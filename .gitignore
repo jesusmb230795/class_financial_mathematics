@@ -131,3 +131,6 @@ api_keys.py
 pull.sh
 reset.sh
 .DS_Store
+
+*.tex
+/latex
