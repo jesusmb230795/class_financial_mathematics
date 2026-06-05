@@ -1,0 +1,50 @@
+title: Quantitative Financial Mathematics with Python
+author: Jesús Enrique Miranda Blanco
+copyright: "2026"
+logo: img/msc-international-financial-degree.jpg
+
+execute:
+  execute_notebooks: "off"
+
+exclude_patterns:
+  - README.md
+  - .venv/**
+  - .uv-cache/**
+  - .uv-python/**
+  - .data-cache/**
+  - _build/**
+  - .jupyter_cache/**
+  - deep-research/**
+  - chapters/DR_*.md
+  - chapters/*DR*.md
+  - "**.ipynb_checkpoints"
+
+repository:
+  url: https://github.com/jesusmb230795/class_financial_mathematics
+  branch: main
+  path_to_book: ""
+
+html:
+  use_repository_button: true
+  use_issues_button: true
+  use_edit_page_button: true
+  home_page_in_navbar: true
+
+launch_buttons:
+  notebook_interface: jupyterlab
+
+parse:
+  myst_enable_extensions:
+    - amsmath
+    - colon_fence
+    - deflist
+    - dollarmath
+    - html_image
+    - linkify
+    - substitution
+
+sphinx:
+  config:
+    language: en
+    html_theme_options:
+      navigation_with_keys: true
