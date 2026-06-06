@@ -1,8 +1,8 @@
 # Course Roadmap
 
-This roadmap takes the classic financial mathematics syllabus and updates it into an applied version built around Python, real data, simulation, optimization, and interactivity.
+This roadmap takes the classic financial mathematics syllabus and updates it into an applied version built around Python, real data, simulation, optimization, and interactivity {cite}`mckinney2010data,harris2020array,kluyver2016jupyter`.
 
-For implementation standards, use `chapters/course-standards.md`. For graded practice and module checkpoints, use `chapters/exercises.md`.
+The published Jupyter Book currently focuses on Modules 0 through 2. Modules 3 through 7 are tracked here as a work-in-progress roadmap and remain outside the published table of contents until they are reviewed and promoted.
 
 ## Module 0: Setup and Python ecosystem
 
@@ -15,25 +15,38 @@ Core topics:
 - using JupyterLab and Jupyter Book;
 - Git workflow;
 - environment validation and package reproducibility checks;
-- foundations of `pandas`, `numpy`, `matplotlib`, `seaborn`, `plotly`, and `ipywidgets`;
-- connection to data sources such as Yahoo Finance, FRED, and Banxico SIE;
+- foundations of `pandas`, `numpy`, `matplotlib`, `seaborn`, `plotly`, and `ipywidgets` {cite}`mckinney2010data,harris2020array,hunter2007matplotlib,waskom2021seaborn,plotly2015collaborative`;
+- connection to data sources such as Yahoo Finance, FRED, and Banxico SIE {cite}`yfinance2025,fredAPI2025,banxicoSIE2025`;
 - local caching and reusable data-access helpers.
 
-## Module 1: Markets, data, and exploratory analysis
+## Module 1: Markets and Data
 
 Goal: understand how markets operate and how to convert financial data into analytical inputs.
 
 Core topics:
 
-- equity markets, indices, fixed income, derivatives, and foreign exchange;
+- market structure, participants, trading venues, post-trade infrastructure, and regulation;
+- equities, fixed income, funds, ETFs, FIBRAs, CKDs, derivatives, indices, and foreign exchange;
+- quotation conventions, liquidity, bid-ask spreads, calendars, frequencies, and instrument-specific data fields;
+- price formation through supply, demand, expectations, discount rates, risk premia, liquidity, and macroeconomic context;
+- source taxonomy for market data, macroeconomic data, reference data, corporate data, and metadata;
+- source selection criteria: authority, coverage, definition, frequency, latency, revisions, accessibility, reliability, licensing, and reproducibility;
 - extraction of prices, rates, and macroeconomic data;
-- market microstructure and Mexican financial institutions;
-- cleaning, calendar alignment, corporate action awareness, returns, volatility, and correlations;
+- raw/interim/processed data layers, local cache, metadata, and audit trails;
+- cleaning, calendar alignment, frequency alignment, corporate action awareness, revisions, returns, volatility, and correlations;
+- wide and long financial panels with source and quality flags;
+- descriptive return statistics: count, mean, median, volatility, minimum, maximum, percentiles, skewness, kurtosis, and missingness;
+- empirical distributions, rolling means, rolling volatility, rolling correlations, and rolling drawdowns;
+- correlation matrices, heatmaps, scatterplots, dependence caveats, and macro-financial exploratory relationships;
+- introductory risk and performance metrics: downside percentiles, drawdown, historical VaR as a percentile, Sharpe ratio, hit ratio, cumulative return, and benchmark comparison;
 - robust outlier flags and data quality reporting;
 - exploratory visualization of assets and macro variables;
 - Mexican market data pipeline design;
 - macro dashboard with Banxico/FRED source mapping;
-- return explorer dashboard.
+- return explorer dashboard;
+- dashboard design principles: analytical question, chart purpose, offline/live mode, source note, and data quality visibility;
+- data narrative from observation to insight, including audience, uncertainty, limitations, and next analytical step;
+- integrated Mexican market case that connects data inventory, quality report, return panel, exploratory metrics, dashboard, and written interpretation.
 
 ## Module 2: Financial time series
 
@@ -43,15 +56,15 @@ Core topics:
 
 - components of a time series;
 - stationarity, autocorrelation, and lags;
-- ARIMA models as a baseline;
-- model diagnostics with ADF, Ljung-Box, and Jarque-Bera tests;
+- ARIMA models as a baseline {cite}`box2015time,hamilton1994time`;
+- model diagnostics with ADF, Ljung-Box, and Jarque-Bera tests {cite}`dickey1979distribution,ljung1978measure,jarque1980efficient`;
 - conditional heteroskedasticity;
-- ARCH and GARCH models;
+- ARCH and GARCH models {cite}`engle1982autoregressive,bollerslev1986generalized`;
 - asymmetric volatility extensions and heavy-tailed residuals;
 - ARIMA and GARCH model-building labs;
 - interactive volatility and GARCH dashboard.
 
-## Module 3: Market risk
+## Work in progress: Module 3 - Market risk
 
 Goal: quantify potential losses under different distributional assumptions and scenarios.
 
@@ -67,7 +80,7 @@ Core topics:
 - deterministic stress testing and scenario analysis;
 - interactive VaR and CVaR simulator.
 
-## Module 4: Modern portfolio theory
+## Work in progress: Module 4 - Modern portfolio theory
 
 Goal: build and evaluate portfolios using the mean-variance framework.
 
@@ -85,7 +98,7 @@ Core topics:
 - risk parity and Hierarchical Risk Parity;
 - interactive efficient frontier dashboard.
 
-## Module 5: Time value of money and fixed income
+## Work in progress: Module 5 - Time value of money and fixed income
 
 Goal: value deterministic cash flows and measure bond price sensitivity.
 
@@ -101,7 +114,7 @@ Core topics:
 - bond repricing under interest-rate shocks;
 - interactive bond duration-convexity dashboard.
 
-## Module 6: Term structure and interest rate models
+## Work in progress: Module 6 - Term structure and interest rate models
 
 Goal: move from flat-yield valuation to curve-based valuation and rate simulation.
 
@@ -115,7 +128,7 @@ Core topics:
 - Vasicek AR(1) calibration and Cox-Ingersoll-Ross Feller-condition checks;
 - short-rate simulation and model-risk interpretation.
 
-## Module 7: Derivatives
+## Work in progress: Module 7 - Derivatives
 
 Goal: price derivative contracts using no-arbitrage reasoning and numerical methods.
 
@@ -136,13 +149,15 @@ Core topics:
 
 The following topics complete the course vision, but still require richer notebooks, real data integration, or project-level expansion:
 
-- live-data variants for dashboards using Banxico, FRED, and public market sources;
-- calendar-aware Mexican fixed-income examples using Banxico and public market sources;
-- liability-driven portfolio optimization examples;
-- Monte Carlo market risk with PCA covariance stabilization;
-- FRTB liquidity-horizon Expected Shortfall examples;
-- Nelson-Siegel-Svensson calibration and yield curve PCA with historical data;
-- constrained portfolio optimization with turnover and transaction costs;
-- full implied-volatility surface fitting with arbitrage checks;
-- option strategy analysis and portfolio hedging P&L attribution;
-- capstone projects with interactive dashboards and real Mexican data.
+| Expansion topic | Primary module | Promotion note |
+| --- | --- | --- |
+| Live-data variants for dashboards using Banxico, FRED, and public market sources | Module 1 - Markets and Data | Implemented as opt-in `DATA_MODE=live` dashboard panels; reuse Module 1 provider, cache, and quality patterns before adding live data to later modules. |
+| Calendar-aware Mexican fixed-income examples using Banxico and public market sources | Module 5 - Time value of money and fixed income | Promote after fixed-income conventions, settlement dates, accrued interest, CETES, Bonos M, and UDIBONOS examples are stable. |
+| Liability-driven portfolio optimization examples | Module 5 - Time value of money and fixed income | Treat as an asset-liability extension that can reference Module 4 portfolio optimization once the fixed-income cash-flow mechanics are ready. |
+| Monte Carlo market risk with PCA covariance stabilization | Module 3 - Market risk | Add after VaR, CVaR, stress testing, and covariance estimation references are stable; connect to Module 4 as a supporting method. |
+| FRTB liquidity-horizon Expected Shortfall examples | Module 3 - Market risk | Keep as an advanced regulatory risk extension after Expected Shortfall and backtesting are clear. |
+| Nelson-Siegel-Svensson calibration and yield curve PCA with historical data | Module 6 - Term structure and interest rate models | Promote after bootstrapping, Nelson-Siegel, PCA scenarios, and historical yield-curve data handling are reviewed. |
+| Constrained portfolio optimization with turnover and transaction costs | Module 4 - Modern portfolio theory | Add after the analytical frontier and robust allocation notebooks, because the extension depends on constraints and implementation frictions. |
+| Full implied-volatility surface fitting with arbitrage checks | Module 7 - Derivatives | Promote after implied-volatility inversion and option-smile interpretation are stable. |
+| Option strategy analysis and portfolio hedging P&L attribution | Module 7 - Derivatives | Add after Greeks, implied volatility, and numerical pricing are ready enough to support hedging interpretation. |
+| Capstone projects with interactive dashboards and real Mexican data | Final project track after Module 7 | Keep as a cross-module capstone drawing from Module 1 data foundations and the promoted modeling modules. |

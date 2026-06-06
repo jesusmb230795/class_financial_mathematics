@@ -6,6 +6,24 @@ Repository of the financial mathematics class for students of the actuarial scie
 
 This repository is organized as a Jupyter Book.
 
+### Repository scope
+
+Keep this repository focused on the buildable book and its reproducible support code:
+
+- `_config.yml`, `_config.outputs.yml`, and `_toc.yml` define the book build and navigation.
+- `intro.md`, `chapters/`, `notebooks/class/`, `references.md`, and `references.bib` are book content.
+- `src/` contains reusable finance, data, and modeling helpers used by notebooks.
+- `scripts/` and `img/generated/` support validation and visual assets.
+- `.env.example`, `pyproject.toml`, `uv.lock`, and `Makefile` support local setup and reproducible builds.
+
+Instructor-only assessment files, private readings, obsolete PDFs, raw research drafts, local API keys, downloaded datasets, and generated build/cache directories should stay outside the repository or in a private companion repository. A public version can keep the book source, reproducible notebooks, code helpers, generated images, and citation files as long as no licensed readings or credentials are included.
+
+### Source format policy
+
+Use Markdown first for the book surface. Chapter introductions, roadmaps, glossaries, references, and narrative-only notebook pages should stay as `.md`.
+
+Use `.ipynb` when a page contains executable Python cells intended to produce rendered outputs such as tables, plots, dashboards, or numerical diagnostics. Notebook sources should not commit saved outputs or execution counts; publication builds execute the notebooks and cache outputs under `_build/.jupyter_cache/`.
+
 ### Local setup
 
 ```bash
@@ -86,7 +104,7 @@ make visual-assets-sync
 make book
 ```
 
-For a focused execution check of curated MyST notebooks that should run without external data, run:
+For a focused execution check of curated executable notebooks that should run without external data, run:
 
 ```bash
 make check-curated-notebooks
@@ -106,6 +124,7 @@ Student-facing module pages should not carry repository maintenance backlog. Kee
 
 #### Data and dashboards
 
+- Live-data variants for dashboards using Banxico, FRED, and public market sources: add opt-in dashboard panels while keeping deterministic offline defaults for publication builds.
 - Add INEGI, World Bank, and DBnomics examples for Mexico, LATAM, and multi-provider macro comparisons.
 - Extend the live dashboard provider map beyond Banxico, FRED, and Yahoo Finance into instructor-approved APIs such as Finnhub, Alpha Vantage, EODHD, FMP, INEGI, World Bank, or DBnomics.
 - Add provider-specific rate-limit, cache-expiration, and credential-handling notes for live-data notebooks.
@@ -118,6 +137,7 @@ Student-facing module pages should not carry repository maintenance backlog. Kee
 
 #### Module 2 - Financial Time Series
 
+- Clean repeated dependencies across legacy notebooks.
 - Add forecast evaluation examples with train/test splits and rolling-origin validation.
 - Add exogenous macro variables or regime-break examples for Mexican rates, FX, or equity returns.
 - Connect conditional volatility forecasts with dynamic VaR backtesting.
@@ -128,6 +148,12 @@ Student-facing module pages should not carry repository maintenance backlog. Kee
 - Turn FRTB liquidity-horizon context into a full numerical example.
 - Connect tail-risk metrics with mean-variance portfolio construction.
 
+#### Module 4 - Modern Portfolio Theory
+
+- Add constrained optimization.
+- Add rebalancing backtesting with turnover penalties.
+- Add robust optimization examples with uncertainty sets.
+
 #### Module 5 - Fixed Income
 
 - Add calendar-aware coupon schedule generation from actual settlement dates.
@@ -137,6 +163,7 @@ Student-facing module pages should not carry repository maintenance backlog. Kee
 
 #### Module 6 - Term Structure
 
+- Add Banxico and Mexican yield curve data sources.
 - Turn monotone-convex interpolation into an executable lab.
 - Add a Nelson-Siegel-Svensson notebook that uses the existing term-structure helper.
 - Add discount-factor distribution summaries from simulated short-rate paths.
@@ -165,7 +192,11 @@ Run all hooks manually with:
 make pre-commit
 ```
 
-The notebook hooks clean `.ipynb` outputs and execution counts, then validate `.ipynb` and MyST notebook sources under `notebooks/class/`.
+The notebook hooks clean `.ipynb` outputs and execution counts, then validate `.ipynb` files and enforce that Markdown sources under `notebooks/class/` remain narrative-only.
+
+## License
+
+This project is licensed under the MIT License. See `LICENSE`.
 
 ## References
 

@@ -25,6 +25,8 @@ This glossary defines core terms used throughout the Jupyter Book.
 | Correlation | Standardized measure of linear co-movement between two variables. | Markets and data |
 | Cost of carry | Net financing, income, storage, or convenience yield effect linking spot and forward prices. | Derivatives |
 | CVaR | Conditional Value at Risk; average loss conditional on exceeding the VaR threshold. Also called Expected Shortfall. | Market risk |
+| Data mode | Explicit notebook setting, such as `DATA_MODE=offline` or `DATA_MODE=live`, that determines whether a dashboard uses deterministic fallback data or provider-backed data. | Markets and data |
+| Data source inventory | Structured record of provider, instrument or variable, frequency, date range, field, currency, calendar, and limitations before modeling. | Markets and data |
 | Dirty price | Bond settlement price including accrued interest. | Fixed income |
 | Duration | First-order sensitivity of a bond price to changes in yield. | Fixed income |
 | DV01 | Dollar value of one basis point; approximate currency price change for a one-basis-point yield move. | Fixed income |
@@ -46,11 +48,13 @@ This glossary defines core terms used throughout the Jupyter Book.
 | Macaulay duration | Weighted average time to receive a bond's cash flows. | Fixed income |
 | Leisen-Reimer tree | Binomial tree designed to improve convergence for option pricing, especially around payoff kinks. | Derivatives |
 | Local volatility | Deterministic volatility function of strike and maturity calibrated to vanilla option prices. | Derivatives |
+| Live data mode | Dashboard mode that fetches provider-backed data through shared `src` helpers, local cache, and approved credentials or public endpoints. | Markets and data |
 | Modified duration | Approximate percentage price change for a one-unit change in yield. | Fixed income |
 | Monte Carlo simulation | Numerical method that estimates values or risks by generating many random scenarios. | Derivatives |
 | Nelson-Siegel model | Parametric yield-curve model with level, slope, curvature, and decay parameters. | Term structure |
 | Nelson-Siegel-Svensson model | Extension of Nelson-Siegel with an additional curvature term and decay parameter. | Term structure |
 | OAS covariance | Oracle Approximating Shrinkage covariance estimator. | Portfolio theory |
+| Offline fallback | Deterministic synthetic or instructor-provided dataset used so notebooks and book builds run without credentials, network access, or provider-rate-limit risk. | Markets and data |
 | Parametric VaR | VaR estimated from an assumed distribution, often Gaussian. | Market risk |
 | Par swap rate | Fixed rate that makes a swap have zero value at inception under a given discount curve. | Derivatives |
 | Principal Component Analysis | Dimension-reduction method used to summarize correlated curve or return movements with orthogonal factors. | Term structure |

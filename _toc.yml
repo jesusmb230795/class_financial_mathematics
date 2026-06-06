@@ -5,12 +5,8 @@ parts:
   - caption: Course Path
     chapters:
       - file: chapters/course-roadmap
-      - file: chapters/course-standards
-      - file: chapters/exercises
-      - file: chapters/assessment
       - file: chapters/glossary
-      - file: chapters/materials
-      - file: chapters/project-ideas
+      - file: references
 
   - caption: Module 0 - Setup and Python Ecosystem
     chapters:
@@ -25,12 +21,12 @@ parts:
           - file: notebooks/class/1.2.setup_example
             title: Classroom Environment Setup
 
-  - caption: Module 1 - Markets, Data, and EDA
+  - caption: Module 1 - Markets and Data
     chapters:
       - file: chapters/01-markets-data
         sections:
           - file: notebooks/class/1.1.stock_markets
-            title: Stock Market Operations
+            title: Market Foundations
           - file: notebooks/class/1.3.data_extraction
             title: Financial Data Extraction
           - file: notebooks/class/1.4.EDA_stock_data
@@ -45,6 +41,8 @@ parts:
             title: Macro Dashboard - Banxico and FRED
           - file: notebooks/class/1.9.return_explorer_dashboard
             title: Return Explorer Dashboard
+          - file: notebooks/class/1.10.market_analysis_communication_case
+            title: Communication and Integrated Case
 
   - caption: Module 2 - Financial Time Series
     chapters:
@@ -62,78 +60,3 @@ parts:
             title: GARCH Volatility and Risk Workflow
           - file: notebooks/class/2.6.interactive_volatility_garch_dashboard
             title: Interactive Volatility and GARCH Dashboard
-
-  - caption: Module 3 - Market Risk
-    chapters:
-      - file: chapters/03-market-risk
-        sections:
-          - file: notebooks/class/3.1.value_at_Risk
-            title: VaR and CVaR
-          - file: notebooks/class/3.2.downside_risk_var_methods
-            title: Downside Risk and VaR Methods
-          - file: notebooks/class/3.3.var_backtesting_and_stress_testing
-            title: VaR Backtesting and Stress Testing
-          - file: notebooks/class/3.4.interactive_var_cvar_simulator
-            title: Interactive VaR and CVaR Simulator
-
-  - caption: Module 4 - Modern Portfolio Theory
-    chapters:
-      - file: chapters/04-portfolio-theory
-        sections:
-          - file: notebooks/class/4.1.modern_portfolio_theory_1
-            title: Mean-Variance and the Efficient Frontier
-          - file: notebooks/class/4.2.analytical_efficient_frontier
-            title: Analytical Efficient Frontier
-          - file: notebooks/class/4.3.robust_portfolio_construction
-            title: Robust Portfolio Construction
-          - file: notebooks/class/4.4.interactive_efficient_frontier_dashboard
-            title: Interactive Efficient Frontier Dashboard
-
-  - caption: Module 5 - Time Value of Money and Fixed Income
-    chapters:
-      - file: chapters/05-fixed-income
-        sections:
-          - file: notebooks/class/5.1.time_value_of_money
-            title: Time Value of Money
-          - file: notebooks/class/5.2.bond_pricing_duration_convexity
-            title: Bond Pricing, Duration, and Convexity
-          - file: notebooks/class/5.3.interactive_bond_sensitivity
-            title: Interactive Bond Duration-Convexity Dashboard
-          - file: notebooks/class/5.4.mexican_government_bond_valuation
-            title: Mexican Government Bond Valuation
-          - file: notebooks/class/5.5.ytm_dv01_and_immunization_lab
-            title: Yield, DV01, and Immunization Lab
-
-  - caption: Module 6 - Term Structure and Interest Rate Models
-    chapters:
-      - file: chapters/06-term-structure
-        sections:
-          - file: notebooks/class/6.1.yield_curve_bootstrapping
-            title: Yield Curve Bootstrapping
-          - file: notebooks/class/6.2.short_rate_models
-            title: Short-Rate Models
-          - file: notebooks/class/6.3.nelson_siegel_curve_fitting
-            title: Nelson-Siegel Curve Fitting
-          - file: notebooks/class/6.4.yield_curve_pca_and_scenarios
-            title: Yield Curve PCA and Scenarios
-          - file: notebooks/class/6.5.short_rate_calibration_lab
-            title: Short-Rate Calibration Lab
-
-  - caption: Module 7 - Derivatives
-    chapters:
-      - file: chapters/07-derivatives
-        sections:
-          - file: notebooks/class/7.1.options_black_scholes
-            title: Options and Black-Scholes
-          - file: notebooks/class/7.2.binomial_and_monte_carlo
-            title: Binomial Trees and Monte Carlo
-          - file: notebooks/class/7.3.interactive_black_scholes_dashboard
-            title: Interactive Black-Scholes Greeks Dashboard
-          - file: notebooks/class/7.4.linear_derivatives_and_carry
-            title: Linear Derivatives and Carry
-          - file: notebooks/class/7.5.implied_volatility_and_smiles
-            title: Implied Volatility and Smiles
-          - file: notebooks/class/7.6.american_and_exotic_options
-            title: American and Exotic Option Methods
-          - file: notebooks/class/7.7.stochastic_volatility_heston_lab
-            title: Stochastic Volatility and Heston Lab

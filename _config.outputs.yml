@@ -6,7 +6,12 @@ logo: img/generated/fm-course-hero.png
 only_build_toc_files: true
 
 execute:
-  execute_notebooks: "off"
+  execute_notebooks: "cache"
+  cache: _build/.jupyter_cache
+  timeout: 120
+  exclude_patterns:
+    - notebooks/class/3.1.value_at_Risk.ipynb
+    - notebooks/class/4.1.modern_portfolio_theory_1.ipynb
 
 bibtex_bibfiles:
   - references.bib
@@ -49,6 +54,8 @@ sphinx:
   config:
     language: en
     bibtex_reference_style: author_year
+    nb_kernel_rgx_aliases:
+      "^cfm$": "python3"
     togglebutton_selector: ".toggle, .admonition.dropdown, div.cell_input"
     togglebutton_hint: "Show code"
     togglebutton_hint_hide: "Hide code"
