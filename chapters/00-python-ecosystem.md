@@ -1,6 +1,6 @@
 # Setup and Python Ecosystem
 
-This module defines the reproducibility contract for the course. It prepares the working environment, explains the repository structure, and gives students a stable workflow for running notebooks and building the Jupyter Book.
+This module defines the reproducibility contract for the course. It prepares the working environment, explains the repository structure, and gives students a stable workflow for running notebooks and building the Jupyter Book {cite}`kluyver2016jupyter,jupyterbook2025`.
 
 ## Expected outcome
 
@@ -26,21 +26,13 @@ By the end of this module, students should be able to:
 
 | Area | Course decision | Reason |
 | --- | --- | --- |
-| Python runtime | Python 3.12 or newer through `pyenv` | Keeps the interpreter explicit and modern |
-| Dependency manager | `uv` with `pyproject.toml` and `uv.lock` | Provides fast, deterministic environment setup |
+| Python runtime | Python 3.12 or newer through `pyenv` {cite}`pyenv2025` | Keeps the interpreter explicit and modern |
+| Dependency manager | `uv` with `pyproject.toml` and `uv.lock` {cite}`uv2025` | Provides fast, deterministic environment setup |
 | Notebook interface | JupyterLab launched with `uv run` | Prevents accidental use of the wrong Python kernel |
-| Book build | Jupyter Book with notebook execution disabled | Avoids build failures from APIs, credentials, and long simulations |
+| Book build | `make book` with cached execution for reproducible notebooks | Publishes reader-facing outputs without saving generated notebook results in source files |
 | Data credentials | `.env` or shell variables, with `.env.example` as template | Keeps tokens out of Git history |
-| Deep research drafts | `chapters/DR_*.md`, excluded from the build | Allows technical research to be synthesized before publication |
 
-## Recommended next improvements
-
-- add an optional CI/CD workflow for GitHub Pages;
-- add notebook output stripping with `pre-commit` and `nbstripout`;
-- create reusable data fetchers in `src/` for Banxico, FRED, and Yahoo Finance;
-- add a static-output publication policy for interactive Plotly and `ipywidgets` notebooks.
-
-## Class sequence
+## Reading sequence
 
 1. Start with the repository structure and explain where notebooks, images, source helpers, and book configuration live.
 2. Install or select Python 3.12 or newer with `pyenv`.
@@ -48,16 +40,8 @@ By the end of this module, students should be able to:
 4. Launch JupyterLab with `uv run jupyter lab`.
 5. Run the environment validation lab.
 6. Review API credential handling with `.env.example`.
-7. Build the book with `make book`.
+7. Build the publication book with `make book`.
 8. Record package versions before moving into market data notebooks.
-
-## In-class practice
-
-Students should reproduce the `pyenv` and `uv` setup locally, launch JupyterLab from the project environment, and compare their package versions against the instructor environment. Any mismatch that affects execution should be recorded before the data modules begin.
-
-## Module checkpoint
-
-The checkpoint is a short environment report with Python version, operating system, package versions, and the `uv` commands used to launch JupyterLab and build the book.
 
 ## Base command
 
