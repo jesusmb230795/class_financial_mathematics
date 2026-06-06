@@ -82,6 +82,7 @@ target/
 # Jupyter Notebook
 .ipynb_checkpoints
 .jupyter-config/
+.matplotlib-cache/
 
 # IPython
 profile_default/
