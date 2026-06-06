@@ -56,6 +56,7 @@ sphinx:
     bibtex_reference_style: author_year
     nb_kernel_rgx_aliases:
       "^cfm$": "python3"
+    nb_output_stderr: remove
     togglebutton_selector: ".toggle, .admonition.dropdown, div.cell_input"
     togglebutton_hint: "Show code"
     togglebutton_hint_hide: "Hide code"
