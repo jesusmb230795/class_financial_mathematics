@@ -14,7 +14,7 @@ By the end of this module, students should be able to:
 - compare portfolios using the Sharpe ratio;
 - estimate CAPM beta with robust standard errors;
 - compare sample covariance against shrinkage estimators;
-- construct risk parity and HRP benchmark allocations.
+- construct risk parity and HRP benchmark allocations;
 - use an interactive efficient frontier dashboard.
 
 ## Included notes
@@ -24,13 +24,7 @@ By the end of this module, students should be able to:
 - Robust Portfolio Construction;
 - Interactive Efficient Frontier Dashboard.
 
-## Recommended next improvements
-
-- add constrained optimization;
-- add rebalancing backtesting with turnover penalties;
-- add robust optimization examples with uncertainty sets.
-
-## Class sequence
+## Reading sequence
 
 1. Download and inspect price data for a multi-asset universe.
 2. Estimate returns, volatility, and covariance.
@@ -43,11 +37,3 @@ By the end of this module, students should be able to:
 9. Build risk parity and HRP benchmark allocations.
 10. Use the efficient frontier dashboard to test correlation and risk-free-rate assumptions.
 11. Connect portfolio allocation with VaR as a complementary risk view.
-
-## In-class practice
-
-Students should build at least five portfolios: equal weight, minimum variance, tangency, shrinkage-based minimum variance, and risk parity. They should compare weights, expected return, volatility, Sharpe ratio, risk contributions, concentration risk, and one dashboard scenario.
-
-## Module checkpoint
-
-The checkpoint is a portfolio construction brief with selected weights, expected performance, covariance method, beta estimate, risk contributions, and a short explanation of why the selected allocation is defensible.
