@@ -166,7 +166,7 @@
       ],
       "used_by": [
         {
-          "file": "notebooks/class/1.4.EDA_stock_data.md",
+          "file": "notebooks/class/1.4.EDA_stock_data.ipynb",
           "locator": "cell 35 skewness diagram",
           "mode": "text_replace",
           "current_ref": "../../img/Relationship_between_mean_and_median_under_different_skewness.png",
@@ -189,7 +189,7 @@
       ],
       "used_by": [
         {
-          "file": "notebooks/class/1.4.EDA_stock_data.md",
+          "file": "notebooks/class/1.4.EDA_stock_data.ipynb",
           "locator": "cell 39 kurtosis diagram",
           "mode": "text_replace",
           "current_ref": "../../img/Kurtosis.jpg",
@@ -212,7 +212,7 @@
       ],
       "used_by": [
         {
-          "file": "notebooks/class/1.4.EDA_stock_data.md",
+          "file": "notebooks/class/1.4.EDA_stock_data.ipynb",
           "locator": "cell 44 correlation diagram",
           "mode": "text_replace",
           "current_ref": "../../img/1920px-Correlation_examples2.svg.png",
@@ -372,7 +372,7 @@
       ],
       "used_by": [
         {
-          "file": "notebooks/class/2.3.time_series_diagnostics_and_volatility_extensions.md",
+          "file": "notebooks/class/2.3.time_series_diagnostics_and_volatility_extensions.ipynb",
           "locator": "Conditional heteroskedasticity section",
           "mode": "markdown_insert",
           "target_markdown": "![Comparison of historical, moving-average, and exponentially weighted volatility estimators](../../img/generated/ts-sample-volatility-estimators.png)"
@@ -395,6 +395,88 @@
       "used_by": [],
       "prompt": "Create a 1920x1080 PNG, 16:9. Two-panel educational diagram showing positive skew and negative skew distributions with tail regions shaded. Use clean density curves, short labels only, and show the tail direction with subtle arrows. Use teal for positive skew, coral for negative skew, navy axes, off-white background. Keep a 7% safe margin. This replaces an unreferenced legacy image if the concept is added back to the book.",
       "integration_note": "Approved visual retained in the asset library, but not inserted because the active EDA lesson already uses eda-skewness-mean-median-mode for skewness."
+    },
+    {
+      "order": 16,
+      "id": "m1-global-market-activity-scale",
+      "status": "pending",
+      "role": "future_python_chart_or_infographic",
+      "target_path": "img/generated/m1-global-market-activity-scale.png",
+      "aspect_ratio": "16:9",
+      "recommended_size": "1920x1080",
+      "alt_text": "Global market scale snapshot comparing market capitalization, share trading value, listed companies, trades, and derivatives contracts.",
+      "data_source": {
+        "name": "World Federation of Exchanges Focus Dashboard - May 2026",
+        "url": "https://focus.world-exchanges.org/issue/may-2026/dashboard",
+        "retrieved_on": "2026-06-06",
+        "note": "Use the same values as src.market_data.wfe_equity_market_scale_snapshot unless refreshing the snapshot intentionally."
+      },
+      "intended_placement": [
+        {
+          "file": "notebooks/class/1.3.data_extraction.ipynb",
+          "locator": "Market scale snapshot section",
+          "note": "Replace or complement the current executed matplotlib chart after the image is generated and approved."
+        }
+      ],
+      "production_notes": [
+        "Show exact metric units: USD trillions, thousand companies, billion trades, and billion contracts.",
+        "Do not compare bars without units; use grouped panels or metric cards so units are explicit.",
+        "Include source and retrieval date in small footer text."
+      ],
+      "prompt": "Create a 1920x1080 PNG, 16:9. Academic finance infographic titled \"WFE market scale snapshot\" using the shared style. Show five metric cards or grouped mini-bars with exact values from WFE Focus Dashboard May 2026: Market capitalisation 149.20 USD trillions, Value of share trading 25.19 USD trillions, Listed companies 60.06 thousand, Number of trades 6.95 billion trades, Options contracts 6.73 billion and Futures contracts 3.37 billion. Include a small footer: Source: WFE Focus dashboard, May 2026; retrieved 2026-06-06. Use off-white background, navy ink, teal activity accents, amber count accents, and muted blue derivatives accents. Keep a 7% safe margin. No logos, no decorative gradients, no extra numbers."
+    },
+    {
+      "order": 17,
+      "id": "m1-mexico-market-activity-snapshot",
+      "status": "pending",
+      "role": "future_python_chart_or_infographic",
+      "target_path": "img/generated/m1-mexico-market-activity-snapshot.png",
+      "aspect_ratio": "16:9",
+      "recommended_size": "1920x1080",
+      "alt_text": "Mexican market activity snapshot showing trading value, volume, transactions, listed issuers, and market infrastructure sources.",
+      "data_source": {
+        "name": "BMV trading statistics, BIVA market activity, and WFE market statistics",
+        "url": "https://www.biva.mx/informacion_de_mercado/estadisticas/operacion_ultimo_mes",
+        "secondary_url": "https://focus.world-exchanges.org/issue/june-2026/market-statistics",
+        "retrieved_on": "to be filled when generated",
+        "note": "Refresh with the latest available month before generation; record source URLs and retrieval date in the footer."
+      },
+      "intended_placement": [
+        {
+          "file": "notebooks/class/1.7.mexican_market_data_pipeline.ipynb",
+          "locator": "Suggested Mexican market dataset section",
+          "note": "Use after source values are verified and written into the figure footer."
+        }
+      ],
+      "production_notes": [
+        "Use only verified latest-month data from public BMV/BIVA/WFE pages.",
+        "Prefer a small multiples layout: value traded, volume, transactions, listed issuers, and source coverage.",
+        "If BMV public page is unavailable, use WFE market statistics and state that limitation in the footer."
+      ],
+      "prompt": "Create a 1920x1080 PNG, 16:9. Academic finance infographic for \"Mexican market activity snapshot\" using the shared style. Use verified latest-month public data from BMV/BIVA/WFE before generation. Show compact metric cards for trading value, trading volume, number of transactions, listed issuers, and core infrastructure sources (BMV, BIVA, MexDer, Indeval, CNBV). Include source names, month, and retrieval date in a small footer. Use off-white background, navy ink, teal market activity accents, amber infrastructure accents, and coral quality-warning accents. Keep a 7% safe margin. No logos, no fake numbers, no unreadable labels."
+    },
+    {
+      "order": 18,
+      "id": "m2-price-return-volume-volatility-bridge",
+      "status": "pending",
+      "role": "lesson_diagram",
+      "target_path": "img/generated/m2-price-return-volume-volatility-bridge.png",
+      "aspect_ratio": "16:9",
+      "recommended_size": "1920x1080",
+      "alt_text": "Bridge diagram linking price, return, volume, liquidity, volatility clustering, and model diagnostics in financial time series.",
+      "intended_placement": [
+        {
+          "file": "chapters/02-time-series.md",
+          "locator": "After module overview or reading sequence",
+          "note": "Use as a conceptual bridge once generated and approved."
+        }
+      ],
+      "production_notes": [
+        "Keep this conceptual; do not include fake market data.",
+        "Use short labels only: price, return, volume, liquidity, volatility, ACF/PACF, GARCH.",
+        "Show volume as context for interpreting volatility, not as a model input requirement."
+      ],
+      "prompt": "Create a 1920x1080 PNG, 16:9. Academic time-series bridge diagram for Module 2. Show a clean left-to-right flow: price series -> simple/log returns -> volume and liquidity context -> volatility clustering -> diagnostics (ACF/PACF, residual checks) -> ARCH/GARCH model. Use small schematic charts, not real data. Use teal lines for prices/returns, amber bars for volume, coral clusters for high-volatility periods, navy axes and annotations. Off-white background, 7% safe margin, no fake ticker names, no formulas beyond short labels."
     }
   ]
 }
