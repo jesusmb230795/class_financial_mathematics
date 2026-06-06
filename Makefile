@@ -9,7 +9,8 @@ PRE_COMMIT_HOME ?= .pre-commit-cache
 BOOK_CONFIG ?= _config.outputs.yml
 BOOK_STATIC_CONFIG ?= _config.yml
 BOOK_OUTPUTS_CONFIG ?= $(BOOK_CONFIG)
-CURATED_EXECUTABLE_NOTEBOOKS = \
+NOTEBOOK_SOURCE_FILES = $(shell find notebooks/class \( -name '*.ipynb' -o -name '*.md' \) | sort)
+PUBLISHED_EXECUTABLE_NOTEBOOKS = \
 	notebooks/class/0.2.environment_validation_lab.ipynb \
 	notebooks/class/0.3.initial_repository_setup.ipynb \
 	notebooks/class/0.4.classroom_environment_setup.ipynb \
@@ -26,7 +27,8 @@ CURATED_EXECUTABLE_NOTEBOOKS = \
 	notebooks/class/2.3.time_series_diagnostics_and_volatility_extensions.ipynb \
 	notebooks/class/2.4.arima_diagnostic_workflow.ipynb \
 	notebooks/class/2.5.garch_volatility_risk_workflow.ipynb \
-	notebooks/class/2.6.interactive_volatility_garch_dashboard.ipynb \
+	notebooks/class/2.6.interactive_volatility_garch_dashboard.ipynb
+CURATED_EXECUTABLE_NOTEBOOKS = $(PUBLISHED_EXECUTABLE_NOTEBOOKS) \
 	notebooks/class/3.2.downside_risk_var_methods.ipynb \
 	notebooks/class/3.3.var_backtesting_and_stress_testing.ipynb \
 	notebooks/class/3.4.interactive_var_cvar_simulator.ipynb \
@@ -56,7 +58,7 @@ BOOK_ENV = $(JUPYTER_ENV) RUN_INTERACTIVE_WIDGETS=0
 NOTEBOOK_CHECK_ENV = $(JUPYTER_ENV) RUN_INTERACTIVE_WIDGETS=0
 PRE_COMMIT_ENV = $(JUPYTER_ENV) PRE_COMMIT_HOME=$(PRE_COMMIT_HOME)
 
-.PHONY: book book-static book-with-outputs check-curated-notebooks clean-book install-pre-commit pre-commit sync lab visual-assets visual-assets-exchange-chart visual-assets-sync visual-assets-validate
+.PHONY: book book-static book-with-outputs check-book-links check-curated-notebooks check-notebook-sources check-published-notebooks clean-book clean-book-all install-pre-commit pre-commit publish-check sync lab visual-assets visual-assets-exchange-chart visual-assets-sync visual-assets-validate
 
 sync:
 	UV_CACHE_DIR=$(UV_CACHE_DIR) uv sync
@@ -79,6 +81,9 @@ install-pre-commit:
 pre-commit:
 	$(PRE_COMMIT_ENV) uv run pre-commit run --all-files
 
+check-notebook-sources:
+	$(NOTEBOOK_CHECK_ENV) uv run python scripts/validate_notebooks.py $(NOTEBOOK_SOURCE_FILES)
+
 visual-assets:
 	python3 scripts/visual_assets.py status
 
@@ -91,9 +96,26 @@ visual-assets-sync:
 visual-assets-validate:
 	python3 scripts/visual_assets.py validate
 
+check-published-notebooks:
+	mkdir -p $(NOTEBOOK_CHECK_OUTPUT)
+	$(NOTEBOOK_CHECK_ENV) uv run jupyter nbconvert --execute --ExecutePreprocessor.kernel_name=python3 --to notebook --output-dir $(NOTEBOOK_CHECK_OUTPUT) $(PUBLISHED_EXECUTABLE_NOTEBOOKS)
+
 check-curated-notebooks:
 	mkdir -p $(NOTEBOOK_CHECK_OUTPUT)
 	$(NOTEBOOK_CHECK_ENV) uv run jupyter nbconvert --execute --ExecutePreprocessor.kernel_name=python3 --to notebook --output-dir $(NOTEBOOK_CHECK_OUTPUT) $(CURATED_EXECUTABLE_NOTEBOOKS)
 
+check-book-links:
+	$(JUPYTER_ENV) uv run python scripts/check_book_links.py _build/html
+
+publish-check:
+	git diff --check
+	$(MAKE) visual-assets-validate
+	$(MAKE) check-notebook-sources
+	$(MAKE) book
+	$(MAKE) check-book-links
+
 clean-book:
 	$(JUPYTER_ENV) uv run jupyter-book clean .
+
+clean-book-all:
+	$(JUPYTER_ENV) uv run jupyter-book clean . --all

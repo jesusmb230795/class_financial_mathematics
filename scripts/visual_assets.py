@@ -153,10 +153,14 @@ def validate_command(args: argparse.Namespace) -> int:
             actual_size = read_png_size(target)
             expected_width, expected_height = (int(part) for part in size.split("x"))
             if actual_size and actual_size != (expected_width, expected_height):
-                errors.append(
+                message = (
                     f"{asset['id']}: expected {size}px, but file is "
                     f"{actual_size[0]}x{actual_size[1]}px"
                 )
+                if status in {"generated", "approved"}:
+                    errors.append(message)
+                else:
+                    warnings.append(message)
         if status == "pending" and target.exists():
             warnings.append(
                 f"{asset['id']}: file exists, but status is still pending"

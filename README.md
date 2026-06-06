@@ -64,6 +64,18 @@ make book-static
 
 Legacy notebooks that require live market data, FRED keys, or local `api_keys` modules are excluded from build-time execution until they are converted to reproducible classroom datasets.
 
+### Publish on GitHub Pages
+
+GitHub Pages with GitHub Actions is the recommended hosting path for this book. The repository already contains `.github/workflows/deploy-book.yml`, which installs the locked environment, runs the publication gate, builds `_build/html`, preserves Jupyter Book static assets with `.nojekyll`, and deploys the generated site through the official Pages artifact flow.
+
+Before the first deployment, configure the repository on GitHub:
+
+1. Open **Settings > Pages**.
+2. Set **Build and deployment > Source** to **GitHub Actions**.
+3. Push or merge the prepared publication commit to `main`, or run the workflow manually from the **Actions** tab.
+
+No generated HTML needs to be committed. The workflow builds the site from source and uploads `_build/html` as the Pages artifact.
+
 ### Data access and cache
 
 The book should use real data whenever a reproducible, classroom-safe source is available. Prefer official sources for macroeconomic and Mexico-specific series, documented APIs with stable free tiers for market data, and synthetic or instructor-provided fallbacks only when live access would require secrets or unstable network calls during publication builds.
@@ -96,7 +108,7 @@ Never commit real API tokens. `.env` is ignored by Git.
 
 ### Validation
 
-Before sharing changes, run:
+Before sharing changes or publishing the book, run:
 
 ```bash
 git diff --check
@@ -104,13 +116,26 @@ make visual-assets-sync
 make book
 ```
 
-For a focused execution check of curated executable notebooks that should run without external data, run:
+For the full publication gate used by GitHub Actions, run:
+
+```bash
+make clean-book-all
+make publish-check
+```
+
+For a focused fresh execution check of the executable notebooks currently included in the published table of contents, run:
+
+```bash
+make check-published-notebooks
+```
+
+For an optional wider check of executable notebooks that are still outside the published navigation, run:
 
 ```bash
 make check-curated-notebooks
 ```
 
-This writes temporary executed notebooks to `/private/tmp/class_financial_mathematics_notebooks`.
+Notebook execution checks write temporary executed notebooks to `/private/tmp/class_financial_mathematics_notebooks`.
 
 ### Recommended next improvements
 
@@ -118,9 +143,8 @@ Student-facing module pages should not carry repository maintenance backlog. Kee
 
 #### Publication and workflow
 
-- Add an optional CI/CD workflow for GitHub Pages using `uv sync --locked`, `make book`, and Pages artifact upload.
 - Add notebook output stripping with `pre-commit` and `nbstripout`.
-- Add a lightweight validation checklist for final publication: `git diff --check`, `make visual-assets-sync`, `make book-static`, `make book`, and `make check-curated-notebooks`.
+- Promote Modules 3 through 7 into the published table of contents only after each module passes the publication gate with reproducible outputs.
 
 #### Data and dashboards
 
