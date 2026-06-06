@@ -31,20 +31,24 @@ make lab
 ### Build the book
 
 ```bash
-uv run jupyter-book build .
-```
-
-The same command is available through:
-
-```bash
 make book
 ```
 
 The generated site is written to `_build/html`.
 
-Notebook execution is disabled during the book build because several notebooks depend on external data providers. Open the notebooks in JupyterLab when you want to run them interactively.
+The `make book` publication build uses `_config.outputs.yml`, executes reproducible notebooks, and caches rendered outputs under `_build/.jupyter_cache/`. It disables live widgets during execution and renders each dashboard's static fallback view for publication. Notebook sources remain free of saved outputs.
+
+For a faster structural build without notebook execution, run:
+
+```bash
+make book-static
+```
+
+Legacy notebooks that require live market data, FRED keys, or local `api_keys` modules are excluded from build-time execution until they are converted to reproducible classroom datasets.
 
 ### Data access and cache
+
+The book should use real data whenever a reproducible, classroom-safe source is available. Prefer official sources for macroeconomic and Mexico-specific series, documented APIs with stable free tiers for market data, and synthetic or instructor-provided fallbacks only when live access would require secrets or unstable network calls during publication builds.
 
 Reusable provider logic lives in `src/`:
 
@@ -52,6 +56,13 @@ Reusable provider logic lives in `src/`:
 - `src/fred.py` for FRED;
 - `src/market_data.py` for Yahoo Finance, provider facades, returns, alignment, and classroom panels;
 - `src/cache.py` for local tabular and JSON caching.
+
+Recommended real-data sources by use case:
+
+- Mexico official data: INEGI API and Banxico SIE;
+- US macro and rates: FRED;
+- global macro comparisons: World Bank Open Data, DBnomics, IMF WEO, and OECD Data;
+- market data: Finnhub for generous free-tier prototypes, Alpha Vantage for technical indicators, EODHD for global end-of-day history, Financial Modeling Prep for fundamentals, and Yahoo Finance as a convenient educational fallback.
 
 Downloaded data is cached under `.data-cache/`, which is ignored by Git and excluded from the Jupyter Book build.
 
@@ -71,16 +82,74 @@ Before sharing changes, run:
 
 ```bash
 git diff --check
+make visual-assets-sync
 make book
 ```
 
-For curated MyST notebooks that should execute without external data, run:
+For a focused execution check of curated MyST notebooks that should run without external data, run:
 
 ```bash
 make check-curated-notebooks
 ```
 
 This writes temporary executed notebooks to `/private/tmp/class_financial_mathematics_notebooks`.
+
+### Recommended next improvements
+
+Student-facing module pages should not carry repository maintenance backlog. Keep remaining improvement items here instead.
+
+#### Publication and workflow
+
+- Add an optional CI/CD workflow for GitHub Pages using `uv sync --locked`, `make book`, and Pages artifact upload.
+- Add notebook output stripping with `pre-commit` and `nbstripout`.
+- Add a lightweight validation checklist for final publication: `git diff --check`, `make visual-assets-sync`, `make book-static`, `make book`, and `make check-curated-notebooks`.
+
+#### Data and dashboards
+
+- Add INEGI, World Bank, and DBnomics examples for Mexico, LATAM, and multi-provider macro comparisons.
+- Extend the live dashboard provider map beyond Banxico, FRED, and Yahoo Finance into instructor-approved APIs such as Finnhub, Alpha Vantage, EODHD, FMP, INEGI, World Bank, or DBnomics.
+- Add provider-specific rate-limit, cache-expiration, and credential-handling notes for live-data notebooks.
+
+#### Module 1 - Markets and Data
+
+- Add a short executable example that compares official macro data, public market prices, and cached classroom panels under the same schema.
+- Add a compact Mexican market-infrastructure glossary covering BMV, BIVA, MexDer, CNBV, PIP, Valmer, Indeval, and Asigna.
+- Add a dashboard-ready data dictionary template for source, unit, frequency, calendar, currency, license note, and quality flags.
+
+#### Module 2 - Financial Time Series
+
+- Add forecast evaluation examples with train/test splits and rolling-origin validation.
+- Add exogenous macro variables or regime-break examples for Mexican rates, FX, or equity returns.
+- Connect conditional volatility forecasts with dynamic VaR backtesting.
+
+#### Module 3 - Market Risk
+
+- Add Monte Carlo VaR and Expected Shortfall examples.
+- Turn FRTB liquidity-horizon context into a full numerical example.
+- Connect tail-risk metrics with mean-variance portfolio construction.
+
+#### Module 5 - Fixed Income
+
+- Add calendar-aware coupon schedule generation from actual settlement dates.
+- Connect Banxico UDI and CETES series through the data layer for optional live-data runs.
+- Extend the bond dashboard with clean price, dirty price, accrued interest, and settlement controls.
+- Add a liability-driven portfolio optimization example after immunization.
+
+#### Module 6 - Term Structure
+
+- Turn monotone-convex interpolation into an executable lab.
+- Add a Nelson-Siegel-Svensson notebook that uses the existing term-structure helper.
+- Add discount-factor distribution summaries from simulated short-rate paths.
+- Connect PCA scenarios to fixed-income portfolio valuation and liabilities.
+
+#### Module 7 - Derivatives
+
+- Add strategy payoff diagrams for spreads, straddles, collars, and covered calls.
+- Connect optional live option-chain data through `src/market_data.py`.
+- Add an implied-volatility surface fitting lab with arbitrage checks.
+- Extend Heston from simulation to stable characteristic-function pricing.
+- Add local-volatility and SVI/SSVI surface concepts after implied volatility is stable.
+- Add option portfolio hedging and P&L attribution examples.
 
 ### Pre-commit hooks
 

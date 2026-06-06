@@ -3,14 +3,19 @@ PYTHONPATH ?= $(CURDIR)
 JUPYTER_CONFIG_DIR ?= .jupyter-config
 JUPYTER_DATA_DIR ?= .jupyter-config/data
 JUPYTER_RUNTIME_DIR ?= .jupyter-config/runtime
+MPLCONFIGDIR ?= $(CURDIR)/.matplotlib-cache
 NOTEBOOK_CHECK_OUTPUT ?= /private/tmp/class_financial_mathematics_notebooks
 PRE_COMMIT_HOME ?= .pre-commit-cache
+BOOK_CONFIG ?= _config.outputs.yml
+BOOK_STATIC_CONFIG ?= _config.yml
+BOOK_OUTPUTS_CONFIG ?= $(BOOK_CONFIG)
 
-JUPYTER_ENV = UV_CACHE_DIR=$(UV_CACHE_DIR) PYTHONPATH=$(PYTHONPATH) JUPYTER_CONFIG_DIR=$(JUPYTER_CONFIG_DIR) JUPYTER_DATA_DIR=$(JUPYTER_DATA_DIR) JUPYTER_RUNTIME_DIR=$(JUPYTER_RUNTIME_DIR)
+JUPYTER_ENV = UV_CACHE_DIR=$(UV_CACHE_DIR) PYTHONPATH=$(PYTHONPATH) JUPYTER_CONFIG_DIR=$(JUPYTER_CONFIG_DIR) JUPYTER_DATA_DIR=$(JUPYTER_DATA_DIR) JUPYTER_RUNTIME_DIR=$(JUPYTER_RUNTIME_DIR) MPLCONFIGDIR=$(MPLCONFIGDIR)
+BOOK_ENV = $(JUPYTER_ENV) RUN_INTERACTIVE_WIDGETS=0
 NOTEBOOK_CHECK_ENV = $(JUPYTER_ENV) RUN_INTERACTIVE_WIDGETS=0
 PRE_COMMIT_ENV = UV_CACHE_DIR=$(UV_CACHE_DIR) PRE_COMMIT_HOME=$(PRE_COMMIT_HOME)
 
-.PHONY: book check-curated-notebooks clean-book install-pre-commit pre-commit sync lab
+.PHONY: book book-static book-with-outputs check-curated-notebooks clean-book install-pre-commit pre-commit sync lab visual-assets visual-assets-exchange-chart visual-assets-sync visual-assets-validate
 
 sync:
 	UV_CACHE_DIR=$(UV_CACHE_DIR) uv sync
@@ -19,7 +24,13 @@ lab:
 	$(JUPYTER_ENV) uv run jupyter lab
 
 book:
-	$(JUPYTER_ENV) uv run jupyter-book build .
+	$(BOOK_ENV) uv run jupyter-book build . --config $(BOOK_CONFIG)
+
+book-static:
+	$(BOOK_ENV) uv run jupyter-book build . --config $(BOOK_STATIC_CONFIG)
+
+book-with-outputs:
+	$(BOOK_ENV) uv run jupyter-book build . --config $(BOOK_OUTPUTS_CONFIG)
 
 install-pre-commit:
 	$(PRE_COMMIT_ENV) uv run pre-commit install
@@ -27,8 +38,24 @@ install-pre-commit:
 pre-commit:
 	$(PRE_COMMIT_ENV) uv run pre-commit run --all-files
 
+visual-assets:
+	python3 scripts/visual_assets.py status
+
+visual-assets-exchange-chart:
+	$(JUPYTER_ENV) uv run python scripts/generate_exchange_market_cap_chart.py
+
+visual-assets-sync:
+	python3 scripts/visual_assets.py sync
+
+visual-assets-validate:
+	python3 scripts/visual_assets.py validate
+
 check-curated-notebooks:
 	mkdir -p $(NOTEBOOK_CHECK_OUTPUT)
+	$(NOTEBOOK_CHECK_ENV) uv run jupytext --execute --to ipynb --output $(NOTEBOOK_CHECK_OUTPUT)/1.3.data_extraction.ipynb notebooks/class/1.3.data_extraction.md
+	$(NOTEBOOK_CHECK_ENV) uv run jupytext --execute --to ipynb --output $(NOTEBOOK_CHECK_OUTPUT)/1.4.EDA_stock_data.ipynb notebooks/class/1.4.EDA_stock_data.md
+	$(NOTEBOOK_CHECK_ENV) uv run jupytext --execute --to ipynb --output $(NOTEBOOK_CHECK_OUTPUT)/1.5.EDA_macroeconomic_data.ipynb notebooks/class/1.5.EDA_macroeconomic_data.md
+	$(NOTEBOOK_CHECK_ENV) uv run jupytext --execute --to ipynb --output $(NOTEBOOK_CHECK_OUTPUT)/1.7.mexican_market_data_pipeline.ipynb notebooks/class/1.7.mexican_market_data_pipeline.md
 	$(NOTEBOOK_CHECK_ENV) uv run jupytext --execute --to ipynb --output $(NOTEBOOK_CHECK_OUTPUT)/1.8.macro_dashboard_banxico_fred.ipynb notebooks/class/1.8.macro_dashboard_banxico_fred.md
 	$(NOTEBOOK_CHECK_ENV) uv run jupytext --execute --to ipynb --output $(NOTEBOOK_CHECK_OUTPUT)/1.9.return_explorer_dashboard.ipynb notebooks/class/1.9.return_explorer_dashboard.md
 	$(NOTEBOOK_CHECK_ENV) uv run jupytext --execute --to ipynb --output $(NOTEBOOK_CHECK_OUTPUT)/2.6.interactive_volatility_garch_dashboard.ipynb notebooks/class/2.6.interactive_volatility_garch_dashboard.md
