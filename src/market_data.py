@@ -292,6 +292,88 @@ def synthetic_macro_panel(
     ).rename_axis("date")
 
 
+def wfe_equity_market_scale_snapshot() -> pd.DataFrame:
+    """Return a static WFE global market scale snapshot for publication builds.
+
+    Values are copied from the World Federation of Exchanges Focus dashboard
+    for May 2026. They are stored in code instead of fetched live so the book
+    remains reproducible without network access.
+    """
+    source_url = "https://focus.world-exchanges.org/issue/may-2026/dashboard"
+    source_snapshot = "WFE Focus dashboard, May 2026"
+    retrieved_on = "2026-06-06"
+    rows = [
+        {
+            "metric": "Market capitalisation",
+            "category": "equity market scale",
+            "reported_value": 149_199_047.91,
+            "reported_unit": "USD millions",
+            "display_value": 149.20,
+            "display_unit": "USD trillions",
+            "change_percent": 5.93,
+        },
+        {
+            "metric": "Value of share trading",
+            "category": "equity market activity",
+            "reported_value": 25_186_065.32,
+            "reported_unit": "USD millions",
+            "display_value": 25.19,
+            "display_unit": "USD trillions",
+            "change_percent": 25.07,
+        },
+        {
+            "metric": "Listed companies",
+            "category": "market breadth",
+            "reported_value": 60_055,
+            "reported_unit": "domestic and foreign companies",
+            "display_value": 60.06,
+            "display_unit": "thousand companies",
+            "change_percent": 0.15,
+        },
+        {
+            "metric": "Number of trades",
+            "category": "equity market activity",
+            "reported_value": 6_948_777.81,
+            "reported_unit": "thousand trades",
+            "display_value": 6.95,
+            "display_unit": "billion trades",
+            "change_percent": 27.79,
+        },
+        {
+            "metric": "Investment flows",
+            "category": "primary market flow",
+            "reported_value": 14_945.69,
+            "reported_unit": "USD millions",
+            "display_value": 14.95,
+            "display_unit": "USD billions",
+            "change_percent": 30.82,
+        },
+        {
+            "metric": "Options contracts traded",
+            "category": "derivatives activity",
+            "reported_value": 6_732_597_316,
+            "reported_unit": "contracts",
+            "display_value": 6.73,
+            "display_unit": "billion contracts",
+            "change_percent": 8.75,
+        },
+        {
+            "metric": "Futures contracts traded",
+            "category": "derivatives activity",
+            "reported_value": 3_367_804_629,
+            "reported_unit": "contracts",
+            "display_value": 3.37,
+            "display_unit": "billion contracts",
+            "change_percent": 45.10,
+        },
+    ]
+    snapshot = pd.DataFrame(rows)
+    snapshot["source_snapshot"] = source_snapshot
+    snapshot["source_url"] = source_url
+    snapshot["retrieved_on"] = retrieved_on
+    return snapshot
+
+
 def dashboard_data_inventory() -> pd.DataFrame:
     """Return the recommended provider map for the interactive dashboards."""
     return pd.DataFrame(
