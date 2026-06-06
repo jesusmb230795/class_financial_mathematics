@@ -112,6 +112,7 @@ publish-check:
 	$(MAKE) visual-assets-validate
 	$(MAKE) check-notebook-sources
 	$(MAKE) book
+	touch _build/html/.nojekyll
 	$(MAKE) check-book-links
 
 clean-book:
