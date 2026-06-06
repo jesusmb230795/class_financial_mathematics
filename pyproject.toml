@@ -3,6 +3,7 @@ name = "class-financial-mathematics"
 version = "0.1.0"
 description = "Jupyter Book for a quantitative financial mathematics course with Python."
 readme = "README.md"
+license = { text = "MIT" }
 requires-python = ">=3.12"
 dependencies = [
     "aleatory",

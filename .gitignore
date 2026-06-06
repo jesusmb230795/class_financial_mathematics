@@ -144,3 +144,4 @@ reset.sh
 
 *.tex
 /latex
+*.csv
