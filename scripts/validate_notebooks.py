@@ -1,4 +1,4 @@
-"""Validate Jupyter notebooks and MyST notebook sources."""
+"""Validate Jupyter notebooks and Markdown notebook sources."""
 
 from __future__ import annotations
 
@@ -33,7 +33,15 @@ def validate_ipynb(path: Path) -> list[str]:
 
 
 def validate_myst(path: Path) -> list[str]:
-    """Validate a MyST notebook source file."""
+    """Validate a Markdown source file against the repository format policy."""
+    errors = []
+    text = path.read_text()
+    if "```{code-cell}" in text:
+        errors.append(
+            f"{path}: executable Python cells belong in .ipynb sources; "
+            "keep .md files for narrative content and static examples"
+        )
+
     try:
         notebook = jupytext.read(path)
         nbformat.validate(notebook)
@@ -41,7 +49,7 @@ def validate_myst(path: Path) -> list[str]:
         return [f"{path}: invalid MyST notebook schema: {exc}"]
     except Exception as exc:
         return [f"{path}: cannot read as MyST notebook: {exc}"]
-    return []
+    return errors
 
 
 def main(argv: list[str]) -> int:
