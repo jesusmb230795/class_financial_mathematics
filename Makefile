@@ -11,8 +11,8 @@ BOOK_STATIC_CONFIG ?= _config.yml
 BOOK_OUTPUTS_CONFIG ?= $(BOOK_CONFIG)
 CURATED_EXECUTABLE_NOTEBOOKS = \
 	notebooks/class/0.2.environment_validation_lab.ipynb \
-	notebooks/class/1.0.setup_example.ipynb \
-	notebooks/class/1.2.setup_example.ipynb \
+	notebooks/class/0.3.initial_repository_setup.ipynb \
+	notebooks/class/0.4.classroom_environment_setup.ipynb \
 	notebooks/class/1.3.data_extraction.ipynb \
 	notebooks/class/1.4.EDA_stock_data.ipynb \
 	notebooks/class/1.5.EDA_macroeconomic_data.ipynb \

@@ -77,6 +77,26 @@
     },
     {
       "order": 2,
+      "id": "module0-reproducible-workflow",
+      "status": "approved",
+      "role": "python_diagram",
+      "target_path": "img/generated/module0-reproducible-workflow.png",
+      "aspect_ratio": "16:9",
+      "recommended_size": "1920x1080",
+      "alt_text": "Workflow connecting locked environment, reusable code, notebook execution, credentials, validation, and the published book.",
+      "generator_script": "scripts/generate_module0_workflow_image.py",
+      "used_by": [
+        {
+          "file": "chapters/00-python-ecosystem.md",
+          "locator": "Module 0 opening workflow figure",
+          "mode": "markdown_insert",
+          "target_markdown": "../img/generated/module0-reproducible-workflow.png"
+        }
+      ],
+      "prompt": "Do not generate this image with an image model. Generate it from code with: uv run python scripts/generate_module0_workflow_image.py. The output must be a 1920x1080 PNG saved to img/generated/module0-reproducible-workflow.png."
+    },
+    {
+      "order": 3,
       "id": "m1-market-floor-structure",
       "status": "approved",
       "role": "lesson_figure",
@@ -99,7 +119,7 @@
       "prompt": "Create a 1920x1080 PNG, 16:9. Stylized modern stock exchange floor as an academic finance illustration, not a photo. Show a circular trading area, abstract screens with clean price lines, small neutral human silhouettes, and a network flow connecting issuers, investors, brokers, clearing, and the exchange. Use the shared quantitative finance editorial line: off-white background, deep navy linework, teal and amber market data accents, coral for risk or price drops. Keep a 7% safe margin. No real logos, no readable ticker names, no brand marks, no crowded photo detail."
     },
     {
-      "order": 3,
+      "order": 4,
       "id": "m1-global-exchanges-ranking",
       "status": "approved",
       "role": "python_barplot",
@@ -130,7 +150,7 @@
       "prompt": "Do not generate this image with an image model. Generate it from data with: python3 scripts/generate_exchange_market_cap_chart.py. The output must be a 1600x1200 PNG saved to img/generated/m1-global-exchanges-ranking.png."
     },
     {
-      "order": 4,
+      "order": 5,
       "id": "m1-market-price-drivers",
       "status": "approved",
       "role": "lesson_figure",
@@ -153,7 +173,7 @@
       "prompt": "Create a 1920x1080 PNG, 16:9. Conceptual market price drivers illustration: a central asset price line and order book grid receives five clean directional inputs from investors, business conditions, government policy, economic indicators, and international events. Use simple icons and arrows, no long text, no real logos. Show both upward and downward market pressure with teal and coral curves. Academic editorial vector-like style, off-white background, navy ink, amber policy highlights. Keep a 7% safe margin."
     },
     {
-      "order": 5,
+      "order": 6,
       "id": "eda-skewness-mean-median-mode",
       "status": "approved",
       "role": "lesson_diagram",
@@ -176,7 +196,7 @@
       "prompt": "Create a 1920x1080 PNG, 16:9. Educational statistics diagram with three side-by-side density curves: positive skew, symmetric distribution, and negative skew. Show short exact labels for mean, median, and mode with thin vertical markers, and use tail direction visibly. Use navy curve for symmetric distribution, teal for positive-skew income-like tail, amber for negative-skew loss-like tail, with coral tail accents. Clean vector-like academic style, off-white background, no paragraphs, no extra decoration. Keep a 7% safe margin."
     },
     {
-      "order": 6,
+      "order": 7,
       "id": "eda-kurtosis-tail-risk",
       "status": "approved",
       "role": "lesson_diagram",
@@ -199,7 +219,7 @@
       "prompt": "Create a 1920x1080 PNG, 16:9. Educational kurtosis diagram comparing three smooth distributions on the same axis: low kurtosis with flatter center, normal distribution, and high kurtosis with sharp peak and heavier tails. Emphasize both tails with subtle coral shading to connect kurtosis to financial tail risk. Use only short labels: low, normal, high kurtosis. Clean academic vector-like style, off-white background, navy axis, teal and amber curves. Keep a 7% safe margin."
     },
     {
-      "order": 7,
+      "order": 8,
       "id": "eda-correlation-gallery",
       "status": "approved",
       "role": "lesson_diagram",
@@ -222,7 +242,7 @@
       "prompt": "Create a 2000x1000 PNG, 2:1. Clean gallery of small scatterplot panels showing correlation patterns for quantitative finance: perfect positive, strong positive, weak positive, zero linear correlation, weak negative, strong negative, perfect negative, and several nonlinear zero-correlation shapes. Use a neat grid with short numeric labels only when legible: +1, +0.8, +0.4, 0, -0.4, -0.8, -1. Points should be navy with selected teal and coral highlights. Off-white background, thin axes, generous spacing. Keep a 7% safe margin."
     },
     {
-      "order": 8,
+      "order": 9,
       "id": "ts-stationarity-properties",
       "status": "approved",
       "role": "lesson_diagram",
@@ -245,7 +265,7 @@
       "prompt": "Create a 1440x1800 PNG, 4:5 vertical. Tall academic diagram comparing stationary and non-stationary time series in three rows: constant mean versus drifting mean, constant variance versus changing variance, and stable autocovariance versus changing dependence over time. Use paired mini time-series plots in each row. Keep text minimal with short labels only: mean, variance, autocovariance, stationary, non-stationary. Teal lines for stationary examples, coral lines for non-stationary examples, navy axes, off-white background. Keep a 7% safe margin."
     },
     {
-      "order": 9,
+      "order": 10,
       "id": "risk-var-tail-loss",
       "status": "approved",
       "role": "lesson_diagram",
@@ -268,7 +288,7 @@
       "prompt": "Create a 1920x1080 PNG, 16:9. Clean Value at Risk diagram: a smooth profit-loss distribution centered near zero, left side labeled loss direction, right side labeled profit direction, left alpha tail shaded in coral, a vertical cutoff at the alpha percentile, and a simple horizontal arrow labeled VaR from zero to the cutoff. Use exact short labels only: Loss, Profit, alpha tail, VaR. Academic vector-like style, off-white background, navy axes and curve, coral tail shading. Keep a 7% safe margin."
     },
     {
-      "order": 10,
+      "order": 11,
       "id": "risk-cvar-expected-shortfall",
       "status": "approved",
       "role": "lesson_diagram",
@@ -291,7 +311,7 @@
       "prompt": "Create a 1920x1080 PNG, 16:9. Clean CVaR expected shortfall diagram: a bell-shaped return distribution with the left tail shaded, a vertical VaR cutoff, and a second marker farther left showing CVaR as the average loss inside the tail. Add minimal exact labels: VaR, CVaR, worst alpha tail, mean. Use navy curve and axis, coral tail shading, teal mean marker, off-white background. Academic vector-like finance style, no long explanatory text. Keep a 7% safe margin."
     },
     {
-      "order": 11,
+      "order": 12,
       "id": "risk-zscore-standardization",
       "status": "retired",
       "role": "latex_formula_block",
@@ -314,7 +334,7 @@
       "prompt": "Retired from the original 1920x1080 image-generation request. This formula panel is represented directly with LaTeX in the VaR notebook so formulas remain selectable, accessible, and mathematically exact."
     },
     {
-      "order": 12,
+      "order": 13,
       "id": "risk-skewness-tail-orientation",
       "status": "approved",
       "role": "lesson_diagram",
@@ -337,7 +357,7 @@
       "prompt": "Create a 1920x1080 PNG, 16:9. Finance risk diagram comparing distribution skewness: three smooth density curves for positive skew, symmetric distribution, and negative skew, with tail direction emphasized and a central median marker. Use short exact labels: Positive skew, Symmetric, Negative skew, Tail. Use teal for positive-skew curve, navy for symmetric curve, coral for negative-skew downside tail, off-white background, clean axes. Keep a 7% safe margin."
     },
     {
-      "order": 13,
+      "order": 14,
       "id": "ts-volatility-from-prices",
       "status": "approved",
       "role": "lesson_diagram",
@@ -359,7 +379,7 @@
       "prompt": "Create a 1920x1080 PNG, 16:9. Educational quantitative finance pipeline showing how volatility is computed from historical asset prices: price series to log returns to sample variance to annualized volatility. Use simple formula snippets only if legible: R_t = log(P_t / P_{t-1}) and sigma hat. Clean vector-like style, off-white background, navy formulas and axes, teal arrows, amber highlights. Keep a 7% safe margin. This replaces an unreferenced legacy image if the concept is added back to the book."
     },
     {
-      "order": 14,
+      "order": 15,
       "id": "ts-sample-volatility-estimators",
       "status": "approved",
       "role": "lesson_diagram",
@@ -381,7 +401,7 @@
       "prompt": "Create a 1920x1080 PNG, 16:9. Academic comparison panel for volatility estimators: historical average, simple moving average, exponential moving average, and exponentially weighted moving average. Show four clean cards connected to a return series, with minimal formula fragments and different decay-weight patterns. Use navy linework, teal current estimate, amber weights, coral warning marker for model risk. Off-white background. Keep a 7% safe margin. This replaces an unreferenced legacy image if the concept is added back to the book."
     },
     {
-      "order": 15,
+      "order": 16,
       "id": "eda-positive-negative-skew-tail-shading",
       "status": "approved",
       "role": "approved_unintegrated",
@@ -397,7 +417,7 @@
       "integration_note": "Approved visual retained in the asset library, but not inserted because the active EDA lesson already uses eda-skewness-mean-median-mode for skewness."
     },
     {
-      "order": 16,
+      "order": 17,
       "id": "m1-global-market-activity-scale",
       "status": "pending",
       "role": "future_python_chart_or_infographic",
@@ -426,7 +446,7 @@
       "prompt": "Create a 1920x1080 PNG, 16:9. Academic finance infographic titled \"WFE market scale snapshot\" using the shared style. Show five metric cards or grouped mini-bars with exact values from WFE Focus Dashboard May 2026: Market capitalisation 149.20 USD trillions, Value of share trading 25.19 USD trillions, Listed companies 60.06 thousand, Number of trades 6.95 billion trades, Options contracts 6.73 billion and Futures contracts 3.37 billion. Include a small footer: Source: WFE Focus dashboard, May 2026; retrieved 2026-06-06. Use off-white background, navy ink, teal activity accents, amber count accents, and muted blue derivatives accents. Keep a 7% safe margin. No logos, no decorative gradients, no extra numbers."
     },
     {
-      "order": 17,
+      "order": 18,
       "id": "m1-mexico-market-activity-snapshot",
       "status": "pending",
       "role": "future_python_chart_or_infographic",
@@ -456,7 +476,7 @@
       "prompt": "Create a 1920x1080 PNG, 16:9. Academic finance infographic for \"Mexican market activity snapshot\" using the shared style. Use verified latest-month public data from BMV/BIVA/WFE before generation. Show compact metric cards for trading value, trading volume, number of transactions, listed issuers, and core infrastructure sources (BMV, BIVA, MexDer, Indeval, CNBV). Include source names, month, and retrieval date in a small footer. Use off-white background, navy ink, teal market activity accents, amber infrastructure accents, and coral quality-warning accents. Keep a 7% safe margin. No logos, no fake numbers, no unreadable labels."
     },
     {
-      "order": 18,
+      "order": 19,
       "id": "m2-price-return-volume-volatility-bridge",
       "status": "pending",
       "role": "lesson_diagram",

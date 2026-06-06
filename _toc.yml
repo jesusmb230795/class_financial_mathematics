@@ -16,9 +16,9 @@ parts:
             title: Reproducible Computational Finance Stack
           - file: notebooks/class/0.2.environment_validation_lab
             title: Environment Validation Lab
-          - file: notebooks/class/1.0.setup_example
+          - file: notebooks/class/0.3.initial_repository_setup
             title: Initial Repository Setup
-          - file: notebooks/class/1.2.setup_example
+          - file: notebooks/class/0.4.classroom_environment_setup
             title: Classroom Environment Setup
 
   - caption: Module 1 - Markets and Data
