@@ -13,6 +13,16 @@ from src.cache import DataCache, default_cache, stable_cache_key
 from src.fred import FredClient
 from src.market_data_quality import log_returns, simple_returns
 
+DEFAULT_LIVE_START = "2020-01-01"
+DEFAULT_LIVE_END = "2024-12-31"
+
+DEFAULT_RETURN_DASHBOARD_TICKERS = {
+    "mexican_equity_index": "^MXX",
+    "mexico_etf_usd": "EWW",
+    "global_equity": "SPY",
+    "usd_mxn": "MXN=X",
+}
+
 
 class MarketDataClient:
     """Facade for Yahoo Finance, FRED, and Banxico data access."""
@@ -64,6 +74,143 @@ class MarketDataClient:
                 "field": field,
             },
         )
+
+
+def _percent_to_decimal(series: pd.Series) -> pd.Series:
+    """Convert percentage-point series to decimals when needed."""
+    numeric = pd.to_numeric(series, errors="coerce")
+    if numeric.dropna().abs().max() > 1:
+        return numeric / 100
+    return numeric
+
+
+def live_macro_dashboard_panel(
+    start: str = DEFAULT_LIVE_START,
+    end: str = DEFAULT_LIVE_END,
+    client: MarketDataClient | None = None,
+    market_ticker: str = "^MXX",
+    ttl: timedelta | None = timedelta(days=1),
+    force_refresh: bool = False,
+) -> pd.DataFrame:
+    """Fetch a live macro dashboard panel from Banxico, FRED, and public prices.
+
+    Returned columns match `synthetic_macro_panel` so dashboard code can switch
+    between offline and live data without changing visualization logic.
+    """
+    client = client or MarketDataClient()
+
+    banxico = client.banxico.fetch_series_group(
+        ["SF61745", "SF43718"],
+        start=start,
+        end=end,
+        ttl=ttl,
+        force_refresh=force_refresh,
+    )
+    fred = client.fred.fetch_series_group(
+        ["MEXCPALTT01IXNBM", "DGS10"],
+        start=start,
+        end=end,
+        ttl=ttl,
+        force_refresh=force_refresh,
+    )
+    market_prices = client.yahoo_prices(
+        market_ticker,
+        start=start,
+        end=end,
+        ttl=ttl,
+        force_refresh=force_refresh,
+    )
+
+    cpi = fred["MEXCPALTT01IXNBM"].resample("ME").last()
+    macro = pd.DataFrame(
+        {
+            "banxico_target_rate": _percent_to_decimal(banxico["SF61745"]).resample("ME").last(),
+            "mexico_inflation": cpi.pct_change(12, fill_method=None),
+            "usd_mxn": banxico["SF43718"].resample("ME").last(),
+            "us_10y": _percent_to_decimal(fred["DGS10"]).resample("ME").last(),
+            "ipc_index": market_prices.iloc[:, 0].resample("ME").last(),
+        }
+    )
+    macro = macro.ffill().dropna().rename_axis("date")
+    if macro.empty:
+        raise ValueError("Live macro dashboard panel is empty after alignment and cleaning.")
+    macro.attrs["data_mode"] = "live"
+    macro.attrs["sources"] = "Banxico SIE, FRED, Yahoo Finance"
+    macro.attrs["start"] = start
+    macro.attrs["end"] = end
+    return macro
+
+
+def live_return_dashboard_prices(
+    start: str = DEFAULT_LIVE_START,
+    end: str = DEFAULT_LIVE_END,
+    tickers: dict[str, str] | None = None,
+    client: MarketDataClient | None = None,
+    ttl: timedelta | None = timedelta(days=1),
+    force_refresh: bool = False,
+) -> pd.DataFrame:
+    """Fetch a live public-market price panel for the return explorer."""
+    client = client or MarketDataClient()
+    ticker_map = tickers or DEFAULT_RETURN_DASHBOARD_TICKERS
+    raw_prices = client.yahoo_prices(
+        list(ticker_map.values()),
+        start=start,
+        end=end,
+        ttl=ttl,
+        force_refresh=force_refresh,
+    )
+    rename_map = {ticker: label for label, ticker in ticker_map.items()}
+    prices = raw_prices.rename(columns=rename_map).sort_index()
+    prices = prices.reindex(columns=list(ticker_map.keys())).dropna(axis=1, how="all")
+    prices = prices.dropna(how="all").ffill()
+    if prices.empty:
+        raise ValueError("Live return dashboard price panel is empty after provider fetch.")
+    prices.attrs["data_mode"] = "live"
+    prices.attrs["sources"] = "Yahoo Finance public market prices"
+    prices.attrs["tickers"] = ticker_map
+    prices.attrs["start"] = start
+    prices.attrs["end"] = end
+    return prices.rename_axis("date")
+
+
+def macro_dashboard_panel(
+    data_mode: str = "offline",
+    start: str = DEFAULT_LIVE_START,
+    end: str = DEFAULT_LIVE_END,
+    periods: int = 96,
+    seed: int = 2027,
+    **live_kwargs,
+) -> pd.DataFrame:
+    """Return a macro dashboard panel for offline or live mode."""
+    normalized_mode = data_mode.lower()
+    if normalized_mode == "offline":
+        panel = synthetic_macro_panel(periods=periods, seed=seed)
+        panel.attrs["data_mode"] = "offline"
+        panel.attrs["sources"] = "synthetic_macro_panel"
+        return panel
+    if normalized_mode == "live":
+        return live_macro_dashboard_panel(start=start, end=end, **live_kwargs)
+    raise ValueError("data_mode must be 'offline' or 'live'")
+
+
+def return_dashboard_price_panel(
+    data_mode: str = "offline",
+    start: str = DEFAULT_LIVE_START,
+    end: str = DEFAULT_LIVE_END,
+    periods: int = 756,
+    seed: int = 2026,
+    **live_kwargs,
+) -> pd.DataFrame:
+    """Return a return-dashboard price panel for offline or live mode."""
+    normalized_mode = data_mode.lower()
+    if normalized_mode == "offline":
+        panel = synthetic_price_panel(periods=periods, seed=seed)
+        panel.attrs["data_mode"] = "offline"
+        panel.attrs["sources"] = "synthetic_price_panel"
+        return panel
+    if normalized_mode == "live":
+        return live_return_dashboard_prices(start=start, end=end, **live_kwargs)
+    raise ValueError("data_mode must be 'offline' or 'live'")
 
 
 def returns_from_prices(
@@ -151,18 +298,21 @@ def dashboard_data_inventory() -> pd.DataFrame:
         [
             {
                 "dashboard": "Macro dashboard",
-                "primary_sources": "Banxico SIE, FRED",
+                "primary_sources": "Banxico SIE, FRED, INEGI API, World Bank, DBnomics",
                 "offline_fallback": "synthetic_macro_panel",
+                "provider_notes": "Prefer official Mexico sources and documented macro APIs.",
             },
             {
                 "dashboard": "Return explorer",
-                "primary_sources": "Yahoo Finance or instructor data",
+                "primary_sources": "Finnhub, EODHD, Alpha Vantage, FMP, Yahoo Finance",
                 "offline_fallback": "synthetic_price_panel",
+                "provider_notes": "Use Yahoo Finance as a convenience fallback, not the only source.",
             },
             {
                 "dashboard": "Risk and portfolio dashboards",
-                "primary_sources": "Clean return matrix",
+                "primary_sources": "Clean return matrix from documented market providers",
                 "offline_fallback": "synthetic_price_panel",
+                "provider_notes": "Cache provider extracts before modeling risk or portfolios.",
             },
         ]
     )
