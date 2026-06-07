@@ -2,11 +2,16 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 from scipy.optimize import minimize
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+BANXICO_DAILY_SNAPSHOT_PATH = PROJECT_ROOT / "data" / "snapshots" / "banxico_daily.csv"
 
 
 def discount_factor_from_spot_rate(rate: float, maturity: float, compounding: str = "continuous") -> float:
@@ -227,24 +232,30 @@ def simulate_cir_full_truncation(
     return pd.DataFrame(rates, index=np.linspace(0, years, steps + 1))
 
 
-def synthetic_mexican_yield_curve_history(periods: int = 520, seed: int = 2028) -> pd.DataFrame:
-    """Create a deterministic Mexican-style yield curve panel for classroom PCA."""
-    rng = np.random.default_rng(seed)
-    dates = pd.bdate_range("2024-01-02", periods=periods)
-    maturities = np.array([0.25, 0.5, 1, 2, 3, 5, 7, 10, 20, 30])
-    base_curve = 0.082 + 0.018 * np.exp(-maturities / 1.5) + 0.006 * np.exp(-((maturities - 5) / 4) ** 2)
-    level = np.cumsum(rng.normal(0.0, 0.00045, periods))
-    slope = np.cumsum(rng.normal(0.0, 0.00025, periods))
-    curvature = np.cumsum(rng.normal(0.0, 0.00018, periods))
-    slope_loading = (maturities - maturities.mean()) / np.ptp(maturities)
-    curvature_loading = -((maturities - 6) ** 2)
-    curvature_loading = (curvature_loading - curvature_loading.mean()) / np.max(np.abs(curvature_loading))
-    values = (
-        base_curve
-        + level[:, None]
-        + slope[:, None] * slope_loading
-        + curvature[:, None] * curvature_loading
-        + rng.normal(0.0, 0.00035, size=(periods, len(maturities)))
-    )
-    columns = [f"{m:g}Y" for m in maturities]
-    return pd.DataFrame(values, index=dates, columns=columns).rename_axis("date")
+def official_mexican_rate_history(
+    start: str | None = None,
+    end: str | None = None,
+) -> pd.DataFrame:
+    """Load real Banxico rate history from the committed publication snapshot."""
+    if not BANXICO_DAILY_SNAPSHOT_PATH.exists():
+        raise FileNotFoundError(
+            "Banxico daily snapshot not found. Run "
+            "`PYTHONPATH=$PWD uv run python scripts/generate_real_data_snapshots.py` "
+            "with valid local credentials."
+        )
+
+    raw = pd.read_csv(BANXICO_DAILY_SNAPSHOT_PATH, index_col="date", parse_dates=True).sort_index()
+    rates = raw[["policy_rate", "cetes_28d", "tiie_28d"]].div(100)
+    rates = rates.ffill().dropna().rename_axis("date")
+    if start is not None:
+        rates = rates.loc[pd.to_datetime(start) :]
+    if end is not None:
+        rates = rates.loc[: pd.to_datetime(end)]
+    rates.attrs["data_mode"] = "snapshot"
+    rates.attrs["sources"] = "Banxico SIE official snapshot"
+    rates.attrs["series"] = {
+        "policy_rate": "SF61745",
+        "cetes_28d": "SF60633",
+        "tiie_28d": "SF60648",
+    }
+    return rates
