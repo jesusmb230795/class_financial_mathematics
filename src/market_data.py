@@ -3,18 +3,22 @@
 from __future__ import annotations
 
 from datetime import timedelta
+from pathlib import Path
 
-import numpy as np
 import pandas as pd
 import yfinance as yf
 
 from src.banxico import BanxicoClient
 from src.cache import DataCache, default_cache, stable_cache_key
-from src.fred import FredClient
+from src.dbnomics import DBNOMICS_MACRO_SERIES, DBnomicsClient
 from src.market_data_quality import log_returns, simple_returns
 
 DEFAULT_LIVE_START = "2020-01-01"
 DEFAULT_LIVE_END = "2024-12-31"
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+SNAPSHOT_DIR = PROJECT_ROOT / "data" / "snapshots"
+OFFICIAL_PRICE_PANEL_PATH = SNAPSHOT_DIR / "official_price_panel.csv"
+OFFICIAL_MACRO_PANEL_PATH = SNAPSHOT_DIR / "official_macro_panel.csv"
 
 DEFAULT_RETURN_DASHBOARD_TICKERS = {
     "mexican_equity_index": "^MXX",
@@ -25,12 +29,12 @@ DEFAULT_RETURN_DASHBOARD_TICKERS = {
 
 
 class MarketDataClient:
-    """Facade for Yahoo Finance, FRED, and Banxico data access."""
+    """Facade for Yahoo Finance, DB.NOMICS, and Banxico data access."""
 
     def __init__(self, cache: DataCache | None = None) -> None:
         self.cache = cache or default_cache()
         self.banxico = BanxicoClient(cache=self.cache)
-        self.fred = FredClient(cache=self.cache)
+        self.dbnomics = DBnomicsClient(cache=self.cache)
 
     def yahoo_prices(
         self,
@@ -84,6 +88,62 @@ def _percent_to_decimal(series: pd.Series) -> pd.Series:
     return numeric
 
 
+def _read_snapshot(path: str | Path) -> pd.DataFrame:
+    snapshot_path = Path(path)
+    if not snapshot_path.exists():
+        display_path = (
+            snapshot_path.relative_to(PROJECT_ROOT)
+            if snapshot_path.is_relative_to(PROJECT_ROOT)
+            else snapshot_path
+        )
+        raise FileNotFoundError(
+            f"Snapshot not found: {display_path}. Run "
+            "`PYTHONPATH=$PWD uv run python scripts/generate_real_data_snapshots.py` "
+            "with valid Banxico and DB.NOMICS credentials."
+        )
+    return pd.read_csv(snapshot_path, index_col="date", parse_dates=True).sort_index()
+
+
+def _slice_dates(
+    frame: pd.DataFrame,
+    start: str | None = None,
+    end: str | None = None,
+) -> pd.DataFrame:
+    start_date = pd.to_datetime(start) if start else frame.index.min()
+    end_date = pd.to_datetime(end) if end else frame.index.max()
+    return frame.loc[start_date:end_date]
+
+
+def official_price_panel(
+    start: str | None = None,
+    end: str | None = None,
+) -> pd.DataFrame:
+    """Load the versioned official price-like panel used by the published book."""
+    panel = _read_snapshot(OFFICIAL_PRICE_PANEL_PATH)
+    if start is not None or end is not None:
+        panel = _slice_dates(panel, start=start, end=end)
+    panel.attrs["data_mode"] = "snapshot"
+    panel.attrs["sources"] = "Banxico SIE official snapshot"
+    panel.attrs["start"] = panel.index.min().strftime("%Y-%m-%d")
+    panel.attrs["end"] = panel.index.max().strftime("%Y-%m-%d")
+    return panel.rename_axis("date")
+
+
+def official_macro_panel(
+    start: str | None = None,
+    end: str | None = None,
+) -> pd.DataFrame:
+    """Load the versioned official macro panel used by the published book."""
+    panel = _read_snapshot(OFFICIAL_MACRO_PANEL_PATH)
+    if start is not None or end is not None:
+        panel = _slice_dates(panel, start=start, end=end)
+    panel.attrs["data_mode"] = "snapshot"
+    panel.attrs["sources"] = "Banxico SIE and DB.NOMICS official snapshots"
+    panel.attrs["start"] = panel.index.min().strftime("%Y-%m-%d")
+    panel.attrs["end"] = panel.index.max().strftime("%Y-%m-%d")
+    return panel.rename_axis("date")
+
+
 def live_macro_dashboard_panel(
     start: str = DEFAULT_LIVE_START,
     end: str = DEFAULT_LIVE_END,
@@ -92,10 +152,11 @@ def live_macro_dashboard_panel(
     ttl: timedelta | None = timedelta(days=1),
     force_refresh: bool = False,
 ) -> pd.DataFrame:
-    """Fetch a live macro dashboard panel from Banxico, FRED, and public prices.
+    """Fetch a live macro dashboard panel from Banxico, DB.NOMICS, and public prices.
 
-    Returned columns match `synthetic_macro_panel` so dashboard code can switch
-    between offline and live data without changing visualization logic.
+    Returned columns match the versioned official macro snapshot so dashboard
+    code can switch between reproducible and live real-data inputs without
+    changing visualization logic.
     """
     client = client or MarketDataClient()
 
@@ -106,8 +167,8 @@ def live_macro_dashboard_panel(
         ttl=ttl,
         force_refresh=force_refresh,
     )
-    fred = client.fred.fetch_series_group(
-        ["MEXCPALTT01IXNBM", "DGS10"],
+    dbnomics = client.dbnomics.fetch_series_group(
+        DBNOMICS_MACRO_SERIES,
         start=start,
         end=end,
         ttl=ttl,
@@ -121,13 +182,13 @@ def live_macro_dashboard_panel(
         force_refresh=force_refresh,
     )
 
-    cpi = fred["MEXCPALTT01IXNBM"].resample("ME").last()
+    cpi = dbnomics["mexico_cpi"].resample("ME").last()
     macro = pd.DataFrame(
         {
             "banxico_target_rate": _percent_to_decimal(banxico["SF61745"]).resample("ME").last(),
             "mexico_inflation": cpi.pct_change(12, fill_method=None),
             "usd_mxn": banxico["SF43718"].resample("ME").last(),
-            "us_10y": _percent_to_decimal(fred["DGS10"]).resample("ME").last(),
+            "us_10y": _percent_to_decimal(dbnomics["us_10y"]).resample("ME").last(),
             "ipc_index": market_prices.iloc[:, 0].resample("ME").last(),
         }
     )
@@ -135,7 +196,7 @@ def live_macro_dashboard_panel(
     if macro.empty:
         raise ValueError("Live macro dashboard panel is empty after alignment and cleaning.")
     macro.attrs["data_mode"] = "live"
-    macro.attrs["sources"] = "Banxico SIE, FRED, Yahoo Finance"
+    macro.attrs["sources"] = "Banxico SIE, DB.NOMICS, Yahoo Finance"
     macro.attrs["start"] = start
     macro.attrs["end"] = end
     return macro
@@ -177,40 +238,30 @@ def macro_dashboard_panel(
     data_mode: str = "offline",
     start: str = DEFAULT_LIVE_START,
     end: str = DEFAULT_LIVE_END,
-    periods: int = 96,
-    seed: int = 2027,
     **live_kwargs,
 ) -> pd.DataFrame:
-    """Return a macro dashboard panel for offline or live mode."""
+    """Return a macro dashboard panel from official snapshots or live providers."""
     normalized_mode = data_mode.lower()
-    if normalized_mode == "offline":
-        panel = synthetic_macro_panel(periods=periods, seed=seed)
-        panel.attrs["data_mode"] = "offline"
-        panel.attrs["sources"] = "synthetic_macro_panel"
-        return panel
+    if normalized_mode in {"offline", "snapshot"}:
+        return official_macro_panel(start=start, end=end)
     if normalized_mode == "live":
         return live_macro_dashboard_panel(start=start, end=end, **live_kwargs)
-    raise ValueError("data_mode must be 'offline' or 'live'")
+    raise ValueError("data_mode must be 'offline', 'snapshot', or 'live'")
 
 
 def return_dashboard_price_panel(
     data_mode: str = "offline",
     start: str = DEFAULT_LIVE_START,
     end: str = DEFAULT_LIVE_END,
-    periods: int = 756,
-    seed: int = 2026,
     **live_kwargs,
 ) -> pd.DataFrame:
-    """Return a return-dashboard price panel for offline or live mode."""
+    """Return a return-dashboard price panel from real snapshots or live providers."""
     normalized_mode = data_mode.lower()
-    if normalized_mode == "offline":
-        panel = synthetic_price_panel(periods=periods, seed=seed)
-        panel.attrs["data_mode"] = "offline"
-        panel.attrs["sources"] = "synthetic_price_panel"
-        return panel
+    if normalized_mode in {"offline", "snapshot"}:
+        return official_price_panel(start=start, end=end)
     if normalized_mode == "live":
         return live_return_dashboard_prices(start=start, end=end, **live_kwargs)
-    raise ValueError("data_mode must be 'offline' or 'live'")
+    raise ValueError("data_mode must be 'offline', 'snapshot', or 'live'")
 
 
 def returns_from_prices(
@@ -243,53 +294,6 @@ def align_time_series(
     if fill_method not in {"ffill", "bfill"}:
         raise ValueError("fill_method must be 'ffill', 'bfill', or None")
     return getattr(aligned, fill_method)()
-
-
-def synthetic_price_panel(
-    periods: int = 756,
-    seed: int = 2026,
-) -> pd.DataFrame:
-    """Create a reproducible multi-asset price panel for classroom dashboards."""
-    rng = np.random.default_rng(seed)
-    dates = pd.bdate_range("2023-01-02", periods=periods)
-    assets = ["mexican_equity", "global_equity", "mxn_bond", "usd_mxn"]
-    mean = np.array([0.00035, 0.00028, 0.00010, 0.00005])
-    covariance = np.array(
-        [
-            [0.00016, 0.00008, 0.00001, 0.00003],
-            [0.00008, 0.00012, 0.00002, 0.00002],
-            [0.00001, 0.00002, 0.00002, -0.00001],
-            [0.00003, 0.00002, -0.00001, 0.00008],
-        ]
-    )
-    returns = rng.multivariate_normal(mean, covariance, size=periods)
-    prices = 100 * np.exp(np.cumsum(returns, axis=0))
-    return pd.DataFrame(prices, index=dates, columns=assets).rename_axis("date")
-
-
-def synthetic_macro_panel(
-    periods: int = 96,
-    seed: int = 2027,
-) -> pd.DataFrame:
-    """Create a reproducible macro panel resembling Banxico and FRED data."""
-    rng = np.random.default_rng(seed)
-    dates = pd.date_range("2018-01-31", periods=periods, freq="ME")
-    target_rate = 0.075 + np.cumsum(rng.normal(0.0003, 0.0020, periods))
-    inflation = 0.045 + 0.60 * (target_rate - target_rate.mean()) + rng.normal(0, 0.004, periods)
-    usd_mxn = 19.5 + np.cumsum(rng.normal(0.02, 0.20, periods))
-    us_10y = 0.028 + np.cumsum(rng.normal(0.0001, 0.0015, periods))
-    ipc_index = 100 * np.exp(np.cumsum(rng.normal(0.006, 0.035, periods)))
-
-    return pd.DataFrame(
-        {
-            "banxico_target_rate": target_rate,
-            "mexico_inflation": inflation,
-            "usd_mxn": usd_mxn,
-            "us_10y": us_10y,
-            "ipc_index": ipc_index,
-        },
-        index=dates,
-    ).rename_axis("date")
 
 
 def wfe_equity_market_scale_snapshot() -> pd.DataFrame:
@@ -380,20 +384,20 @@ def dashboard_data_inventory() -> pd.DataFrame:
         [
             {
                 "dashboard": "Macro dashboard",
-                "primary_sources": "Banxico SIE, FRED, INEGI API, World Bank, DBnomics",
-                "offline_fallback": "synthetic_macro_panel",
-                "provider_notes": "Prefer official Mexico sources and documented macro APIs.",
+                "primary_sources": "Banxico SIE, DB.NOMICS, INEGI API, World Bank",
+                "publication_input": "official_macro_panel.csv",
+                "provider_notes": "Publication builds read versioned Banxico and DB.NOMICS snapshots.",
             },
             {
                 "dashboard": "Return explorer",
                 "primary_sources": "Finnhub, EODHD, Alpha Vantage, FMP, Yahoo Finance",
-                "offline_fallback": "synthetic_price_panel",
-                "provider_notes": "Use Yahoo Finance as a convenience fallback, not the only source.",
+                "publication_input": "official_price_panel.csv",
+                "provider_notes": "Use Banxico-derived price-like indexes for reproducible return examples.",
             },
             {
                 "dashboard": "Risk and portfolio dashboards",
                 "primary_sources": "Clean return matrix from documented market providers",
-                "offline_fallback": "synthetic_price_panel",
+                "publication_input": "official_price_panel.csv",
                 "provider_notes": "Cache provider extracts before modeling risk or portfolios.",
             },
         ]
