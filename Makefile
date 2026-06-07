@@ -19,7 +19,7 @@ PUBLISHED_EXECUTABLE_NOTEBOOKS = \
 	notebooks/class/1.5.EDA_macroeconomic_data.ipynb \
 	notebooks/class/1.6.market_data_quality_framework.ipynb \
 	notebooks/class/1.7.mexican_market_data_pipeline.ipynb \
-	notebooks/class/1.8.macro_dashboard_banxico_fred.ipynb \
+	notebooks/class/1.8.macro_dashboard_banxico_dbnomics.ipynb \
 	notebooks/class/1.9.return_explorer_dashboard.ipynb \
 	notebooks/class/1.10.market_analysis_communication_case.ipynb \
 	notebooks/class/2.1.time_series_1.ipynb \
