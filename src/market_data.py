@@ -19,13 +19,17 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 SNAPSHOT_DIR = PROJECT_ROOT / "data" / "snapshots"
 OFFICIAL_PRICE_PANEL_PATH = SNAPSHOT_DIR / "official_price_panel.csv"
 OFFICIAL_MACRO_PANEL_PATH = SNAPSHOT_DIR / "official_macro_panel.csv"
+NASDAQ_STOCK_PANEL_PATH = SNAPSHOT_DIR / "nasdaq_stock_panel.csv"
 
-DEFAULT_RETURN_DASHBOARD_TICKERS = {
-    "mexican_equity_index": "^MXX",
-    "mexico_etf_usd": "EWW",
-    "global_equity": "SPY",
-    "usd_mxn": "MXN=X",
+DEFAULT_NASDAQ_STOCK_TICKERS = {
+    "AAPL": "Apple Inc.",
+    "MSFT": "Microsoft Corporation",
+    "NVDA": "NVIDIA Corporation",
+    "AMZN": "Amazon.com, Inc.",
+    "GOOGL": "Alphabet Inc. Class A",
 }
+
+DEFAULT_RETURN_DASHBOARD_TICKERS = {ticker: ticker for ticker in DEFAULT_NASDAQ_STOCK_TICKERS}
 
 
 class MarketDataClient:
@@ -144,6 +148,22 @@ def official_macro_panel(
     return panel.rename_axis("date")
 
 
+def nasdaq_stock_price_panel(
+    start: str | None = None,
+    end: str | None = None,
+) -> pd.DataFrame:
+    """Load the versioned NASDAQ equity panel used for stock EDA lessons."""
+    panel = _read_snapshot(NASDAQ_STOCK_PANEL_PATH)
+    if start is not None or end is not None:
+        panel = _slice_dates(panel, start=start, end=end)
+    panel.attrs["data_mode"] = "snapshot"
+    panel.attrs["sources"] = "Yahoo Finance via yfinance snapshot"
+    panel.attrs["tickers"] = DEFAULT_NASDAQ_STOCK_TICKERS
+    panel.attrs["start"] = panel.index.min().strftime("%Y-%m-%d")
+    panel.attrs["end"] = panel.index.max().strftime("%Y-%m-%d")
+    return panel.rename_axis("date")
+
+
 def live_macro_dashboard_panel(
     start: str = DEFAULT_LIVE_START,
     end: str = DEFAULT_LIVE_END,
@@ -234,6 +254,36 @@ def live_return_dashboard_prices(
     return prices.rename_axis("date")
 
 
+def live_nasdaq_stock_prices(
+    start: str = DEFAULT_LIVE_START,
+    end: str = DEFAULT_LIVE_END,
+    tickers: dict[str, str] | None = None,
+    client: MarketDataClient | None = None,
+    ttl: timedelta | None = timedelta(days=1),
+    force_refresh: bool = False,
+) -> pd.DataFrame:
+    """Fetch a live NASDAQ stock panel from Yahoo Finance for local exploration."""
+    client = client or MarketDataClient()
+    ticker_map = tickers or DEFAULT_NASDAQ_STOCK_TICKERS
+    raw_prices = client.yahoo_prices(
+        list(ticker_map.keys()),
+        start=start,
+        end=end,
+        ttl=ttl,
+        force_refresh=force_refresh,
+    )
+    prices = raw_prices.reindex(columns=list(ticker_map.keys())).dropna(axis=1, how="all")
+    prices = prices.dropna(how="all").ffill()
+    if prices.empty:
+        raise ValueError("Live NASDAQ stock price panel is empty after provider fetch.")
+    prices.attrs["data_mode"] = "live"
+    prices.attrs["sources"] = "Yahoo Finance public market prices via yfinance"
+    prices.attrs["tickers"] = ticker_map
+    prices.attrs["start"] = start
+    prices.attrs["end"] = end
+    return prices.rename_axis("date")
+
+
 def macro_dashboard_panel(
     data_mode: str = "offline",
     start: str = DEFAULT_LIVE_START,
@@ -258,7 +308,7 @@ def return_dashboard_price_panel(
     """Return a return-dashboard price panel from real snapshots or live providers."""
     normalized_mode = data_mode.lower()
     if normalized_mode in {"offline", "snapshot"}:
-        return official_price_panel(start=start, end=end)
+        return nasdaq_stock_price_panel(start=start, end=end)
     if normalized_mode == "live":
         return live_return_dashboard_prices(start=start, end=end, **live_kwargs)
     raise ValueError("data_mode must be 'offline', 'snapshot', or 'live'")
@@ -391,8 +441,14 @@ def dashboard_data_inventory() -> pd.DataFrame:
             {
                 "dashboard": "Return explorer",
                 "primary_sources": "Finnhub, EODHD, Alpha Vantage, FMP, Yahoo Finance",
-                "publication_input": "official_price_panel.csv",
-                "provider_notes": "Use Banxico-derived price-like indexes for reproducible return examples.",
+                "publication_input": "nasdaq_stock_panel.csv",
+                "provider_notes": "Use Yahoo Finance adjusted-close snapshots for reproducible NASDAQ stock return examples.",
+            },
+            {
+                "dashboard": "NASDAQ equity EDA",
+                "primary_sources": "Yahoo Finance through yfinance",
+                "publication_input": "nasdaq_stock_panel.csv",
+                "provider_notes": "Sufficient for classroom EDA of daily adjusted closes; not sufficient as an official, redistribution, or trading feed.",
             },
             {
                 "dashboard": "Risk and portfolio dashboards",
