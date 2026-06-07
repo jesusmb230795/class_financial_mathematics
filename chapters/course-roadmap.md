@@ -16,7 +16,7 @@ Core topics:
 - Git workflow;
 - environment validation and package reproducibility checks;
 - foundations of `pandas`, `numpy`, `matplotlib`, `seaborn`, `plotly`, and `ipywidgets` {cite}`mckinney2010data,harris2020array,hunter2007matplotlib,waskom2021seaborn,plotly2015collaborative`;
-- connection to data sources such as Yahoo Finance, FRED, and Banxico SIE {cite}`yfinance2025,fredAPI2025,banxicoSIE2025`;
+- connection to data sources such as Yahoo Finance, DB.NOMICS, and Banxico SIE {cite}`yfinance2025,dbnomics2025,banxicoSIE2025`;
 - local caching and reusable data-access helpers.
 
 ## Module 1: Markets and Data
@@ -42,7 +42,7 @@ Core topics:
 - robust outlier flags and data quality reporting;
 - exploratory visualization of assets and macro variables;
 - Mexican market data pipeline design;
-- macro dashboard with Banxico/FRED source mapping;
+- macro dashboard with Banxico/DB.NOMICS source mapping;
 - return explorer dashboard;
 - dashboard design principles: analytical question, chart purpose, offline/live mode, source note, and data quality visibility;
 - data narrative from observation to insight, including audience, uncertainty, limitations, and next analytical step;
@@ -151,7 +151,7 @@ The following topics complete the course vision, but still require richer notebo
 
 | Expansion topic | Primary module | Promotion note |
 | --- | --- | --- |
-| Live-data variants for dashboards using Banxico, FRED, and public market sources | Module 1 - Markets and Data | Implemented as opt-in `DATA_MODE=live` dashboard panels; reuse Module 1 provider, cache, and quality patterns before adding live data to later modules. |
+| Live-data variants for dashboards using Banxico, DB.NOMICS, and public market sources | Module 1 - Markets and Data | Implemented as opt-in `DATA_MODE=live` dashboard panels; reuse Module 1 provider, cache, and quality patterns before adding live data to later modules. |
 | Calendar-aware Mexican fixed-income examples using Banxico and public market sources | Module 5 - Time value of money and fixed income | Promote after fixed-income conventions, settlement dates, accrued interest, CETES, Bonos M, and UDIBONOS examples are stable. |
 | Liability-driven portfolio optimization examples | Module 5 - Time value of money and fixed income | Treat as an asset-liability extension that can reference Module 4 portfolio optimization once the fixed-income cash-flow mechanics are ready. |
 | Monte Carlo market risk with PCA covariance stabilization | Module 3 - Market risk | Add after VaR, CVaR, stress testing, and covariance estimation references are stable; connect to Module 4 as a supporting method. |

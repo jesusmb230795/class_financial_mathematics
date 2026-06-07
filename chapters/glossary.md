@@ -25,14 +25,14 @@ This glossary defines core terms used throughout the Jupyter Book.
 | Correlation | Standardized measure of linear co-movement between two variables. | Markets and data |
 | Cost of carry | Net financing, income, storage, or convenience yield effect linking spot and forward prices. | Derivatives |
 | CVaR | Conditional Value at Risk; average loss conditional on exceeding the VaR threshold. Also called Expected Shortfall. | Market risk |
-| Data mode | Explicit notebook setting, such as `DATA_MODE=offline` or `DATA_MODE=live`, that determines whether a dashboard uses deterministic fallback data or provider-backed data. | Markets and data |
+| Data mode | Explicit notebook setting, such as `DATA_MODE=offline` or `DATA_MODE=live`, that determines whether a dashboard uses a versioned publication snapshot or provider-backed live data. | Markets and data |
 | Data source inventory | Structured record of provider, instrument or variable, frequency, date range, field, currency, calendar, and limitations before modeling. | Markets and data |
 | Dirty price | Bond settlement price including accrued interest. | Fixed income |
 | Duration | First-order sensitivity of a bond price to changes in yield. | Fixed income |
 | DV01 | Dollar value of one basis point; approximate currency price change for a one-basis-point yield move. | Fixed income |
 | Efficient frontier | Set of portfolios with minimum variance for each expected-return target. | Portfolio theory |
 | Expected Shortfall | Average tail loss beyond a selected quantile threshold. | Market risk |
-| FRED | Federal Reserve Economic Data, a public macroeconomic data source. | Markets and data |
+| DB.NOMICS | Public macroeconomic data platform and API that aggregates series from official providers. | Markets and data |
 | Forward contract | OTC agreement to buy or sell an asset at a fixed future delivery price. | Derivatives |
 | Futures contract | Exchange-traded forward-like contract with margining and daily mark-to-market settlement. | Derivatives |
 | GARCH | Generalized autoregressive conditional heteroskedasticity model for volatility clustering. | Time series |
@@ -54,7 +54,7 @@ This glossary defines core terms used throughout the Jupyter Book.
 | Nelson-Siegel model | Parametric yield-curve model with level, slope, curvature, and decay parameters. | Term structure |
 | Nelson-Siegel-Svensson model | Extension of Nelson-Siegel with an additional curvature term and decay parameter. | Term structure |
 | OAS covariance | Oracle Approximating Shrinkage covariance estimator. | Portfolio theory |
-| Offline fallback | Deterministic synthetic or instructor-provided dataset used so notebooks and book builds run without credentials, network access, or provider-rate-limit risk. | Markets and data |
+| Offline snapshot | Versioned real-data extract used so notebooks and book builds run without credentials, network access, or provider-rate-limit risk. | Markets and data |
 | Parametric VaR | VaR estimated from an assumed distribution, often Gaussian. | Market risk |
 | Par swap rate | Fixed rate that makes a swap have zero value at inception under a given discount curve. | Derivatives |
 | Principal Component Analysis | Dimension-reduction method used to summarize correlated curve or return movements with orthogonal factors. | Term structure |
