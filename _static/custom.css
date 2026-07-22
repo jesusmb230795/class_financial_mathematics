@@ -1,0 +1,84 @@
+/* Keep notebook outputs readable without allowing page-wide horizontal overflow. */
+.bd-article-container,
+.bd-article {
+  max-width: 100%;
+}
+
+.bd-article div.cell,
+.bd-article div.cell_input,
+.bd-article div.cell_output,
+.bd-article div.output,
+.bd-article div.highlight,
+.bd-article pre,
+.bd-article table {
+  max-width: 100%;
+}
+
+.bd-article div.cell_input,
+.bd-article div.cell_output,
+.bd-article div.output,
+.bd-article div.output.text_html,
+.bd-article div.highlight {
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.bd-article div.output.text_html > div {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.bd-article pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.bd-article code.docutils.literal,
+.bd-article code.docutils.literal .pre {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.bd-article div.cell_output table,
+.bd-article div.output table,
+.bd-article table.dataframe {
+  display: block;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+.bd-article img,
+.bd-article .plotly-graph-div {
+  max-width: 100%;
+}
+
+.bd-article mjx-container {
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.bd-article mjx-container[display="true"] {
+  display: block;
+}
+
+@media (max-width: 600px) {
+  .bd-article div.cell_output table,
+  .bd-article div.output table,
+  .bd-article table.dataframe {
+    display: table;
+    table-layout: fixed;
+    width: 100%;
+    white-space: normal;
+  }
+
+  .bd-article table.dataframe th,
+  .bd-article table.dataframe td,
+  .bd-article div.cell_output table th,
+  .bd-article div.cell_output table td,
+  .bd-article div.output table th,
+  .bd-article div.output table td {
+    overflow-wrap: anywhere;
+    white-space: normal;
+  }
+}

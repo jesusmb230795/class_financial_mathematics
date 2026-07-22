@@ -1,0 +1,36 @@
+{
+  "schema_version": 2,
+  "manifest_type": "visual_asset_scope",
+  "scope": "module-07-derivatives",
+  "title": "Module 7 - Derivatives and Risk Management (Derivatives)",
+  "assets": [
+    {
+      "order": 23,
+      "id": "m7-option-payoff-greeks-map",
+      "status": "approved",
+      "role": "module_concept_map",
+      "target_path": "img/generated/m7-option-payoff-greeks-map.png",
+      "aspect_ratio": "16:9",
+      "recommended_size": "1920x1080",
+      "alt_text": "Derivatives map linking payoffs, replication, pricing inputs, Greeks, implied volatility, hedging, residual profit and loss, limits, and governance.",
+      "generator_script": "scripts/generate_module_concept_maps.py --asset m7-option-payoff-greeks-map",
+      "production_method": "deterministic_matplotlib",
+      "used_by": [
+        {
+          "file": "chapters/07-derivatives-risk-management.md",
+          "locator": "Module 7 pricing-to-governance bridge",
+          "mode": "markdown_insert",
+          "target_markdown": "../img/generated/m7-option-payoff-greeks-map.png"
+        }
+      ],
+      "production_notes": [
+        "Separate payoff intuition from exact pricing equations; use native LaTeX in the notebook for formulas.",
+        "Keep labels short: call, put, delta, gamma, vega, theta, implied volatility.",
+        "Use schematic payoffs and Greeks, not fake option-chain data.",
+        "End with hedge, residual P&L, limits, and governance so pricing remains connected to a risk decision.",
+        "Generate from code so payoff slopes and governance arrows remain exact."
+      ],
+      "prompt": "Create a 1920x1080 PNG, 16:9. Academic derivatives concept map for Module 7. Show a left-to-right path from underlying exposure to call and put payoffs, replication and pricing inputs, Greeks, implied volatility, and exercise features. Continue the path through hedge selection, residual P&L, stress, limits, and governance. Use short labels only: call, put, delta, gamma, vega, theta, implied volatility, hedge, residual P&L, limits. Off-white background, navy linework, teal payoff gains, coral loss and residual-risk accents, amber volatility highlights. Keep a 7% safe margin. No fake option chains, no logos, no dense formulas."
+    }
+  ]
+}

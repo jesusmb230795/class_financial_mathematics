@@ -1,0 +1,33 @@
+{
+  "schema_version": 2,
+  "manifest_type": "visual_asset_scope",
+  "scope": "module-08",
+  "title": "Module 8 - Alternative Investments",
+  "assets": [
+    {
+      "order": 27,
+      "id": "m8-alternatives-asset-vehicle-strategy-map",
+      "status": "approved",
+      "role": "module_concept_map",
+      "target_path": "img/generated/m8-alternatives-asset-vehicle-strategy-map.png",
+      "aspect_ratio": "16:9",
+      "recommended_size": "1920x1080",
+      "alt_text": "Alternatives map separating the underlying asset, legal vehicle, and strategy before tracing investor cash flows, fees, carry, leverage, liquidity, due diligence, and portfolio role.",
+      "generator_script": "scripts/generate_module_concept_maps.py --asset m8-alternatives-asset-vehicle-strategy-map",
+      "production_method": "deterministic_matplotlib",
+      "used_by": [
+        {
+          "file": "chapters/08-alternative-investments.md",
+          "locator": "Module 8 asset-vehicle-strategy analysis map",
+          "mode": "markdown_insert",
+          "target_markdown": "../img/generated/m8-alternatives-asset-vehicle-strategy-map.png"
+        }
+      ],
+      "prompt": "Create a 1920x1080 PNG, 16:9. Academic alternatives-analysis map for Module 8. Separate three layers: underlying asset, legal vehicle, and investment strategy. Connect them to investor-level contributions, distributions, residual NAV, fees and carry, leverage, valuation status, liquidity constraints, operational due diligence, and portfolio role. Keep labels short and exact, with a clear cash-flow timeline and no made-up return. Off-white background, navy linework, teal cash-flow arrows, amber vehicle and fee accents, coral liquidity and leverage warnings, and a 7% safe margin. No fund logos or fake performance values.",
+      "production_notes": [
+        "Generated from code so the asset-vehicle-strategy separation and investor cash-flow direction remain exact.",
+        "No manager-level data or confidential information appears in the figure."
+      ]
+    }
+  ]
+}

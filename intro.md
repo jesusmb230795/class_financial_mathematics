@@ -46,12 +46,13 @@ Module 0 makes that contract operational before the course moves into market dat
 
 ## Current publication scope
 
-The published book is being developed incrementally. The current Jupyter Book focuses on Modules 0 through 2:
+The published book is being developed incrementally. The current Jupyter Book focuses on Modules 0 through 3:
 
 - reproducible setup, Python environment management, and JupyterLab workflow;
-- markets, data extraction, exploratory data analysis, data quality, and first dashboards;
-- financial time series, ARIMA diagnostics, volatility modeling, and GARCH interpretation {cite}`box2015time,engle1982autoregressive,bollerslev1986generalized`.
+- markets, instruments, data extraction, exploratory data analysis, data quality, and first dashboards;
+- quantitative methods, financial time series, ARIMA diagnostics, volatility modeling, and GARCH interpretation {cite}`box2015time,engle1982autoregressive,bollerslev1986generalized`;
+- economics, macro indicators, policy, currency parity, FX interpretation, and capital market expectations {cite}`mishkin2019financial,banxicoCentralBank,dbnomics2025`.
 
-Later modules on market risk, portfolio theory, fixed income, term structure, and derivatives remain as work-in-progress source files in the repository. They are intentionally kept out of the published navigation until each module is reviewed and promoted.
+Later modules on financial statements, corporate finance, valuation, fixed income, derivatives and risk management, alternatives, portfolio management, and capstone pathways remain as work-in-progress source files or roadmap structure in the repository. They are intentionally kept out of the published navigation until each module is reviewed and promoted.
 
 Publication builds use cached execution for curated notebooks while excluding API-sensitive notebooks and disabling live widget execution. To work interactively, install the environment and open the notebooks in JupyterLab.

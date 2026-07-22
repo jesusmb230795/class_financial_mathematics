@@ -1,0 +1,126 @@
+version: 1
+
+project:
+  title: Quantitative Financial Mathematics with Python
+  authors:
+    - name: Jesús Enrique Miranda Blanco
+  github: jesusmb230795/class_financial_mathematics
+  bibliography:
+    - references.bib
+  toc:
+    - file: intro.md
+    - title: Course Path
+      children:
+        - file: chapters/course-roadmap.md
+        - file: chapters/glossary.md
+        - file: references.md
+    - title: Module 0 - Setup and Python Ecosystem
+      children:
+        - file: chapters/00-python-ecosystem.md
+        - file: notebooks/course/0.1.reproducible_computing_stack.md
+        - file: notebooks/course/0.3.initial_repository_setup.ipynb
+        - file: notebooks/course/0.2.environment_validation_lab.ipynb
+        - file: notebooks/course/0.4.classroom_environment_setup.ipynb
+    - title: Module 1 - Markets, Instruments, and Data
+      children:
+        - file: chapters/01-markets-data.md
+        - file: notebooks/course/1.1.stock_markets.md
+        - file: notebooks/course/1.3.data_extraction.ipynb
+        - file: notebooks/course/1.6.market_data_quality_framework.ipynb
+        - file: notebooks/course/1.4.EDA_stock_data.ipynb
+        - file: notebooks/course/1.5.EDA_macroeconomic_data.ipynb
+        - file: notebooks/course/1.7.mexican_market_data_pipeline.ipynb
+        - file: notebooks/course/1.8.macro_dashboard_banxico_dbnomics.ipynb
+        - file: notebooks/course/1.9.return_explorer_dashboard.ipynb
+        - file: notebooks/course/1.10.market_analysis_communication_case.ipynb
+    - title: Module 2 - Quantitative Methods and Financial Time Series
+      children:
+        - file: chapters/02-time-series.md
+        - file: notebooks/course/2.0.quantitative_foundations.ipynb
+        - file: notebooks/course/2.1.time_series_1.ipynb
+        - file: notebooks/course/2.3.time_series_diagnostics_and_volatility_extensions.ipynb
+        - file: notebooks/course/2.4.arima_diagnostic_workflow.ipynb
+        - file: notebooks/course/2.2.time_series_2.ipynb
+        - file: notebooks/course/2.5.garch_volatility_risk_workflow.ipynb
+        - file: notebooks/course/2.6.interactive_volatility_garch_dashboard.ipynb
+    - title: Module 3 - Economics, Macro, and Currency
+      children:
+        - file: chapters/03-economics-macro-currency.md
+        - file: notebooks/course/3.1.economic_foundations.md
+        - file: notebooks/course/3.2.macro_indicators_policy.md
+        - file: notebooks/course/3.3.currency_parity_fx.md
+        - file: notebooks/course/3.4.macro_scenarios_cme.md
+        - file: notebooks/course/3.5.applied_macro_fx_case.ipynb
+    - title: Module 4 - Financial Statement Analysis and Financial Modeling
+      children:
+        - file: chapters/04-financial-statements-modeling.md
+        - file: notebooks/course/4.1.analysis_framework_and_statement_linkages.md
+        - file: notebooks/course/4.2.ratios_dupont_and_capital_efficiency.md
+        - file: notebooks/course/4.3.accounting_quality_and_normalization.md
+        - file: notebooks/course/4.4.specialized_entities_and_consolidation.md
+        - file: notebooks/course/4.5.three_statement_model_and_review.md
+    - title: Module 5 - Corporate Issuers and Equity Valuation
+      children:
+        - file: chapters/05-corporate-equity-valuation.md
+        - file: notebooks/course/5.1.corporate_decisions_and_capital_budgeting.md
+        - file: notebooks/course/5.2.capital_structure_and_wacc.md
+        - file: notebooks/course/5.3.business_model_and_forecasting.md
+        - file: notebooks/course/5.4.equity_valuation_frameworks.md
+        - file: notebooks/course/5.5.investment_thesis_and_valuation_memo.md
+    - title: Module 6 - Fixed Income, Credit, and Term Structure
+      children:
+        - file: chapters/06-fixed-income-credit-term-structure.md
+        - file: notebooks/course/6.1.bond_pricing_duration_convexity.ipynb
+        - file: notebooks/course/6.2.interactive_bond_sensitivity.ipynb
+        - file: notebooks/course/6.3.mexican_government_bond_valuation.ipynb
+        - file: notebooks/course/6.4.ytm_dv01_and_immunization_lab.ipynb
+        - file: notebooks/course/6.5.credit_spreads_securitized_products.ipynb
+        - file: notebooks/course/6.6.yield_curve_bootstrapping.ipynb
+        - file: notebooks/course/6.7.short_rate_models.ipynb
+        - file: notebooks/course/6.8.nelson_siegel_curve_fitting.ipynb
+        - file: notebooks/course/6.9.rate_panel_pca_and_scenarios.ipynb
+        - file: notebooks/course/6.10.short_rate_calibration_lab.ipynb
+    - title: Module 7 - Derivatives and Risk Management
+      children:
+        - file: chapters/07-derivatives-risk-management.md
+        - file: notebooks/course/7.1.linear_derivatives_and_carry.ipynb
+        - file: notebooks/course/7.2.european_option_pricing_and_greeks.ipynb
+        - file: notebooks/course/7.3.binomial_and_monte_carlo.ipynb
+        - file: notebooks/course/7.4.implied_volatility_and_smiles.ipynb
+        - file: notebooks/course/7.5.interactive_option_pricing_dashboard.ipynb
+        - file: notebooks/course/7.6.american_and_exotic_options.ipynb
+        - file: notebooks/course/7.7.stochastic_volatility_heston_lab.ipynb
+        - file: notebooks/course/7.8.hedging_risk_governance.ipynb
+        - file: notebooks/course/7.9.value_at_risk_foundations.ipynb
+        - file: notebooks/course/7.10.downside_risk_var_methods.ipynb
+        - file: notebooks/course/7.11.var_backtesting_and_stress_testing.ipynb
+        - file: notebooks/course/7.12.interactive_var_cvar_simulator.ipynb
+    - title: Module 8 - Alternative Investments
+      children:
+        - file: chapters/08-alternative-investments.md
+        - file: notebooks/course/8.1.private_capital_structures_and_economics.md
+        - file: notebooks/course/8.2.private_company_valuation_and_due_diligence.md
+        - file: notebooks/course/8.3.real_assets_and_commodities.md
+        - file: notebooks/course/8.4.hedge_funds_digital_assets_and_liquidity.md
+        - file: notebooks/course/8.5.alternatives_portfolio_role_and_mexico_case.md
+    - title: Module 9 - Portfolio Management, Asset Allocation, and Performance
+      children:
+        - file: chapters/09-portfolio-management.md
+        - file: notebooks/course/9.1.ips_asset_allocation_performance.ipynb
+        - file: notebooks/course/9.2.analytical_efficient_frontier.ipynb
+        - file: notebooks/course/9.3.robust_portfolio_construction.ipynb
+        - file: notebooks/course/9.4.interactive_efficient_frontier_dashboard.ipynb
+    - title: Module 10 - Advanced Pathways and Capstone
+      children:
+        - file: chapters/10-capstone.md
+        - file: notebooks/course/10.1.portfolio_management_pathway.md
+        - file: notebooks/course/10.2.private_markets_pathway.md
+        - file: notebooks/course/10.3.private_wealth_pathway.md
+        - file: notebooks/course/10.4.structured_response_and_committee_communication.md
+        - file: notebooks/course/10.5.integrative_capstone.md
+
+site:
+  template: book-theme
+  title: Quantitative Financial Mathematics with Python
+  options:
+    logo: img/generated/fm-course-hero.png

@@ -1,0 +1,52 @@
+{
+  "schema_version": 2,
+  "manifest_type": "visual_asset_scope",
+  "scope": "shared",
+  "title": "Shared and Cross-Module Visuals",
+  "assets": [
+    {
+      "order": 1,
+      "id": "fm-course-hero",
+      "status": "approved",
+      "role": "course_cover",
+      "target_path": "img/generated/fm-course-hero.png",
+      "aspect_ratio": "16:9",
+      "recommended_size": "1920x1080",
+      "alt_text": "Course hero showing Python, market data, distributions, yield curves, and portfolio optimization.",
+      "legacy_sources": [
+        "img/msc-international-financial-degree.jpg"
+      ],
+      "used_by": [
+        {
+          "file": "_config.yml",
+          "locator": "book logo",
+          "mode": "text_replace",
+          "current_ref": "img/msc-international-financial-degree.jpg",
+          "target_ref": "img/generated/fm-course-hero.png"
+        },
+        {
+          "file": "_config.outputs.yml",
+          "locator": "book logo for output-rendering build",
+          "mode": "text_replace",
+          "current_ref": "img/msc-international-financial-degree.jpg",
+          "target_ref": "img/generated/fm-course-hero.png"
+        },
+        {
+          "file": "myst.yml",
+          "locator": "Jupyter Book 2 logo",
+          "mode": "text_replace",
+          "current_ref": "img/msc-international-financial-degree.jpg",
+          "target_ref": "img/generated/fm-course-hero.png"
+        },
+        {
+          "file": "intro.md",
+          "locator": "intro figure",
+          "mode": "text_replace",
+          "current_ref": "img/msc-international-financial-degree.jpg",
+          "target_ref": "img/generated/fm-course-hero.png"
+        }
+      ],
+      "prompt": "Create a 1920x1080 PNG, 16:9. Academic editorial course hero for Quantitative Financial Mathematics with Python: a clean desk-like composition with an open laptop showing an abstract Python notebook, a candlestick chart, a smooth probability distribution, a yield curve, and an efficient frontier connected by thin analytical lines. Include subtle references to global and Mexican market data through abstract maps and bond certificates without any real logos. Use off-white paper background, deep navy linework, teal data curves, amber highlights, and coral risk accents. Keep a 7% safe margin. Elegant university course visual, no readable brand names, no long text."
+    }
+  ]
+}

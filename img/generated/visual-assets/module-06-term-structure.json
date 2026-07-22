@@ -1,0 +1,35 @@
+{
+  "schema_version": 2,
+  "manifest_type": "visual_asset_scope",
+  "scope": "module-06-term-structure",
+  "title": "Module 6 - Fixed Income, Credit, and Term Structure (Term Structure)",
+  "assets": [
+    {
+      "order": 22,
+      "id": "m6-yield-curve-factor-scenarios",
+      "status": "approved",
+      "role": "module_concept_map",
+      "target_path": "img/generated/m6-yield-curve-factor-scenarios.png",
+      "aspect_ratio": "16:9",
+      "recommended_size": "1920x1080",
+      "alt_text": "Yield-curve scenario map showing bootstrapping, Nelson-Siegel factors, PCA shocks, and short-rate models.",
+      "generator_script": "scripts/generate_module_concept_maps.py --asset m6-yield-curve-factor-scenarios",
+      "production_method": "deterministic_matplotlib",
+      "used_by": [
+        {
+          "file": "chapters/06-fixed-income-credit-term-structure.md",
+          "locator": "Module 6 term-structure and rate-panel distinction",
+          "mode": "markdown_insert",
+          "target_markdown": "../img/generated/m6-yield-curve-factor-scenarios.png"
+        }
+      ],
+      "production_notes": [
+        "Keep homogeneous yield-curve factors visually separate from heterogeneous rate-panel PCA.",
+        "No made-up yield values; use schematic curves only.",
+        "Make factor shocks visually distinct but consistent with the shared palette.",
+        "Generate from code so homogeneous curve factors cannot be confused with heterogeneous-panel principal components."
+      ],
+      "prompt": "Create a 1920x1080 PNG, 16:9. Academic term-structure concept map for Module 6. Show a clean flow from market bond or swap quotes to a bootstrapped zero curve, Nelson-Siegel fit, homogeneous curve scenarios, and short-rate calibration. Add a visibly separate rate-panel PCA branch whose statistical components are labeled PC1, PC2, and PC3 rather than level, slope, or curvature. Use off-white background, navy axes and labels, teal base curve, amber factor accents, and a coral stress curve. Keep labels short: bootstrap, zero curve, Nelson-Siegel, PCA, PC1, PC2, PC3, short rate. Keep a 7% safe margin. No fake numbers, no logos."
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "schema_version": 2,
+  "manifest_type": "visual_asset_scope",
+  "scope": "module-00",
+  "title": "Module 0 - Setup and Python Ecosystem",
+  "assets": [
+    {
+      "order": 2,
+      "id": "module0-reproducible-workflow",
+      "status": "approved",
+      "role": "python_diagram",
+      "target_path": "img/generated/module0-reproducible-workflow.png",
+      "aspect_ratio": "16:9",
+      "recommended_size": "1920x1080",
+      "alt_text": "Workflow connecting locked environment, reusable code, notebook execution, credentials, validation, and the published book.",
+      "generator_script": "scripts/generate_module0_workflow_image.py",
+      "used_by": [
+        {
+          "file": "chapters/00-python-ecosystem.md",
+          "locator": "Module 0 opening workflow figure",
+          "mode": "markdown_insert",
+          "target_markdown": "../img/generated/module0-reproducible-workflow.png"
+        }
+      ],
+      "prompt": "Do not generate this image with an image model. Generate it from code with: uv run python scripts/generate_module0_workflow_image.py. The output must be a 1920x1080 PNG saved to img/generated/module0-reproducible-workflow.png."
+    }
+  ]
+}

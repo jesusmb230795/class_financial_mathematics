@@ -2,6 +2,33 @@ name: Deploy Jupyter Book
 
 on:
   workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/deploy-book.yml"
+      - "_config.yml"
+      - "_config.outputs.yml"
+      - "_toc.yml"
+      - "CONTRIBUTING.md"
+      - "Makefile"
+      - "README.md"
+      - "START_HERE.md"
+      - "binder/**"
+      - "chapters/**"
+      - "content/**"
+      - "img/**"
+      - "intro.md"
+      - "jupyter/**"
+      - "myst.yml"
+      - "notebooks/**"
+      - "pyproject.toml"
+      - "references.bib"
+      - "references.md"
+      - "scripts/**"
+      - "src/**"
+      - "tests/**"
+      - "uv.lock"
   push:
     branches:
       - main
@@ -10,17 +37,24 @@ on:
       - "_config.yml"
       - "_config.outputs.yml"
       - "_toc.yml"
+      - "CONTRIBUTING.md"
       - "Makefile"
       - "README.md"
+      - "START_HERE.md"
+      - "binder/**"
       - "chapters/**"
+      - "content/**"
       - "img/**"
       - "intro.md"
+      - "jupyter/**"
+      - "myst.yml"
       - "notebooks/**"
       - "pyproject.toml"
       - "references.bib"
       - "references.md"
       - "scripts/**"
       - "src/**"
+      - "tests/**"
       - "uv.lock"
 
 permissions:
@@ -65,7 +99,7 @@ jobs:
   deploy:
     name: Deploy to GitHub Pages
     needs: build
-    if: github.ref == 'refs/heads/main'
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment:
       name: github-pages

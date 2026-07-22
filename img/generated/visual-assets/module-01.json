@@ -1,0 +1,231 @@
+{
+  "schema_version": 2,
+  "manifest_type": "visual_asset_scope",
+  "scope": "module-01",
+  "title": "Module 1 - Markets, Instruments, and Data",
+  "assets": [
+    {
+      "order": 3,
+      "id": "m1-market-floor-structure",
+      "status": "approved",
+      "role": "lesson_figure",
+      "target_path": "img/generated/m1-market-floor-structure.png",
+      "aspect_ratio": "16:9",
+      "recommended_size": "1920x1080",
+      "alt_text": "Stylized stock exchange floor connecting issuers, investors, brokers, and exchange infrastructure.",
+      "legacy_sources": [
+        "img/traders-professionals-opening-bell-New-York-Stock-Exchange-NYSE-January-2-2019.jpg"
+      ],
+      "used_by": [
+        {
+          "file": "notebooks/course/1.1.stock_markets.md",
+          "locator": "Stock Market Operations opening figure",
+          "mode": "text_replace",
+          "current_ref": "../../img/traders-professionals-opening-bell-New-York-Stock-Exchange-NYSE-January-2-2019.jpg",
+          "target_ref": "../../img/generated/m1-market-floor-structure.png"
+        }
+      ],
+      "prompt": "Create a 1920x1080 PNG, 16:9. Stylized modern stock exchange floor as an academic finance illustration, not a photo. Show a circular trading area, abstract screens with clean price lines, small neutral human silhouettes, and a network flow connecting issuers, investors, brokers, clearing, and the exchange. Use the shared quantitative finance editorial line: off-white background, deep navy linework, teal and amber market data accents, coral for risk or price drops. Keep a 7% safe margin. No real logos, no readable ticker names, no brand marks, no crowded photo detail."
+    },
+    {
+      "order": 4,
+      "id": "m1-global-exchanges-ranking",
+      "status": "approved",
+      "role": "python_barplot",
+      "target_path": "img/generated/m1-global-exchanges-ranking.png",
+      "aspect_ratio": "4:3",
+      "recommended_size": "1600x1200",
+      "alt_text": "Infographic comparing major global stock exchanges by market capitalization.",
+      "generator_script": "scripts/generate_exchange_market_cap_chart.py",
+      "data_path": "img/generated/data/global_exchange_market_caps.csv",
+      "data_source": {
+        "name": "marketcap.company Stock Exchanges Ranked by Market Cap",
+        "url": "https://marketcap.company/stock-exchanges-by-market-cap/",
+        "retrieved_on": "2026-06-05",
+        "note": "Daily source snapshot; values may differ from official monthly WFE statistics."
+      },
+      "legacy_sources": [
+        "img/top10_exchanges.png"
+      ],
+      "used_by": [
+        {
+          "file": "notebooks/course/1.1.stock_markets.md",
+          "locator": "Top ten exchanges figure",
+          "mode": "text_replace",
+          "current_ref": "../../img/top10_exchanges.png",
+          "target_ref": "../../img/generated/m1-global-exchanges-ranking.png"
+        }
+      ],
+      "prompt": "Do not generate this image with an image model. Generate it from data with: python3 scripts/generate_exchange_market_cap_chart.py. The output must be a 1600x1200 PNG saved to img/generated/m1-global-exchanges-ranking.png."
+    },
+    {
+      "order": 5,
+      "id": "m1-market-price-drivers",
+      "status": "approved",
+      "role": "lesson_figure",
+      "target_path": "img/generated/m1-market-price-drivers.png",
+      "aspect_ratio": "16:9",
+      "recommended_size": "1920x1080",
+      "alt_text": "Market price drivers linking investors, firms, policy, indicators, and global events to asset prices.",
+      "legacy_sources": [
+        "img/msc-international-financial-degree.jpg"
+      ],
+      "used_by": [
+        {
+          "file": "notebooks/course/1.1.stock_markets.md",
+          "locator": "Factors Which Affect Markets figure",
+          "mode": "text_replace",
+          "current_ref": "../../img/msc-international-financial-degree.jpg",
+          "target_ref": "../../img/generated/m1-market-price-drivers.png"
+        }
+      ],
+      "prompt": "Create a 1920x1080 PNG, 16:9. Conceptual market price drivers illustration: a central asset price line and order book grid receives five clean directional inputs from investors, business conditions, government policy, economic indicators, and international events. Use simple icons and arrows, no long text, no real logos. Show both upward and downward market pressure with teal and coral curves. Academic editorial vector-like style, off-white background, navy ink, amber policy highlights. Keep a 7% safe margin."
+    },
+    {
+      "order": 6,
+      "id": "eda-skewness-mean-median-mode",
+      "status": "approved",
+      "role": "lesson_diagram",
+      "target_path": "img/generated/eda-skewness-mean-median-mode.png",
+      "aspect_ratio": "16:9",
+      "recommended_size": "1920x1080",
+      "alt_text": "Positive, symmetric, and negative skew distributions with mean, median, and mode.",
+      "legacy_sources": [
+        "img/Relationship_between_mean_and_median_under_different_skewness.png"
+      ],
+      "used_by": [
+        {
+          "file": "notebooks/course/1.4.EDA_stock_data.ipynb",
+          "locator": "cell 35 skewness diagram",
+          "mode": "text_replace",
+          "current_ref": "../../img/Relationship_between_mean_and_median_under_different_skewness.png",
+          "target_ref": "../../img/generated/eda-skewness-mean-median-mode.png"
+        }
+      ],
+      "prompt": "Create a 1920x1080 PNG, 16:9. Educational statistics diagram with three side-by-side density curves: positive skew, symmetric distribution, and negative skew. Show short exact labels for mean, median, and mode with thin vertical markers, and use tail direction visibly. Use navy curve for symmetric distribution, teal for positive-skew income-like tail, amber for negative-skew loss-like tail, with coral tail accents. Clean vector-like academic style, off-white background, no paragraphs, no extra decoration. Keep a 7% safe margin."
+    },
+    {
+      "order": 7,
+      "id": "eda-kurtosis-tail-risk",
+      "status": "approved",
+      "role": "lesson_diagram",
+      "target_path": "img/generated/eda-kurtosis-tail-risk.png",
+      "aspect_ratio": "16:9",
+      "recommended_size": "1920x1080",
+      "alt_text": "Comparison of low, normal, and high kurtosis distributions with tail risk emphasis.",
+      "legacy_sources": [
+        "img/Kurtosis.jpg"
+      ],
+      "used_by": [
+        {
+          "file": "notebooks/course/1.4.EDA_stock_data.ipynb",
+          "locator": "cell 39 kurtosis diagram",
+          "mode": "text_replace",
+          "current_ref": "../../img/Kurtosis.jpg",
+          "target_ref": "../../img/generated/eda-kurtosis-tail-risk.png"
+        }
+      ],
+      "prompt": "Create a 1920x1080 PNG, 16:9. Educational kurtosis diagram comparing three smooth distributions on the same axis: low kurtosis with flatter center, normal distribution, and high kurtosis with sharp peak and heavier tails. Emphasize both tails with subtle coral shading to connect kurtosis to financial tail risk. Use only short labels: low, normal, high kurtosis. Clean academic vector-like style, off-white background, navy axis, teal and amber curves. Keep a 7% safe margin."
+    },
+    {
+      "order": 8,
+      "id": "eda-correlation-gallery",
+      "status": "approved",
+      "role": "lesson_diagram",
+      "target_path": "img/generated/eda-correlation-gallery.png",
+      "aspect_ratio": "2:1",
+      "recommended_size": "2000x1000",
+      "alt_text": "Gallery of scatterplots illustrating positive, negative, zero, and nonlinear correlation patterns.",
+      "legacy_sources": [
+        "img/1920px-Correlation_examples2.svg.png"
+      ],
+      "used_by": [
+        {
+          "file": "notebooks/course/1.4.EDA_stock_data.ipynb",
+          "locator": "cell 44 correlation diagram",
+          "mode": "text_replace",
+          "current_ref": "../../img/1920px-Correlation_examples2.svg.png",
+          "target_ref": "../../img/generated/eda-correlation-gallery.png"
+        }
+      ],
+      "prompt": "Create a 2000x1000 PNG, 2:1. Clean gallery of small scatterplot panels showing correlation patterns for quantitative finance: perfect positive, strong positive, weak positive, zero linear correlation, weak negative, strong negative, perfect negative, and several nonlinear zero-correlation shapes. Use a neat grid with short numeric labels only when legible: +1, +0.8, +0.4, 0, -0.4, -0.8, -1. Points should be navy with selected teal and coral highlights. Off-white background, thin axes, generous spacing. Keep a 7% safe margin."
+    },
+    {
+      "order": 16,
+      "id": "eda-positive-negative-skew-tail-shading",
+      "status": "approved",
+      "role": "approved_unintegrated",
+      "target_path": "img/generated/eda-positive-negative-skew-tail-shading.png",
+      "aspect_ratio": "16:9",
+      "recommended_size": "1920x1080",
+      "alt_text": "Positive and negative skew diagrams with shaded tails.",
+      "legacy_sources": [
+        "img/1920px-Negative_and_positive_skew_diagrams_(English).svg.png"
+      ],
+      "used_by": [],
+      "prompt": "Create a 1920x1080 PNG, 16:9. Two-panel educational diagram showing positive skew and negative skew distributions with tail regions shaded. Use clean density curves, short labels only, and show the tail direction with subtle arrows. Use teal for positive skew, coral for negative skew, navy axes, off-white background. Keep a 7% safe margin. This replaces an unreferenced legacy image if the concept is added back to the book.",
+      "integration_note": "Approved visual retained in the asset library, but not inserted because the active EDA lesson already uses eda-skewness-mean-median-mode for skewness."
+    },
+    {
+      "order": 17,
+      "id": "m1-global-market-activity-scale",
+      "status": "retired",
+      "role": "retired_duplicate_data_infographic",
+      "target_path": "img/generated/m1-global-market-activity-scale.png",
+      "aspect_ratio": "16:9",
+      "recommended_size": "1920x1080",
+      "alt_text": "Global market scale snapshot comparing market capitalization, share trading value, listed companies, trades, and derivatives contracts.",
+      "data_source": {
+        "name": "World Federation of Exchanges Focus Dashboard - May 2026",
+        "url": "https://focus.world-exchanges.org/issue/may-2026/dashboard",
+        "retrieved_on": "2026-06-06",
+        "note": "Use the same values as src.market_data.wfe_equity_market_scale_snapshot unless refreshing the snapshot intentionally."
+      },
+      "intended_placement": [
+        {
+          "file": "notebooks/course/1.3.data_extraction.ipynb",
+          "locator": "Market scale snapshot section",
+          "note": "Replace or complement the current executed matplotlib chart after the image is generated and approved."
+        }
+      ],
+      "production_notes": [
+        "Show exact metric units: USD trillions, thousand companies, billion trades, and billion contracts.",
+        "Do not compare bars without units; use grouped panels or metric cards so units are explicit.",
+        "Include source and retrieval date in small footer text.",
+        "Retired after the module-wide visual audit because the published extraction lesson already renders the same WFE snapshot from code."
+      ],
+      "prompt": "Create a 1920x1080 PNG, 16:9. Academic finance infographic titled \"WFE market scale snapshot\" using the shared style. Show five metric cards or grouped mini-bars with exact values from WFE Focus Dashboard May 2026: Market capitalisation 149.20 USD trillions, Value of share trading 25.19 USD trillions, Listed companies 60.06 thousand, Number of trades 6.95 billion trades, Options contracts 6.73 billion and Futures contracts 3.37 billion. Include a small footer: Source: WFE Focus dashboard, May 2026; retrieved 2026-06-06. Use off-white background, navy ink, teal activity accents, amber count accents, and muted blue derivatives accents. Keep a 7% safe margin. No logos, no decorative gradients, no extra numbers."
+    },
+    {
+      "order": 18,
+      "id": "m1-mexico-market-activity-snapshot",
+      "status": "pending",
+      "role": "optional_future_data_infographic",
+      "target_path": "img/generated/m1-mexico-market-activity-snapshot.png",
+      "aspect_ratio": "16:9",
+      "recommended_size": "1920x1080",
+      "alt_text": "Mexican market activity snapshot showing trading value, volume, transactions, listed issuers, and market infrastructure sources.",
+      "data_source": {
+        "name": "BMV trading statistics, BIVA market activity, and WFE market statistics",
+        "url": "https://www.biva.mx/informacion_de_mercado/estadisticas/operacion_ultimo_mes",
+        "secondary_url": "https://focus.world-exchanges.org/issue/june-2026/market-statistics",
+        "retrieved_on": "to be filled when generated",
+        "note": "Refresh with the latest available month before generation; record source URLs and retrieval date in the footer."
+      },
+      "intended_placement": [
+        {
+          "file": "notebooks/course/1.7.mexican_market_data_pipeline.ipynb",
+          "locator": "Suggested Mexican market dataset section",
+          "note": "Use after source values are verified and written into the figure footer."
+        }
+      ],
+      "production_notes": [
+        "Use only verified latest-month data from public BMV/BIVA/WFE pages.",
+        "Prefer a small multiples layout: value traded, volume, transactions, listed issuers, and source coverage.",
+        "If BMV public page is unavailable, use WFE market statistics and state that limitation in the footer.",
+        "Deferred by the module-wide visual audit: Module 1 already has sufficient visual coverage, and this optional asset must not be generated until the latest-month data and retrieval date are verified."
+      ],
+      "prompt": "Create a 1920x1080 PNG, 16:9. Academic finance infographic for \"Mexican market activity snapshot\" using the shared style. Use verified latest-month public data from BMV/BIVA/WFE before generation. Show compact metric cards for trading value, trading volume, number of transactions, listed issuers, and core infrastructure sources (BMV, BIVA, MexDer, Indeval, CNBV). Include source names, month, and retrieval date in a small footer. Use off-white background, navy ink, teal market activity accents, amber infrastructure accents, and coral quality-warning accents. Keep a 7% safe margin. No logos, no fake numbers, no unreadable labels."
+    }
+  ]
+}

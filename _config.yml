@@ -13,12 +13,20 @@ bibtex_bibfiles:
 
 exclude_patterns:
   - README.md
+  - .codex/**
+  - .github/**
   - .venv/**
   - .uv-cache/**
   - .uv-python/**
+  - .uv-tools/**
   - .data-cache/**
+  - .jupyter-config/**
+  - .pre-commit-cache/**
+  - .pytest_cache/**
+  - .ruff_cache/**
   - _build/**
   - .jupyter_cache/**
+  - content/**
   - "**.ipynb_checkpoints"
 
 repository:
@@ -34,6 +42,7 @@ html:
 
 launch_buttons:
   notebook_interface: jupyterlab
+  binderhub_url: https://mybinder.org
 
 parse:
   myst_enable_extensions:
@@ -49,7 +58,10 @@ sphinx:
   config:
     language: en
     bibtex_reference_style: author_year
-    nb_output_stderr: remove
+    html_static_path:
+      - _static
+    html_css_files:
+      - custom.css
     togglebutton_selector: ".toggle, .admonition.dropdown, div.cell_input"
     togglebutton_hint: "Show code"
     togglebutton_hint_hide: "Hide code"

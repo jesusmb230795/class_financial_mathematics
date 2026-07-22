@@ -1,0 +1,96 @@
+{
+  "schema_version": 2,
+  "manifest_type": "visual_asset_scope",
+  "scope": "module-07-risk",
+  "title": "Module 7 - Derivatives and Risk Management (Risk Management)",
+  "assets": [
+    {
+      "order": 10,
+      "id": "risk-var-tail-loss",
+      "status": "approved",
+      "role": "lesson_diagram",
+      "target_path": "img/generated/risk-var-tail-loss.png",
+      "aspect_ratio": "16:9",
+      "recommended_size": "1920x1080",
+      "alt_text": "Value at Risk shown as a left-tail percentile of a profit-loss distribution.",
+      "legacy_sources": [
+        "notebooks/labs/7.8.value_at_risk_foundations.ipynb cell 3 base64 image"
+      ],
+      "used_by": [
+        {
+          "file": "notebooks/course/7.9.value_at_risk_foundations.ipynb",
+          "locator": "Tail-risk notation after the VaR equation",
+          "mode": "markdown_insert",
+          "target_markdown": "![Value at Risk left-tail loss diagram](../../img/generated/risk-var-tail-loss.png)"
+        }
+      ],
+      "prompt": "Create a 1920x1080 PNG, 16:9. Clean Value at Risk diagram: a smooth profit-loss distribution centered near zero, left side labeled loss direction, right side labeled profit direction, left alpha tail shaded in coral, a vertical cutoff at the alpha percentile, and a simple horizontal arrow labeled VaR from zero to the cutoff. Use exact short labels only: Loss, Profit, alpha tail, VaR. Academic vector-like style, off-white background, navy axes and curve, coral tail shading. Keep a 7% safe margin."
+    },
+    {
+      "order": 11,
+      "id": "risk-cvar-expected-shortfall",
+      "status": "approved",
+      "role": "lesson_diagram",
+      "target_path": "img/generated/risk-cvar-expected-shortfall.png",
+      "aspect_ratio": "16:9",
+      "recommended_size": "1920x1080",
+      "alt_text": "CVaR or expected shortfall shown as average loss beyond the VaR cutoff.",
+      "legacy_sources": [
+        "notebooks/labs/7.8.value_at_risk_foundations.ipynb cell 5 base64 image"
+      ],
+      "used_by": [
+        {
+          "file": "notebooks/course/7.9.value_at_risk_foundations.ipynb",
+          "locator": "Tail-risk notation after the Expected Shortfall equation",
+          "mode": "markdown_insert",
+          "target_markdown": "![Conditional Value at Risk expected shortfall diagram](../../img/generated/risk-cvar-expected-shortfall.png)"
+        }
+      ],
+      "prompt": "Create a 1920x1080 PNG, 16:9. Clean CVaR expected shortfall diagram: a bell-shaped return distribution with the left tail shaded, a vertical VaR cutoff, and a second marker farther left showing CVaR as the average loss inside the tail. Add minimal exact labels: VaR, CVaR, worst alpha tail, mean. Use navy curve and axis, coral tail shading, teal mean marker, off-white background. Academic vector-like finance style, no long explanatory text. Keep a 7% safe margin."
+    },
+    {
+      "order": 12,
+      "id": "risk-zscore-standardization",
+      "status": "retired",
+      "role": "latex_formula_block",
+      "target_path": "img/generated/risk-zscore-standardization.png",
+      "aspect_ratio": "16:9",
+      "recommended_size": "1920x1080",
+      "alt_text": "Z-score standardization formula connecting raw observations to standard normal units.",
+      "legacy_sources": [
+        "notebooks/labs/7.8.value_at_risk_foundations.ipynb cell 32 base64 image"
+      ],
+      "used_by": [],
+      "latex_replacement": [
+        {
+          "file": "notebooks/course/7.9.value_at_risk_foundations.ipynb",
+          "locator": "Parametric Gaussian VaR and z-score notation",
+          "description": "Migrated to native MyST/LaTeX formulas for z-score standardization and parametric Gaussian VaR."
+        }
+      ],
+      "prompt": "Retired from the original 1920x1080 image-generation request. This formula panel is represented directly with LaTeX in the VaR notebook so formulas remain selectable, accessible, and mathematically exact."
+    },
+    {
+      "order": 13,
+      "id": "risk-skewness-tail-orientation",
+      "status": "approved",
+      "role": "lesson_diagram",
+      "target_path": "img/generated/risk-skewness-tail-orientation.png",
+      "aspect_ratio": "16:9",
+      "recommended_size": "1920x1080",
+      "alt_text": "Distribution skewness comparison emphasizing tail direction for risk interpretation.",
+      "legacy_sources": [
+        "notebooks/labs/7.8.value_at_risk_foundations.ipynb cell 37 base64 image"
+      ],
+      "used_by": [
+        {
+          "file": "notebooks/course/7.9.value_at_risk_foundations.ipynb",
+          "locator": "Tail-risk notation after the asymmetric-tail discussion",
+          "mode": "markdown_insert",
+          "target_markdown": "![Skewness and tail orientation in return distributions](../../img/generated/risk-skewness-tail-orientation.png)"
+        }
+      ],
+      "prompt": "Create a 1920x1080 PNG, 16:9. Finance risk diagram comparing distribution skewness: three smooth density curves for positive skew, symmetric distribution, and negative skew, with tail direction emphasized and a central median marker. Use short exact labels: Positive skew, Symmetric, Negative skew, Tail. Use teal for positive-skew curve, navy for symmetric curve, coral for negative-skew downside tail, off-white background, clean axes. Keep a 7% safe margin."
+    }
+  ]
+}

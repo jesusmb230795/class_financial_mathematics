@@ -1,0 +1,35 @@
+{
+  "schema_version": 2,
+  "manifest_type": "visual_asset_scope",
+  "scope": "module-09-portfolio",
+  "title": "Module 9 - Portfolio Management, Asset Allocation, and Performance",
+  "assets": [
+    {
+      "order": 20,
+      "id": "m9-efficient-frontier-risk-budget-map",
+      "status": "approved",
+      "role": "module_concept_map",
+      "target_path": "img/generated/m9-efficient-frontier-risk-budget-map.png",
+      "aspect_ratio": "16:9",
+      "recommended_size": "1920x1080",
+      "alt_text": "Governed portfolio lifecycle from the investment policy statement and risk budget through expectations, allocation, construction, implementation, performance, monitoring, and policy review, with an efficient-frontier inset.",
+      "generator_script": "scripts/generate_module_concept_maps.py --asset m9-efficient-frontier-risk-budget-map",
+      "production_method": "deterministic_matplotlib",
+      "used_by": [
+        {
+          "file": "chapters/09-portfolio-management.md",
+          "locator": "Module 9 governed portfolio lifecycle",
+          "mode": "markdown_insert",
+          "target_markdown": "../img/generated/m9-efficient-frontier-risk-budget-map.png"
+        }
+      ],
+      "production_notes": [
+        "Keep labels short: IPS, risk budget, expectations, allocation, construction, implementation, performance, monitoring, exceptions, review.",
+        "Do not use fake tickers or fake numerical coordinates.",
+        "Use the efficient frontier only as a small inset; the executed notebooks already provide the full analytical chart.",
+        "Generate from code so the governance loop and process order remain exact."
+      ],
+      "prompt": "Create a 1920x1080 PNG, 16:9. Academic governed portfolio lifecycle for Module 9. Show the ordered process IPS -> objectives and risk budget -> capital market expectations -> allocation and construction -> implementation and rebalancing -> performance and attribution -> monitoring and exceptions -> IPS review. Add a small schematic efficient-frontier inset inside the allocation step, not as the dominant chart. Use off-white background, navy linework, teal allocation and performance accents, amber governance highlights, and coral exception markers. Keep a 7% safe margin. No fake tickers, coordinates, recommendations, logos, or dense formulas."
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "schema_version": 2,
+  "manifest_type": "visual_asset_scope",
+  "scope": "module-04",
+  "title": "Module 4 - Financial Statement Analysis and Financial Modeling",
+  "assets": [
+    {
+      "order": 25,
+      "id": "m4-three-statement-evidence-model-map",
+      "status": "approved",
+      "role": "module_concept_map",
+      "target_path": "img/generated/m4-three-statement-evidence-model-map.png",
+      "aspect_ratio": "16:9",
+      "recommended_size": "1920x1080",
+      "alt_text": "Financial modeling map linking income statement, balance sheet, cash flow, and equity while separating reported, reclassified, normalized, and forecast evidence layers.",
+      "generator_script": "scripts/generate_module_concept_maps.py --asset m4-three-statement-evidence-model-map",
+      "production_method": "deterministic_matplotlib",
+      "used_by": [
+        {
+          "file": "chapters/04-financial-statements-modeling.md",
+          "locator": "Module 4 statement-linkage and evidence-layer map",
+          "mode": "markdown_insert",
+          "target_markdown": "../img/generated/m4-three-statement-evidence-model-map.png"
+        }
+      ],
+      "prompt": "Create a 1920x1080 PNG, 16:9. Academic three-statement modeling map for Module 4. Link the income statement, balance sheet, cash flow statement, and equity roll-forward with explicit directional arrows and a final balance and cash reconciliation check. Above the statements, show four evidence layers in order: reported, reclassified, normalized, forecast. Keep labels short and exact. Off-white background, navy linework, teal operating links, muted-blue balance-sheet links, amber forecast highlights, coral control-break warnings, and a 7% safe margin. No company logos, fake filings, or invented numbers.",
+      "production_notes": [
+        "Generated from code so accounting identities, layer order, and reconciliation directions remain exact.",
+        "Long accounting definitions remain in the chapter rather than inside the image."
+      ]
+    }
+  ]
+}

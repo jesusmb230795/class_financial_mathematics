@@ -1,0 +1,147 @@
+{
+  "banxico_series": {
+    "cetes_28d": "SF60633",
+    "policy_rate": "SF61745",
+    "tiie_28d": "SF60648",
+    "udi": "SP68257",
+    "usd_mxn": "SF43718"
+  },
+  "carry_index_methodology": {
+    "base_level": 100.0,
+    "calendar_day_policy": "carry is compounded once per elapsed calendar day on an internal daily grid, then sampled on joint USD/MXN and UDI observation dates",
+    "day_count_basis": 360,
+    "formula": "I_d = I_(d-1) * (1 + (y_(d-1) / 100) / 360)",
+    "level_observation_policy": "USD/MXN and UDI levels are never forward-filled; retain dates where both levels were observed",
+    "missing_rate_policy": "use the last published annualized rate after the first valid observation",
+    "scope_limit": "synthetic classroom indexes; not observed prices, total-return indexes, or investable strategies",
+    "stored_interval_formula": "I_t / I_s = product from d=s+1 to t of (1 + (y_(d-1) / 100) / 360)"
+  },
+  "columns": {
+    "banxico_daily": [
+      "usd_mxn",
+      "cetes_28d",
+      "tiie_28d",
+      "policy_rate",
+      "udi"
+    ],
+    "dbnomics_daily": [
+      "mexico_cpi",
+      "us_10y"
+    ],
+    "nasdaq_stock_panel": [
+      "AAPL",
+      "MSFT",
+      "NVDA",
+      "AMZN",
+      "GOOGL"
+    ],
+    "official_macro_panel": [
+      "banxico_target_rate",
+      "cetes_28d",
+      "tiie_28d",
+      "usd_mxn",
+      "udi",
+      "mexico_cpi",
+      "mexico_inflation",
+      "us_10y"
+    ],
+    "official_price_panel": [
+      "usd_mxn",
+      "udi",
+      "cetes_28d_carry",
+      "tiie_28d_carry",
+      "policy_rate_carry"
+    ]
+  },
+  "dbnomics_series": {
+    "mexico_cpi": "IMF/CPI/M.MX.PCPI_IX",
+    "us_10y": "FED/H15/RIFLGFCY10_N.B"
+  },
+  "derived_generated_at": "2026-07-21T06:17:38.531771+00:00",
+  "generated_at": "2026-06-07T03:26:53.768620+00:00",
+  "generation_mode": "derived-only",
+  "methodology_breaks": {
+    "tiie_28d": {
+      "effective_date": "2025-01-01",
+      "note": "Banco de Mexico changed the 28-day TIIE methodology from submitted bank quotes to a market-transaction-based method. The synthetic carry path preserves, rather than removes, this break.",
+      "series_id": "SF60648",
+      "source": "https://www.banxico.org.mx/SieInternet/consultarDirectorioInternetAction.do?accion=consultarCuadro&idCuadro=CF111&locale=en"
+    }
+  },
+  "module_1_analysis_window": {
+    "end": "2025-06-30",
+    "inclusive": true,
+    "note": "Module 1 slices wider source snapshots to this requested window; actual boundaries follow each source calendar and frequency.",
+    "start": "2021-01-01"
+  },
+  "nasdaq_stock_snapshot_end": "2026-06-05",
+  "nasdaq_stock_snapshot_generated_at": "2026-06-07T04:55:41.700953+00:00",
+  "nasdaq_stock_snapshot_start": "2021-01-01",
+  "nasdaq_stock_tickers": {
+    "AAPL": "Apple Inc.",
+    "AMZN": "Amazon.com, Inc.",
+    "GOOGL": "Alphabet Inc. Class A",
+    "MSFT": "Microsoft Corporation",
+    "NVDA": "NVIDIA Corporation"
+  },
+  "notes": [
+    "CSV snapshots are committed for reproducible publication builds.",
+    "Banxico and DB.NOMICS source rates are percentage points; macro rates are decimals.",
+    "Carry compounds the previous known rate once per calendar day under a 360-day convention.",
+    "NASDAQ adjusted closes come from Yahoo Finance through yfinance for classroom EDA.",
+    "Snapshot provenance does not itself establish redistribution or downstream-use rights."
+  ],
+  "observation_policies": {
+    "banxico_daily": "provider-dated observations; no calendar filling",
+    "dbnomics_daily": "provider-dated observations; no calendar filling",
+    "nasdaq_stock_panel": "provider trading dates; no forward filling",
+    "official_macro_panel": "monthly last observations; no forward filling",
+    "official_price_panel": "observed USD/MXN and UDI intersection plus derived carry indexes"
+  },
+  "output_coverage": {
+    "banxico_daily": {
+      "end": "2026-06-05",
+      "start": "2018-01-01"
+    },
+    "dbnomics_daily": {
+      "end": "2026-06-04",
+      "start": "2018-01-01"
+    },
+    "nasdaq_stock_panel": {
+      "end": "2026-06-05",
+      "start": "2021-01-04"
+    },
+    "official_macro_panel": {
+      "end": "2025-06-30",
+      "start": "2019-01-31"
+    },
+    "official_price_panel": {
+      "end": "2026-06-05",
+      "start": "2018-01-02"
+    }
+  },
+  "outputs": {
+    "banxico_daily": "data/snapshots/banxico_daily.csv",
+    "dbnomics_daily": "data/snapshots/dbnomics_daily.csv",
+    "nasdaq_stock_panel": "data/snapshots/nasdaq_stock_panel.csv",
+    "official_macro_panel": "data/snapshots/official_macro_panel.csv",
+    "official_price_panel": "data/snapshots/official_price_panel.csv"
+  },
+  "rebuilt_from_versioned_sources": true,
+  "row_counts": {
+    "banxico_daily": 3078,
+    "dbnomics_daily": 2225,
+    "nasdaq_stock_panel": 1362,
+    "official_macro_panel": 78,
+    "official_price_panel": 2118
+  },
+  "sha256": {
+    "banxico_daily": "4f4611c1004036c77f1d955eaa4f6f257290f44a59fefc137455ff773c1ed3a6",
+    "dbnomics_daily": "c0cc79485f3dd08cf5e1bd763eee4057671077a7f802c13a491e050344f36426",
+    "nasdaq_stock_panel": "762b4cb59a688e05b3c9f757167c706ddd9fc045117377471f416c4d2e758d2a",
+    "official_macro_panel": "874655cda0747702507cf81163b96fa19a593a6a2fb2e3bb708767805b7bd1e9",
+    "official_price_panel": "161795c3a0288ba252f7a33124967d6d32b601ad2b7cd1014e2f0f2f96ccf940"
+  },
+  "snapshot_end": "2026-06-05",
+  "snapshot_start": "2018-01-01"
+}

@@ -79,7 +79,7 @@ def main() -> int:
     html_files = [
         path
         for path in root.rglob("*.html")
-        if "_static" not in path.relative_to(root).parts
+        if not any(part.startswith("_") for part in path.relative_to(root).parts)
     ]
     parsed_files = {path: parse_html(path) for path in html_files}
     ids_by_file = {path: parsed.ids for path, parsed in parsed_files.items()}

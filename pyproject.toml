@@ -10,14 +10,20 @@ dependencies = [
     "arch>=6.0.0,<8.0.0",
     "ipywidgets>=8.0.0,<9.0.0",
     "jupyter-book>=1.0.0,<2.0.0",
+    "jupyterlab-language-pack-es-ES>=4.5.0,<5.0.0",
+    "jupyterlab-lsp>=5.2.0,<6.0.0",
     "jupyterlab>=4.0.0,<5.0.0",
     "jupytext>=1.16.0,<2.0.0",
     "matplotlib>=3.8.0,<4.0.0",
     "notebook>=7.0.0,<8.0.0",
+    "nbclient>=0.10.0,<1.0.0",
+    "nbformat>=5.10.0,<6.0.0",
     "numpy>=1.26.0,<3.0.0",
     "pandas>=2.2.0,<3.0.0",
     "plotly>=5.0.0,<7.0.0",
     "pre-commit>=3.7.0,<5.0.0",
+    "python-lsp-ruff>=2.2.0,<3.0.0",
+    "python-lsp-server>=1.12.0,<2.0.0",
     "pyarrow>=23.0.1,<24.0.0",
     "requests>=2.31.0,<3.0.0",
     "scikit-learn>=1.4.0,<2.0.0",
@@ -30,3 +36,26 @@ dependencies = [
 
 [tool.uv]
 package = false
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0.0,<10.0.0",
+    "ruff>=0.12.0,<1.0.0",
+]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+extend-exclude = [
+    ".jupyter-config",
+    ".uv-cache",
+    ".uv-python",
+    ".venv",
+    "_build",
+]
+
+[tool.ruff.lint]
+select = ["E9", "F63", "F7", "F82"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]

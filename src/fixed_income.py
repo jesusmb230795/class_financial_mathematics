@@ -9,32 +9,116 @@ import pandas as pd
 from scipy.optimize import brentq
 
 
+def _validate_time_and_compounding(time: float, compounding: int | None) -> None:
+    if time < 0:
+        raise ValueError("time must be non-negative")
+    if compounding is not None and (
+        not isinstance(compounding, (int, np.integer)) or compounding <= 0
+    ):
+        raise ValueError("compounding must be a positive integer or None for continuous")
+
+
 def discount_factor(rate: float, time: float, compounding: int | None = 1) -> float:
-    """Return the discount factor for a rate and maturity in years."""
+    """Return a discount factor under nominal or continuous compounding.
+
+    ``compounding=m`` treats ``rate`` as a nominal annual rate convertible ``m``
+    times per year. ``compounding=None`` treats it as a continuously compounded
+    annual rate.
+    """
+    _validate_time_and_compounding(time, compounding)
     if compounding is None:
         return float(np.exp(-rate * time))
+    if 1 + rate / compounding <= 0:
+        raise ValueError("rate is outside the domain of discrete compounding")
     return float((1 + rate / compounding) ** (-compounding * time))
 
 
-def present_value(cash_flows: np.ndarray, times: np.ndarray, rate: float, compounding: int | None = 1) -> float:
+def present_value(
+    cash_flows: np.ndarray,
+    times: np.ndarray,
+    rate: float,
+    compounding: int | None = 1,
+) -> float:
     """Present value of dated cash flows under a flat rate."""
     cash_flows = np.asarray(cash_flows, dtype=float)
     times = np.asarray(times, dtype=float)
+    if cash_flows.ndim != 1 or times.ndim != 1 or cash_flows.shape != times.shape:
+        raise ValueError("cash_flows and times must be one-dimensional arrays of equal length")
+    if not np.all(np.isfinite(cash_flows)) or not np.all(np.isfinite(times)):
+        raise ValueError("cash_flows and times must contain finite values")
+    if np.any(times < 0):
+        raise ValueError("cash-flow times must be non-negative")
     factors = np.array([discount_factor(rate, t, compounding) for t in times])
     return float(np.sum(cash_flows * factors))
 
 
 def future_value(present: float, rate: float, time: float, compounding: int | None = 1) -> float:
-    """Future value under discrete or continuous compounding."""
+    """Future value under the same convention used by :func:`discount_factor`."""
+    _validate_time_and_compounding(time, compounding)
     if compounding is None:
         return float(present * np.exp(rate * time))
+    if 1 + rate / compounding <= 0:
+        raise ValueError("rate is outside the domain of discrete compounding")
     return float(present * (1 + rate / compounding) ** (compounding * time))
 
 
-def annuity_payment(principal: float, annual_rate: float, years: float, payments_per_year: int = 12) -> float:
+def simple_future_value(present: float, rate: float, time: float) -> float:
+    """Future value under simple interest, ``FV = PV(1 + rT)``."""
+    if time < 0:
+        raise ValueError("time must be non-negative")
+    if 1 + rate * time <= 0:
+        raise ValueError("rate and time imply a non-positive accumulation factor")
+    return float(present * (1 + rate * time))
+
+
+def simple_present_value(future: float, rate: float, time: float) -> float:
+    """Present value under simple interest."""
+    if time < 0:
+        raise ValueError("time must be non-negative")
+    accumulation = 1 + rate * time
+    if accumulation <= 0:
+        raise ValueError("rate and time imply a non-positive accumulation factor")
+    return float(future / accumulation)
+
+
+def effective_annual_rate(nominal_rate: float, compounding: int) -> float:
+    """Convert a nominal annual rate convertible ``m`` times to an effective rate."""
+    _validate_time_and_compounding(1.0, compounding)
+    if 1 + nominal_rate / compounding <= 0:
+        raise ValueError("nominal_rate is outside the compounding domain")
+    return float((1 + nominal_rate / compounding) ** compounding - 1)
+
+
+def nominal_rate_from_effective(effective_rate: float, compounding: int) -> float:
+    """Convert an effective annual rate to a nominal annual rate convertible ``m`` times."""
+    _validate_time_and_compounding(1.0, compounding)
+    if effective_rate <= -1:
+        raise ValueError("effective_rate must be greater than -1")
+    return float(compounding * ((1 + effective_rate) ** (1 / compounding) - 1))
+
+
+def continuous_rate_from_effective(effective_rate: float) -> float:
+    """Convert an effective annual rate to a continuously compounded annual rate."""
+    if effective_rate <= -1:
+        raise ValueError("effective_rate must be greater than -1")
+    return float(np.log1p(effective_rate))
+
+
+def effective_rate_from_continuous(continuous_rate: float) -> float:
+    """Convert a continuously compounded annual rate to an effective annual rate."""
+    return float(np.expm1(continuous_rate))
+
+
+def annuity_payment(
+    principal: float, annual_rate: float, years: float, payments_per_year: int = 12
+) -> float:
     """Level payment for an amortizing loan."""
+    if principal <= 0 or years <= 0 or payments_per_year <= 0:
+        raise ValueError("principal, years, and payments_per_year must be positive")
     periods = int(round(years * payments_per_year))
     period_rate = annual_rate / payments_per_year
+    if 1 + period_rate <= 0:
+        raise ValueError("annual_rate is outside the payment-frequency domain")
     if period_rate == 0:
         return principal / periods
     return float(principal * period_rate / (1 - (1 + period_rate) ** (-periods)))
@@ -76,6 +160,14 @@ class Cetes:
     face_value: float = 10.0
     day_count: int = 360
 
+    def __post_init__(self) -> None:
+        if self.days_to_maturity <= 0:
+            raise ValueError("days_to_maturity must be positive")
+        if self.face_value <= 0 or self.day_count <= 0:
+            raise ValueError("face_value and day_count must be positive")
+        if 1 + self.annual_yield * self.days_to_maturity / self.day_count <= 0:
+            raise ValueError("annual_yield implies a non-positive price denominator")
+
     @property
     def price(self) -> float:
         denominator = 1 + self.annual_yield * self.days_to_maturity / self.day_count
@@ -83,7 +175,9 @@ class Cetes:
 
     @property
     def discount_rate(self) -> float:
-        return cetes_discount_rate_from_yield(self.annual_yield, self.days_to_maturity, self.day_count)
+        return cetes_discount_rate_from_yield(
+            self.annual_yield, self.days_to_maturity, self.day_count
+        )
 
 
 def cetes_price(
@@ -96,19 +190,36 @@ def cetes_price(
     return Cetes(days_to_maturity, annual_yield, face_value, day_count).price
 
 
-def cetes_discount_rate_from_yield(annual_yield: float, days_to_maturity: int, day_count: int = 360) -> float:
+def cetes_discount_rate_from_yield(
+    annual_yield: float, days_to_maturity: int, day_count: int = 360
+) -> float:
     """Convert CETES return yield into the quoted discount-rate basis."""
+    if days_to_maturity <= 0 or day_count <= 0:
+        raise ValueError("days_to_maturity and day_count must be positive")
+    if 1 + annual_yield * days_to_maturity / day_count <= 0:
+        raise ValueError("annual_yield is outside the quotation domain")
     return float(annual_yield / (1 + annual_yield * days_to_maturity / day_count))
 
 
-def cetes_yield_from_discount_rate(discount_rate: float, days_to_maturity: int, day_count: int = 360) -> float:
+def cetes_yield_from_discount_rate(
+    discount_rate: float, days_to_maturity: int, day_count: int = 360
+) -> float:
     """Convert CETES discount-rate quote into return-yield basis."""
+    if days_to_maturity <= 0 or day_count <= 0:
+        raise ValueError("days_to_maturity and day_count must be positive")
+    if 1 - discount_rate * days_to_maturity / day_count <= 0:
+        raise ValueError("discount_rate is outside the quotation domain")
     return float(discount_rate / (1 - discount_rate * days_to_maturity / day_count))
 
 
 @dataclass(frozen=True)
 class BonoM:
-    """Simplified Bono M valuation with semiannual 182-day coupons."""
+    """Simplified Bono M valuation with 182-day coupons and a declared basis.
+
+    ``day_count`` is used consistently for the coupon cash amount, the yield per
+    coupon period, and accrued interest. Changing it therefore changes the whole
+    simplified quotation convention, not accrued interest alone.
+    """
 
     coupon_rate: float
     annual_yield: float
@@ -118,6 +229,17 @@ class BonoM:
     coupon_days: int = 182
     day_count: int = 360
 
+    def __post_init__(self) -> None:
+        if self.remaining_coupons <= 0:
+            raise ValueError("remaining_coupons must be positive")
+        if not 0 <= self.days_since_last_coupon < self.coupon_days:
+            raise ValueError("days_since_last_coupon must be in [0, coupon_days)")
+        if self.face_value <= 0 or self.coupon_days <= 0 or self.day_count <= 0:
+            raise ValueError("face_value, coupon_days, and day_count must be positive")
+        period_yield = self.annual_yield * self.coupon_days / self.day_count
+        if 1 + period_yield <= 0:
+            raise ValueError("annual_yield is outside the coupon-period domain")
+
     @property
     def coupon_payment(self) -> float:
         return self.face_value * self.coupon_rate * self.coupon_days / self.day_count
@@ -125,7 +247,9 @@ class BonoM:
     @property
     def fractional_periods(self) -> np.ndarray:
         periods = np.arange(1, self.remaining_coupons + 1, dtype=float)
-        fraction_to_next_coupon = (self.coupon_days - self.days_since_last_coupon) / self.coupon_days
+        fraction_to_next_coupon = (
+            self.coupon_days - self.days_since_last_coupon
+        ) / self.coupon_days
         return periods - 1 + fraction_to_next_coupon
 
     @property
@@ -142,7 +266,9 @@ class BonoM:
 
     @property
     def accrued_interest(self) -> float:
-        return float(self.face_value * self.coupon_rate * self.days_since_last_coupon / self.day_count)
+        return float(
+            self.face_value * self.coupon_rate * self.days_since_last_coupon / self.day_count
+        )
 
     @property
     def clean_price(self) -> float:
@@ -164,7 +290,9 @@ def bono_m_price_table(bond: BonoM) -> pd.DataFrame:
     )
 
 
-def udibono_settlement_mxn(clean_price_udis: float, accrued_interest_udis: float, udi_value: float) -> float:
+def udibono_settlement_mxn(
+    clean_price_udis: float, accrued_interest_udis: float, udi_value: float
+) -> float:
     """Convert an UDIBONO clean price and accrued interest in UDIS into MXN settlement."""
     return float((clean_price_udis + accrued_interest_udis) * udi_value)
 
@@ -173,15 +301,21 @@ def yield_to_maturity_from_cash_flows(
     price: float,
     cash_flows: np.ndarray,
     times: np.ndarray,
+    compounding: int | None = 1,
     lower: float = -0.95,
     upper: float = 1.50,
 ) -> float:
-    """Solve yield to maturity from a market price and dated cash flows."""
+    """Solve a flat annual YTM under the declared compounding convention."""
     cash_flows = np.asarray(cash_flows, dtype=float)
     times = np.asarray(times, dtype=float)
+    if price <= 0:
+        raise ValueError("price must be positive")
+    present_value(cash_flows, times, 0.0, compounding)
+    if lower >= upper:
+        raise ValueError("lower must be less than upper")
 
     def error(rate: float) -> float:
-        return present_value(cash_flows, times, rate, compounding=1) - price
+        return present_value(cash_flows, times, rate, compounding=compounding) - price
 
     return float(brentq(error, lower, upper))
 

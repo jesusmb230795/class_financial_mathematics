@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from datetime import timedelta
 from pathlib import Path
 
@@ -17,9 +18,11 @@ DEFAULT_LIVE_START = "2020-01-01"
 DEFAULT_LIVE_END = "2024-12-31"
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 SNAPSHOT_DIR = PROJECT_ROOT / "data" / "snapshots"
+BANXICO_DAILY_PATH = SNAPSHOT_DIR / "banxico_daily.csv"
 OFFICIAL_PRICE_PANEL_PATH = SNAPSHOT_DIR / "official_price_panel.csv"
 OFFICIAL_MACRO_PANEL_PATH = SNAPSHOT_DIR / "official_macro_panel.csv"
 NASDAQ_STOCK_PANEL_PATH = SNAPSHOT_DIR / "nasdaq_stock_panel.csv"
+SNAPSHOT_METADATA_PATH = SNAPSHOT_DIR / "metadata.json"
 
 DEFAULT_NASDAQ_STOCK_TICKERS = {
     "AAPL": "Apple Inc.",
@@ -30,6 +33,25 @@ DEFAULT_NASDAQ_STOCK_TICKERS = {
 }
 
 DEFAULT_RETURN_DASHBOARD_TICKERS = {ticker: ticker for ticker in DEFAULT_NASDAQ_STOCK_TICKERS}
+
+LIVE_MACRO_BANXICO_SERIES = {
+    "banxico_target_rate": "SF61745",
+    "cetes_28d": "SF60633",
+    "tiie_28d": "SF60648",
+    "usd_mxn": "SF43718",
+    "udi": "SP68257",
+}
+
+OFFICIAL_MACRO_COLUMNS = (
+    "banxico_target_rate",
+    "cetes_28d",
+    "tiie_28d",
+    "usd_mxn",
+    "udi",
+    "mexico_cpi",
+    "mexico_inflation",
+    "us_10y",
+)
 
 
 class MarketDataClient:
@@ -49,15 +71,16 @@ class MarketDataClient:
         ttl: timedelta | None = timedelta(days=1),
         force_refresh: bool = False,
     ) -> pd.DataFrame:
-        """Fetch adjusted Yahoo Finance prices with local caching."""
+        """Fetch adjusted Yahoo Finance prices over an inclusive date interval."""
         ticker_list = [tickers] if isinstance(tickers, str) else list(tickers)
         key = stable_cache_key("yahoo", ticker_list, start, end, field)
+        end_exclusive = (pd.Timestamp(end) + pd.Timedelta(days=1)).strftime("%Y-%m-%d")
 
         def fetcher() -> pd.DataFrame:
             data = yf.download(
                 ticker_list,
                 start=start,
-                end=end,
+                end=end_exclusive,
                 auto_adjust=True,
                 progress=False,
                 group_by="column",
@@ -79,17 +102,20 @@ class MarketDataClient:
                 "tickers": ticker_list,
                 "start": start,
                 "end": end,
+                "end_inclusive": True,
                 "field": field,
             },
         )
 
 
-def _percent_to_decimal(series: pd.Series) -> pd.Series:
-    """Convert percentage-point series to decimals when needed."""
+def rate_to_decimal(series: pd.Series, *, source_unit: str) -> pd.Series:
+    """Convert a rate series to decimals under an explicit source-unit contract."""
     numeric = pd.to_numeric(series, errors="coerce")
-    if numeric.dropna().abs().max() > 1:
+    if source_unit == "percentage_points":
         return numeric / 100
-    return numeric
+    if source_unit == "decimal":
+        return numeric
+    raise ValueError("source_unit must be 'percentage_points' or 'decimal'")
 
 
 def _read_snapshot(path: str | Path) -> pd.DataFrame:
@@ -118,31 +144,85 @@ def _slice_dates(
     return frame.loc[start_date:end_date]
 
 
+def banxico_daily_panel(
+    start: str | None = None,
+    end: str | None = None,
+) -> pd.DataFrame:
+    """Load provider-dated Banxico observations without calendar filling.
+
+    This source-layer surface preserves every date present in the committed
+    Banxico extract. Individual columns can contain missing values because the
+    series follow different publication calendars. By contrast,
+    :func:`mexican_market_level_panel` is a derived analytical surface that
+    retains the joint USD/MXN and UDI observation dates and adds synthetic carry
+    indexes.
+    """
+    panel = _read_snapshot(BANXICO_DAILY_PATH)
+    if start is not None or end is not None:
+        panel = _slice_dates(panel, start=start, end=end)
+
+    metadata: dict[str, object] = {}
+    if SNAPSHOT_METADATA_PATH.exists():
+        metadata = json.loads(SNAPSHOT_METADATA_PATH.read_text(encoding="utf-8"))
+
+    panel.attrs["data_mode"] = "snapshot"
+    panel.attrs["sources"] = "Banxico SIE official snapshot"
+    panel.attrs["observation_policy"] = (
+        "provider-dated observations; no calendar reindexing or forward fill"
+    )
+    panel.attrs["snapshot_generated_at"] = metadata.get("generated_at")
+    panel.attrs["series_ids"] = metadata.get("banxico_series", {})
+    if not panel.empty:
+        panel.attrs["start"] = panel.index.min().strftime("%Y-%m-%d")
+        panel.attrs["end"] = panel.index.max().strftime("%Y-%m-%d")
+    return panel.rename_axis("date")
+
+
+def mexican_market_level_panel(
+    start: str | None = None,
+    end: str | None = None,
+) -> pd.DataFrame:
+    """Load observed Mexican market levels plus synthetic short-rate carry indexes."""
+    panel = _read_snapshot(OFFICIAL_PRICE_PANEL_PATH)
+    if start is not None or end is not None:
+        panel = _slice_dates(panel, start=start, end=end)
+    if panel.empty:
+        raise ValueError("Mexican market level panel has no observations in the requested window.")
+    panel.attrs["data_mode"] = "snapshot"
+    panel.attrs["sources"] = (
+        "Versioned Banxico SIE observations and documented synthetic carry transformations"
+    )
+    panel.attrs["panel_semantics"] = (
+        "jointly observed USD/MXN and UDI levels with synthetic short-rate carry indexes"
+    )
+    panel.attrs["observation_policy"] = (
+        "retain dates where both USD/MXN and UDI were observed; never forward-fill levels"
+    )
+    panel.attrs["start"] = panel.index.min().strftime("%Y-%m-%d")
+    panel.attrs["end"] = panel.index.max().strftime("%Y-%m-%d")
+    return panel.rename_axis("date")
+
+
 def official_price_panel(
     start: str | None = None,
     end: str | None = None,
 ) -> pd.DataFrame:
-    """Load the versioned official price-like panel used by the published book."""
-    panel = _read_snapshot(OFFICIAL_PRICE_PANEL_PATH)
-    if start is not None or end is not None:
-        panel = _slice_dates(panel, start=start, end=end)
-    panel.attrs["data_mode"] = "snapshot"
-    panel.attrs["sources"] = "Banxico SIE official snapshot"
-    panel.attrs["start"] = panel.index.min().strftime("%Y-%m-%d")
-    panel.attrs["end"] = panel.index.max().strftime("%Y-%m-%d")
-    return panel.rename_axis("date")
+    """Compatibility alias for :func:`mexican_market_level_panel`."""
+    return mexican_market_level_panel(start=start, end=end)
 
 
 def official_macro_panel(
     start: str | None = None,
     end: str | None = None,
 ) -> pd.DataFrame:
-    """Load the versioned official macro panel used by the published book."""
+    """Load the versioned Banxico and DB.NOMICS macro panel used by the book."""
     panel = _read_snapshot(OFFICIAL_MACRO_PANEL_PATH)
     if start is not None or end is not None:
         panel = _slice_dates(panel, start=start, end=end)
+    if panel.empty:
+        raise ValueError("Macro snapshot panel has no observations in the requested window.")
     panel.attrs["data_mode"] = "snapshot"
-    panel.attrs["sources"] = "Banxico SIE and DB.NOMICS official snapshots"
+    panel.attrs["sources"] = "Versioned Banxico SIE and DB.NOMICS snapshots"
     panel.attrs["start"] = panel.index.min().strftime("%Y-%m-%d")
     panel.attrs["end"] = panel.index.max().strftime("%Y-%m-%d")
     return panel.rename_axis("date")
@@ -156,9 +236,14 @@ def nasdaq_stock_price_panel(
     panel = _read_snapshot(NASDAQ_STOCK_PANEL_PATH)
     if start is not None or end is not None:
         panel = _slice_dates(panel, start=start, end=end)
+    if panel.empty:
+        raise ValueError("NASDAQ stock panel has no observations in the requested window.")
     panel.attrs["data_mode"] = "snapshot"
-    panel.attrs["sources"] = "Yahoo Finance via yfinance snapshot"
+    panel.attrs["sources"] = "Versioned Yahoo-derived adjusted closes via yfinance"
     panel.attrs["tickers"] = DEFAULT_NASDAQ_STOCK_TICKERS
+    panel.attrs["currency"] = "USD"
+    panel.attrs["field"] = "provider-adjusted close"
+    panel.attrs["frequency"] = "US trading days"
     panel.attrs["start"] = panel.index.min().strftime("%Y-%m-%d")
     panel.attrs["end"] = panel.index.max().strftime("%Y-%m-%d")
     return panel.rename_axis("date")
@@ -168,20 +253,26 @@ def live_macro_dashboard_panel(
     start: str = DEFAULT_LIVE_START,
     end: str = DEFAULT_LIVE_END,
     client: MarketDataClient | None = None,
-    market_ticker: str = "^MXX",
     ttl: timedelta | None = timedelta(days=1),
     force_refresh: bool = False,
 ) -> pd.DataFrame:
-    """Fetch a live macro dashboard panel from Banxico, DB.NOMICS, and public prices.
+    """Fetch a live macro dashboard panel from Banxico and DB.NOMICS.
 
     Returned columns match the versioned official macro snapshot so dashboard
     code can switch between reproducible and live real-data inputs without
     changing visualization logic.
     """
     client = client or MarketDataClient()
+    requested_start = pd.Timestamp(start)
+    requested_end = pd.Timestamp(end)
+    if requested_start > requested_end:
+        raise ValueError("start must be on or before end")
+    cpi_lookback_start = (
+        requested_start.to_period("M").start_time - pd.DateOffset(months=12)
+    ).strftime("%Y-%m-%d")
 
     banxico = client.banxico.fetch_series_group(
-        ["SF61745", "SF43718"],
+        list(LIVE_MACRO_BANXICO_SERIES.values()),
         start=start,
         end=end,
         ttl=ttl,
@@ -189,36 +280,44 @@ def live_macro_dashboard_panel(
     )
     dbnomics = client.dbnomics.fetch_series_group(
         DBNOMICS_MACRO_SERIES,
-        start=start,
+        start=cpi_lookback_start,
         end=end,
         ttl=ttl,
         force_refresh=force_refresh,
     )
-    market_prices = client.yahoo_prices(
-        market_ticker,
-        start=start,
-        end=end,
-        ttl=ttl,
-        force_refresh=force_refresh,
+    banxico = banxico.rename(
+        columns={series_id: label for label, series_id in LIVE_MACRO_BANXICO_SERIES.items()}
     )
-
-    cpi = dbnomics["mexico_cpi"].resample("ME").last()
+    banxico_monthly = banxico.resample("ME").last()
+    dbnomics_monthly = dbnomics.resample("ME").last()
+    cpi = dbnomics_monthly["mexico_cpi"]
     macro = pd.DataFrame(
         {
-            "banxico_target_rate": _percent_to_decimal(banxico["SF61745"]).resample("ME").last(),
+            "banxico_target_rate": rate_to_decimal(
+                banxico_monthly["banxico_target_rate"], source_unit="percentage_points"
+            ),
+            "cetes_28d": rate_to_decimal(
+                banxico_monthly["cetes_28d"], source_unit="percentage_points"
+            ),
+            "tiie_28d": rate_to_decimal(
+                banxico_monthly["tiie_28d"], source_unit="percentage_points"
+            ),
+            "usd_mxn": banxico_monthly["usd_mxn"],
+            "udi": banxico_monthly["udi"],
+            "mexico_cpi": cpi,
             "mexico_inflation": cpi.pct_change(12, fill_method=None),
-            "usd_mxn": banxico["SF43718"].resample("ME").last(),
-            "us_10y": _percent_to_decimal(dbnomics["us_10y"]).resample("ME").last(),
-            "ipc_index": market_prices.iloc[:, 0].resample("ME").last(),
+            "us_10y": rate_to_decimal(dbnomics_monthly["us_10y"], source_unit="percentage_points"),
         }
     )
-    macro = macro.ffill().dropna().rename_axis("date")
+    macro = macro.loc[requested_start:requested_end, list(OFFICIAL_MACRO_COLUMNS)]
+    macro = macro.dropna(how="any").rename_axis("date")
     if macro.empty:
         raise ValueError("Live macro dashboard panel is empty after alignment and cleaning.")
     macro.attrs["data_mode"] = "live"
-    macro.attrs["sources"] = "Banxico SIE, DB.NOMICS, Yahoo Finance"
-    macro.attrs["start"] = start
-    macro.attrs["end"] = end
+    macro.attrs["sources"] = "Banxico SIE and DB.NOMICS"
+    macro.attrs["observation_policy"] = "monthly last observations; no forward filling"
+    macro.attrs["start"] = macro.index.min().strftime("%Y-%m-%d")
+    macro.attrs["end"] = macro.index.max().strftime("%Y-%m-%d")
     return macro
 
 
@@ -243,12 +342,13 @@ def live_return_dashboard_prices(
     rename_map = {ticker: label for label, ticker in ticker_map.items()}
     prices = raw_prices.rename(columns=rename_map).sort_index()
     prices = prices.reindex(columns=list(ticker_map.keys())).dropna(axis=1, how="all")
-    prices = prices.dropna(how="all").ffill()
+    prices = prices.dropna(how="all")
     if prices.empty:
         raise ValueError("Live return dashboard price panel is empty after provider fetch.")
     prices.attrs["data_mode"] = "live"
     prices.attrs["sources"] = "Yahoo Finance public market prices"
     prices.attrs["tickers"] = ticker_map
+    prices.attrs["observation_policy"] = "provider observations; no forward filling"
     prices.attrs["start"] = start
     prices.attrs["end"] = end
     return prices.rename_axis("date")
@@ -273,12 +373,13 @@ def live_nasdaq_stock_prices(
         force_refresh=force_refresh,
     )
     prices = raw_prices.reindex(columns=list(ticker_map.keys())).dropna(axis=1, how="all")
-    prices = prices.dropna(how="all").ffill()
+    prices = prices.dropna(how="all")
     if prices.empty:
         raise ValueError("Live NASDAQ stock price panel is empty after provider fetch.")
     prices.attrs["data_mode"] = "live"
     prices.attrs["sources"] = "Yahoo Finance public market prices via yfinance"
     prices.attrs["tickers"] = ticker_map
+    prices.attrs["observation_policy"] = "provider observations; no forward filling"
     prices.attrs["start"] = start
     prices.attrs["end"] = end
     return prices.rename_axis("date")
@@ -329,9 +430,9 @@ def returns_from_prices(
 def align_time_series(
     frames: dict[str, pd.Series | pd.DataFrame],
     frequency: str = "B",
-    fill_method: str | None = "ffill",
+    fill_method: str | None = None,
 ) -> pd.DataFrame:
-    """Align named time series to a common calendar."""
+    """Align named time series without filling unless a method is explicit."""
     normalized = []
     for name, data in frames.items():
         frame = data.to_frame(name=name) if isinstance(data, pd.Series) else data.copy()
@@ -355,7 +456,7 @@ def wfe_equity_market_scale_snapshot() -> pd.DataFrame:
     """
     source_url = "https://focus.world-exchanges.org/issue/may-2026/dashboard"
     source_snapshot = "WFE Focus dashboard, May 2026"
-    retrieved_on = "2026-06-06"
+    verified_on = "2026-07-20"
     rows = [
         {
             "metric": "Market capitalisation",
@@ -424,23 +525,24 @@ def wfe_equity_market_scale_snapshot() -> pd.DataFrame:
     snapshot = pd.DataFrame(rows)
     snapshot["source_snapshot"] = source_snapshot
     snapshot["source_url"] = source_url
-    snapshot["retrieved_on"] = retrieved_on
+    snapshot["verified_on"] = verified_on
+    snapshot["change_basis"] = "not specified on source dashboard"
     return snapshot
 
 
 def dashboard_data_inventory() -> pd.DataFrame:
-    """Return the recommended provider map for the interactive dashboards."""
+    """Return the publication-provider map for the interactive dashboards."""
     return pd.DataFrame(
         [
             {
                 "dashboard": "Macro dashboard",
-                "primary_sources": "Banxico SIE, DB.NOMICS, INEGI API, World Bank",
+                "primary_sources": "Banxico SIE and DB.NOMICS",
                 "publication_input": "official_macro_panel.csv",
                 "provider_notes": "Publication builds read versioned Banxico and DB.NOMICS snapshots.",
             },
             {
                 "dashboard": "Return explorer",
-                "primary_sources": "Finnhub, EODHD, Alpha Vantage, FMP, Yahoo Finance",
+                "primary_sources": "Yahoo Finance through yfinance",
                 "publication_input": "nasdaq_stock_panel.csv",
                 "provider_notes": "Use Yahoo Finance adjusted-close snapshots for reproducible NASDAQ stock return examples.",
             },
@@ -453,8 +555,8 @@ def dashboard_data_inventory() -> pd.DataFrame:
             {
                 "dashboard": "Risk and portfolio dashboards",
                 "primary_sources": "Clean return matrix from documented market providers",
-                "publication_input": "official_price_panel.csv",
-                "provider_notes": "Cache provider extracts before modeling risk or portfolios.",
+                "publication_input": "module-specific documented asset-return matrix",
+                "provider_notes": "Do not treat mixed market levels and synthetic carry indexes as a single asset universe.",
             },
         ]
     )

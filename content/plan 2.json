@@ -1,0 +1,222 @@
+{
+  "schema_version": 1,
+  "book": {
+    "title": "Quantitative Financial Mathematics with Python",
+    "publication_language": "en",
+    "accepted_source_languages": [
+      "en",
+      "es"
+    ],
+    "production_toc": "_toc.yml",
+    "migration_toc": "myst.yml",
+    "notebook_manifest": "notebooks/manifest.json",
+    "debt_register": "content/debt.json"
+  },
+  "allowed_values": {
+    "publication_status": [
+      "published",
+      "source-only",
+      "roadmap"
+    ],
+    "completion_status": [
+      "substantial",
+      "partial",
+      "source-only",
+      "not-started"
+    ]
+  },
+  "modules": [
+    {
+      "id": "00",
+      "title": "Setup and Python Ecosystem",
+      "publication_status": "published",
+      "completion_status": "substantial",
+      "roadmap_status": "Published; operational baseline",
+      "overview": "chapters/00-python-ecosystem.md",
+      "target_overview": "chapters/00-python-ecosystem.md",
+      "existing_sources": [
+        "notebooks/course/0.*"
+      ],
+      "gaps": [
+        "Keep setup instructions synchronized with the actual repository layout and validation commands."
+      ],
+      "next_text_target": "Maintenance text only unless the authoring or runtime contract changes."
+    },
+    {
+      "id": "01",
+      "title": "Markets, Instruments, and Data",
+      "publication_status": "published",
+      "completion_status": "substantial",
+      "roadmap_status": "Published; substantial",
+      "overview": "chapters/01-markets-data.md",
+      "target_overview": "chapters/01-markets-data.md",
+      "existing_sources": [
+        "notebooks/course/1.*",
+        "notebooks/legacy/macro_dashboard_banxico_fred.*"
+      ],
+      "gaps": [
+        "Add the remaining Mexican market-infrastructure glossary and compact cross-provider schema example.",
+        "Keep provider, license, revision, and snapshot policies explicit."
+      ],
+      "next_text_target": "A concise market-infrastructure and provider-comparison lesson."
+    },
+    {
+      "id": "02",
+      "title": "Quantitative Methods and Financial Time Series",
+      "publication_status": "published",
+      "completion_status": "partial",
+      "roadmap_status": "Published; time-series branch usable, broader methods pending",
+      "overview": "chapters/02-time-series.md",
+      "target_overview": "chapters/02-time-series.md",
+      "existing_sources": [
+        "notebooks/course/2.*",
+        "notebooks/labs/5.1.*"
+      ],
+      "gaps": [
+        "Add probability, inference, regression, simulation, model validation, and machine-learning foundations promised by the roadmap.",
+        "Separate general quantitative foundations from the existing time-series sequence."
+      ],
+      "next_text_target": "Probability, inference, and regression foundations that precede the time-series branch."
+    },
+    {
+      "id": "03",
+      "title": "Economics, Macro, and Currency",
+      "publication_status": "published",
+      "completion_status": "partial",
+      "roadmap_status": "Published; narrative foundation, executable cases pending",
+      "overview": "chapters/03-economics-macro-currency.md",
+      "target_overview": "chapters/03-economics-macro-currency.md",
+      "existing_sources": [
+        "notebooks/course/3.*"
+      ],
+      "gaps": [
+        "Add reproducible macro, parity, and scenario examples backed by versioned data.",
+        "Promote a defined macro dashboard only after source ids and revision policy are stable."
+      ],
+      "next_text_target": "An applied macro-indicator or FX-parity case with an explicit data contract."
+    },
+    {
+      "id": "04",
+      "title": "Financial Statement Analysis and Financial Modeling",
+      "publication_status": "roadmap",
+      "completion_status": "not-started",
+      "roadmap_status": "Roadmap; new text required",
+      "overview": null,
+      "target_overview": "chapters/04-financial-statements-modeling.md",
+      "existing_sources": [],
+      "gaps": [
+        "Create the module overview and the full statement-analysis sequence.",
+        "Add accounting adjustments, ratio analysis, reporting quality, and three-statement modeling."
+      ],
+      "next_text_target": "Financial statement architecture, accounting identities, and analyst workflow."
+    },
+    {
+      "id": "05",
+      "title": "Corporate Issuers and Equity Valuation",
+      "publication_status": "roadmap",
+      "completion_status": "not-started",
+      "roadmap_status": "Roadmap; new text required",
+      "overview": null,
+      "target_overview": "chapters/05-corporate-equity-valuation.md",
+      "existing_sources": [],
+      "gaps": [
+        "Create the module overview and corporate-finance sequence.",
+        "Add DDM, FCFF, FCFE, residual-income, multiples, and investment-memo coverage."
+      ],
+      "next_text_target": "Corporate investment decisions, capital structure, and valuation framework."
+    },
+    {
+      "id": "06",
+      "title": "Fixed Income, Credit, and Term Structure",
+      "publication_status": "source-only",
+      "completion_status": "source-only",
+      "roadmap_status": "Source-only; consolidation and new credit text required",
+      "overview": null,
+      "target_overview": "chapters/06-fixed-income-credit-term-structure.md",
+      "existing_sources": [
+        "chapters/05-fixed-income.md",
+        "chapters/06-term-structure.md",
+        "notebooks/labs/5.2.*",
+        "notebooks/labs/5.3.*",
+        "notebooks/labs/5.4.*",
+        "notebooks/labs/5.5.*",
+        "notebooks/labs/6.*"
+      ],
+      "gaps": [
+        "Consolidate the old fixed-income and term-structure numbering into Module 6.",
+        "Add credit-risk, spread, embedded-option, and securitized-product text.",
+        "Review settlement, day-count, and Mexican instrument conventions before publication."
+      ],
+      "next_text_target": "A unifying fixed-income overview followed by the missing credit-risk spine."
+    },
+    {
+      "id": "07",
+      "title": "Derivatives and Risk Management",
+      "publication_status": "source-only",
+      "completion_status": "source-only",
+      "roadmap_status": "Source-only; integration and governance text required",
+      "overview": null,
+      "target_overview": "chapters/07-derivatives-risk-management.md",
+      "existing_sources": [
+        "chapters/07-derivatives.md",
+        "chapters/03-market-risk.md",
+        "notebooks/labs/7.*"
+      ],
+      "gaps": [
+        "Integrate pricing and market-risk material into one intentional sequence.",
+        "Add hedging, limits, risk budgeting, governance, and portfolio-level interpretation.",
+        "Review notebook numbering and citations before promotion."
+      ],
+      "next_text_target": "The transition from derivative pricing to hedging and portfolio risk governance."
+    },
+    {
+      "id": "08",
+      "title": "Alternative Investments",
+      "publication_status": "roadmap",
+      "completion_status": "not-started",
+      "roadmap_status": "Roadmap; new text required",
+      "overview": null,
+      "target_overview": "chapters/08-alternative-investments.md",
+      "existing_sources": [],
+      "gaps": [
+        "Create the module overview and coverage of private capital, real assets, commodities, hedge funds, and liquidity-adjusted risk.",
+        "Define which Mexican examples can be supported with auditable data."
+      ],
+      "next_text_target": "Alternative-asset structures, cash-flow patterns, valuation constraints, and due diligence."
+    },
+    {
+      "id": "09",
+      "title": "Portfolio Management, Asset Allocation, and Performance",
+      "publication_status": "source-only",
+      "completion_status": "source-only",
+      "roadmap_status": "Source-only; renumbering and broader portfolio text required",
+      "overview": null,
+      "target_overview": "chapters/09-portfolio-management.md",
+      "existing_sources": [
+        "chapters/04-portfolio-theory.md",
+        "notebooks/labs/4.*",
+        "notebooks/legacy/modern_portfolio_theory_1.*"
+      ],
+      "gaps": [
+        "Renumber the old Module 4 portfolio sources into Module 9 before promotion.",
+        "Add IPS, allocation, implementation, attribution, costs, monitoring, and governance."
+      ],
+      "next_text_target": "Portfolio process and IPS before extending the existing mean-variance material."
+    },
+    {
+      "id": "10",
+      "title": "Advanced Pathways and Capstone",
+      "publication_status": "roadmap",
+      "completion_status": "not-started",
+      "roadmap_status": "Roadmap; new text required",
+      "overview": null,
+      "target_overview": "chapters/10-capstone.md",
+      "existing_sources": [],
+      "gaps": [
+        "Create pathway briefs for portfolio management, private markets, and private wealth.",
+        "Define capstone inputs, outputs, rubric, reproducibility contract, and presentation standard."
+      ],
+      "next_text_target": "Capstone brief, deliverables, evidence contract, and evaluation rubric."
+    }
+  ]
+}

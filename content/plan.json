@@ -1,0 +1,215 @@
+{
+  "schema_version": 1,
+  "book": {
+    "title": "Quantitative Financial Mathematics with Python",
+    "publication_language": "en",
+    "accepted_source_languages": [
+      "en",
+      "es"
+    ],
+    "production_toc": "_toc.yml",
+    "migration_toc": "myst.yml",
+    "notebook_manifest": "notebooks/manifest.json",
+    "debt_register": "content/debt.json"
+  },
+  "allowed_values": {
+    "publication_status": [
+      "published",
+      "source-only",
+      "roadmap"
+    ],
+    "completion_status": [
+      "substantial",
+      "partial",
+      "source-only",
+      "not-started"
+    ]
+  },
+  "modules": [
+    {
+      "id": "00",
+      "title": "Setup and Python Ecosystem",
+      "publication_status": "published",
+      "completion_status": "substantial",
+      "roadmap_status": "Published; substantial",
+      "overview": "chapters/00-python-ecosystem.md",
+      "target_overview": "chapters/00-python-ecosystem.md",
+      "existing_sources": [
+        "notebooks/course/0.*"
+      ],
+      "gaps": [
+        "Keep setup instructions synchronized with the supported Python, uv, JupyterLab, and publication workflow."
+      ],
+      "next_text_target": "Maintenance text only when the runtime or author workflow changes."
+    },
+    {
+      "id": "01",
+      "title": "Markets, Instruments, and Data",
+      "publication_status": "published",
+      "completion_status": "substantial",
+      "roadmap_status": "Published; substantial",
+      "overview": "chapters/01-markets-data.md",
+      "target_overview": "chapters/01-markets-data.md",
+      "existing_sources": [
+        "notebooks/course/1.*",
+        "notebooks/legacy/macro_dashboard_banxico_fred.*"
+      ],
+      "gaps": [
+        "Keep provider, rights, revision, actual sample, and constructed-series disclosures synchronized with every snapshot refresh."
+      ],
+      "next_text_target": "A concise cross-provider schema and market-infrastructure extension with auditable rights metadata."
+    },
+    {
+      "id": "02",
+      "title": "Quantitative Methods and Financial Time Series",
+      "publication_status": "published",
+      "completion_status": "substantial",
+      "roadmap_status": "Published; substantial",
+      "overview": "chapters/02-time-series.md",
+      "target_overview": "chapters/02-time-series.md",
+      "existing_sources": [
+        "notebooks/course/2.*",
+        "notebooks/legacy/time_value_of_money_superseded.*"
+      ],
+      "gaps": [
+        "Future Bayesian, clustering, and broader machine-learning cases must preserve time order, a benchmark, and interpretable limitations."
+      ],
+      "next_text_target": "A time-aware Bayesian or clustering extension that does not duplicate the portfolio module."
+    },
+    {
+      "id": "03",
+      "title": "Economics, Macro, and Currency",
+      "publication_status": "published",
+      "completion_status": "substantial",
+      "roadmap_status": "Published; substantial",
+      "overview": "chapters/03-economics-macro-currency.md",
+      "target_overview": "chapters/03-economics-macro-currency.md",
+      "existing_sources": [
+        "notebooks/course/3.*"
+      ],
+      "gaps": [
+        "A future nowcasting or currency-overlay dashboard must preserve release dates, real-time vintages, quote conventions, and offline reproducibility; a latest-vintage panel with a one-month lag is not sufficient for point-in-time evaluation.",
+        "The current Ridge case is intentionally rejected because it fails naive FX benchmarks and its scenario sensitivities change sign across estimation windows; future predictive work must earn acceptance on untouched chronological data."
+      ],
+      "next_text_target": "A vintage-aware nowcasting or currency-overlay dashboard with an explicit benchmark."
+    },
+    {
+      "id": "04",
+      "title": "Financial Statement Analysis and Financial Modeling",
+      "publication_status": "published",
+      "completion_status": "substantial",
+      "roadmap_status": "Published; substantial",
+      "overview": "chapters/04-financial-statements-modeling.md",
+      "target_overview": "chapters/04-financial-statements-modeling.md",
+      "existing_sources": [
+        "notebooks/course/4.*"
+      ],
+      "gaps": [
+        "A filing-backed executable case still requires a redistributable source, full statement reconciliation, and a durable audit trail."
+      ],
+      "next_text_target": "A licensed filing-backed three-statement case that reconciles every statement and adjustment."
+    },
+    {
+      "id": "05",
+      "title": "Corporate Issuers and Equity Valuation",
+      "publication_status": "published",
+      "completion_status": "substantial",
+      "roadmap_status": "Published; substantial",
+      "overview": "chapters/05-corporate-equity-valuation.md",
+      "target_overview": "chapters/05-corporate-equity-valuation.md",
+      "existing_sources": [
+        "notebooks/course/5.*"
+      ],
+      "gaps": [
+        "A full equity-research case should add filing-backed forecasts and reconciliation without weakening the existing valuation controls."
+      ],
+      "next_text_target": "A filing-backed equity research case spanning forecasts, valuation, thesis, risks, and monitoring."
+    },
+    {
+      "id": "06",
+      "title": "Fixed Income, Credit, and Term Structure",
+      "publication_status": "published",
+      "completion_status": "substantial",
+      "roadmap_status": "Published; substantial",
+      "overview": "chapters/06-fixed-income-credit-term-structure.md",
+      "target_overview": "chapters/06-fixed-income-credit-term-structure.md",
+      "existing_sources": [
+        "notebooks/course/6.*",
+        "chapters/legacy/05-fixed-income.md",
+        "chapters/legacy/06-term-structure.md"
+      ],
+      "gaps": [
+        "Dealer-grade settlement calendars, credit curves, CDS, OAS, and loan-level securitization remain advanced extensions."
+      ],
+      "next_text_target": "A reviewed credit-curve or securitized-product case with contractual cash-flow validation."
+    },
+    {
+      "id": "07",
+      "title": "Derivatives and Risk Management",
+      "publication_status": "published",
+      "completion_status": "substantial",
+      "roadmap_status": "Published; substantial",
+      "overview": "chapters/07-derivatives-risk-management.md",
+      "target_overview": "chapters/07-derivatives-risk-management.md",
+      "existing_sources": [
+        "notebooks/course/7.*",
+        "chapters/legacy/03-market-risk.md",
+        "chapters/legacy/07-derivatives.md"
+      ],
+      "gaps": [
+        "Counterparty credit, xVA, collateral, margin, and arbitrage-checked volatility surfaces remain advanced extensions."
+      ],
+      "next_text_target": "An arbitrage-checked volatility-surface or counterparty-risk case with explicit numerical governance."
+    },
+    {
+      "id": "08",
+      "title": "Alternative Investments",
+      "publication_status": "published",
+      "completion_status": "substantial",
+      "roadmap_status": "Published; substantial",
+      "overview": "chapters/08-alternative-investments.md",
+      "target_overview": "chapters/08-alternative-investments.md",
+      "existing_sources": [
+        "notebooks/course/8.*"
+      ],
+      "gaps": [
+        "Manager-level empirical cases require auditable cash flows, privacy-safe inputs, and comparable after-fee benchmarks."
+      ],
+      "next_text_target": "A privacy-safe manager due-diligence case with liquidity and after-fee cash-flow analysis."
+    },
+    {
+      "id": "09",
+      "title": "Portfolio Management, Asset Allocation, and Performance",
+      "publication_status": "published",
+      "completion_status": "substantial",
+      "roadmap_status": "Published; substantial",
+      "overview": "chapters/09-portfolio-management.md",
+      "target_overview": "chapters/09-portfolio-management.md",
+      "existing_sources": [
+        "notebooks/course/9.*",
+        "chapters/legacy/04-portfolio-theory.md",
+        "notebooks/legacy/modern_portfolio_theory_1.*"
+      ],
+      "gaps": [
+        "Full multi-period attribution, tax-lot optimization, and implementation-shortfall reporting remain advanced extensions."
+      ],
+      "next_text_target": "A reconciled performance-attribution case with fees, flows, turnover, and implementation shortfall."
+    },
+    {
+      "id": "10",
+      "title": "Advanced Pathways and Capstone",
+      "publication_status": "published",
+      "completion_status": "substantial",
+      "roadmap_status": "Published; substantial",
+      "overview": "chapters/10-capstone.md",
+      "target_overview": "chapters/10-capstone.md",
+      "existing_sources": [
+        "notebooks/course/10.*"
+      ],
+      "gaps": [
+        "Additional datasets and committee cases must retain the same evidence contract, rubric, and privacy boundary."
+      ],
+      "next_text_target": "A second capstone dataset or committee case using the existing evidence and evaluation contract."
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "autosave": true,
+  "autosaveInterval": 60,
+  "confirmClosingDocument": true,
+  "lastModifiedCheckMargin": 500,
+  "maxNumberRecents": 20,
+  "renameUntitledFileOnSave": true
+}

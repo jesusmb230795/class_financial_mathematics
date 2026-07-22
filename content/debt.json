@@ -1,0 +1,384 @@
+{
+  "schema_version": 1,
+  "scoring": {
+    "scale": "1 (low) through 5 (high)",
+    "priority_rule": "P0 is an active correctness or trust failure; P1 blocks coherent module completion or promotion; P2 materially weakens authoring or migration; P3 is polish."
+  },
+  "items": [
+    {
+      "id": "BOOK-001",
+      "title": "Consolidate source-only material under the canonical module taxonomy",
+      "category": "information-architecture",
+      "status": "resolved",
+      "priority": "P1",
+      "evidence": [
+        "content/plan.json modules 06, 07, and 09",
+        "chapters/legacy/README.md and the canonical Module 06, 07, and 09 overviews",
+        "_toc.yml, myst.yml, and notebooks/manifest.json canonical notebooks/course paths; notebooks/labs/ is empty"
+      ],
+      "affected_workflows_or_users": [
+        "authors integrating fixed-income, derivatives, risk, or portfolio text",
+        "readers following module prerequisites",
+        "TOC and notebook-manifest maintainers"
+      ],
+      "observed_symptom": "Useful sources retain old numbers that collide with the 11-module curriculum.",
+      "potential_impact": "New text can be attached to the wrong module or duplicate an existing lesson.",
+      "engineering_risk": "Renaming paired notebooks without coordinated manifest, TOC, link, and cell-id updates can break publication.",
+      "concrete_failure_mode": "A promoted page uses legacy numbering while the roadmap and navigation identify a different subject for that number.",
+      "dependencies": [
+        "content/plan.json",
+        "both book TOCs",
+        "notebooks/manifest.json",
+        "Jupytext pairs and local links"
+      ],
+      "owner": "book editors",
+      "recommended_next_action": "Preserve canonical notebooks/course numbering and the explicit legacy boundary; update the plan, both TOCs, the manifest, local links, visual-asset ownership, and Jupytext pairs atomically for future promotions.",
+      "validation_criteria": [
+        "No promoted path uses a legacy module number.",
+        "Both TOCs, the manifest, and all local links agree after each move.",
+        "make publish-check passes."
+      ],
+      "prioritization": {
+        "impact": 5,
+        "urgency": 5,
+        "risk": 4,
+        "confidence": 5,
+        "effort": 4
+      }
+    },
+    {
+      "id": "BOOK-002",
+      "title": "Complete the quantitative foundations and executable macro branch",
+      "category": "coverage",
+      "status": "resolved",
+      "priority": "P1",
+      "evidence": [
+        "notebooks/course/2.0.quantitative_foundations.py and chapters/02-time-series.md",
+        "notebooks/course/3.5.applied_macro_fx_case.py and chapters/03-economics-macro-currency.md",
+        "content/plan.json modules 02 and 03 and notebooks/manifest.json"
+      ],
+      "affected_workflows_or_users": [
+        "students entering time-series and valuation lessons",
+        "authors relying on probability, inference, regression, simulation, macro, or FX prerequisites"
+      ],
+      "observed_symptom": "Module 02 publishes a strong time-series branch without the broader methods promised by its title, while Module 03 is mainly narrative.",
+      "potential_impact": "Later modules must repeat prerequisites or assume concepts that the book has not taught.",
+      "engineering_risk": "New notebooks may introduce overlapping notation, data contracts, or modeling helpers.",
+      "concrete_failure_mode": "A later lesson invokes inference, regression, simulation, parity, or scenario analysis with no canonical prerequisite page.",
+      "dependencies": [
+        "notation and glossary",
+        "versioned datasets",
+        "reusable code in src",
+        "module prerequisite links"
+      ],
+      "owner": "quantitative methods and macro editors",
+      "recommended_next_action": "Treat Bayesian, clustering, nowcasting, and currency-overlay work as optional extensions; preserve chronological validation, explicit benchmarks, versioned data, and module handoffs.",
+      "validation_criteria": [
+        "Every new page declares prerequisites and a non-duplicative role.",
+        "Executable examples use versioned data and pass fresh execution.",
+        "Module statuses and next-text targets are updated."
+      ],
+      "prioritization": {
+        "impact": 5,
+        "urgency": 4,
+        "risk": 3,
+        "confidence": 5,
+        "effort": 5
+      }
+    },
+    {
+      "id": "BOOK-003",
+      "title": "Author the four modules that currently have no reusable book text",
+      "category": "coverage",
+      "status": "resolved",
+      "priority": "P1",
+      "evidence": [
+        "chapters/04-financial-statements-modeling.md and notebooks/course/4.1 through 4.5",
+        "chapters/05-corporate-equity-valuation.md and notebooks/course/5.1 through 5.5",
+        "chapters/08-alternative-investments.md and notebooks/course/8.1 through 8.5",
+        "chapters/10-capstone.md and notebooks/course/10.1 through 10.5",
+        "content/plan.json, _toc.yml, myst.yml, and notebooks/manifest.json"
+      ],
+      "affected_workflows_or_users": [
+        "authors completing the curriculum",
+        "students expecting the full 11-module path"
+      ],
+      "observed_symptom": "Financial statements, corporate and equity valuation, alternatives, and the capstone exist only as roadmap targets.",
+      "potential_impact": "The published book remains structurally incomplete even when its current pages build successfully.",
+      "engineering_risk": "Large content drops can bypass the intake boundary and create inconsistent terminology, citations, or navigation.",
+      "concrete_failure_mode": "A module is marked published before its overview, sequence, evidence, and assessment contract are complete.",
+      "dependencies": [
+        "incoming-text workflow",
+        "module and lesson templates",
+        "bibliography and glossary",
+        "both book TOCs"
+      ],
+      "owner": "book editors and subject-matter authors",
+      "recommended_next_action": "Route future filing-backed, manager-level, or capstone cases through make new-content and promote only with citations, rights evidence, the plan, both TOCs, and the manifest updated atomically.",
+      "validation_criteria": [
+        "Each module has an approved overview and explicit lesson sequence.",
+        "Claims and datasets pass citation, provenance, and rights review.",
+        "Promotion changes the plan and both TOCs atomically."
+      ],
+      "prioritization": {
+        "impact": 5,
+        "urgency": 4,
+        "risk": 3,
+        "confidence": 5,
+        "effort": 5
+      }
+    },
+    {
+      "id": "BOOK-004",
+      "title": "Replace generic checkpoint boilerplate with lesson-specific assessment",
+      "category": "pedagogy",
+      "status": "resolved",
+      "priority": "P2",
+      "evidence": [
+        "all 71 published lesson sources in notebooks/manifest.json",
+        "scripts/book_content.py published-lesson semantic checks",
+        "tests/test_book_content.py generic-assessment regression coverage"
+      ],
+      "affected_workflows_or_users": [
+        "students practicing financial interpretation",
+        "instructors reviewing objective alignment"
+      ],
+      "observed_symptom": "Many notebooks end with the same general prompt and rubric.",
+      "potential_impact": "Assessment does not reliably demonstrate mastery of the lesson-specific objective.",
+      "engineering_risk": "Bulk edits to generated ipynb files would be overwritten by the canonical percent sources.",
+      "concrete_failure_mode": "A notebook passes structural validation while its checkpoint can be answered without using the lesson method.",
+      "dependencies": [
+        "canonical percent-format notebook sources",
+        "learning objectives",
+        "assessment review"
+      ],
+      "owner": "module authors",
+      "recommended_next_action": "Keep lesson-specific practice and rubrics aligned with learning objectives; retain the semantic content validator and fresh notebook execution for every future promotion.",
+      "validation_criteria": [
+        "Each checkpoint names a lesson-specific calculation or interpretation.",
+        "Each rubric maps visibly to a learning objective.",
+        "Notebook-pair and fresh-execution checks pass."
+      ],
+      "prioritization": {
+        "impact": 3,
+        "urgency": 3,
+        "risk": 2,
+        "confidence": 4,
+        "effort": 4
+      }
+    },
+    {
+      "id": "BOOK-005",
+      "title": "Add prerequisite and next-step links inside the published learning path",
+      "category": "navigation",
+      "status": "resolved",
+      "priority": "P2",
+      "evidence": [
+        "all 71 published sources in notebooks/manifest.json contain prerequisite and handoff or next-step sections",
+        "canonical module overviews and reading or mastery sequences",
+        "scripts/book_content.py semantic marker checks and scripts/check_book_links.py"
+      ],
+      "affected_workflows_or_users": [
+        "self-directed students",
+        "authors deciding where new text belongs"
+      ],
+      "observed_symptom": "The TOC orders pages, but the pages themselves rarely state prerequisites or the next recommended lesson.",
+      "potential_impact": "Readers can miss conceptual dependencies and authors can introduce duplicate explanations.",
+      "engineering_risk": "Unvalidated relative links can break when legacy material is renumbered.",
+      "concrete_failure_mode": "A student enters an advanced notebook without the required concept, or a link points to a pre-migration path.",
+      "dependencies": [
+        "canonical module taxonomy",
+        "page-level migration map",
+        "local link checker"
+      ],
+      "owner": "book editors",
+      "recommended_next_action": "Preserve prerequisite and handoff blocks when adding or renumbering lessons, and run make check-book-content plus make check-book-links before promotion.",
+      "validation_criteria": [
+        "Every promoted lesson has a clear role and handoff.",
+        "All local links pass make check-book-links.",
+        "No link targets a legacy module number after migration."
+      ],
+      "prioritization": {
+        "impact": 3,
+        "urgency": 2,
+        "risk": 2,
+        "confidence": 4,
+        "effort": 3
+      }
+    },
+    {
+      "id": "BOOK-006",
+      "title": "Keep Jupyter Book 2 provisional until output and deployment parity are proven",
+      "category": "platform-migration",
+      "status": "open",
+      "priority": "P2",
+      "evidence": [
+        "chapters/jupyter-book-2-migration.md",
+        "myst.yml and _toc.yml",
+        "Makefile book-v2-evaluate target",
+        ".github/workflows/deploy-book.yml production Jupyter Book 1 path"
+      ],
+      "affected_workflows_or_users": [
+        "book maintainers",
+        "deployment workflow",
+        "readers of rendered notebook outputs"
+      ],
+      "observed_symptom": "The Book 2 configuration has structural page parity but is not the production build.",
+      "potential_impact": "Premature promotion could lose output fidelity, citations, links, or deployment behavior.",
+      "engineering_risk": "Two build systems can drift if page and validation parity are not enforced.",
+      "concrete_failure_mode": "The production command changes before Book 2 renders every published output and passes equivalent deployment checks.",
+      "dependencies": [
+        "myst.yml",
+        "Book 2 evaluator",
+        "rendered-output comparison",
+        "GitHub Pages workflow"
+      ],
+      "owner": "book platform maintainers",
+      "recommended_next_action": "Run the parallel Book 2 evaluator and record visual-output, citation, redirect, link, and deployment parity before changing the production build.",
+      "validation_criteria": [
+        "Page order remains identical to the production TOC.",
+        "Published notebook outputs and citations are visually and semantically equivalent.",
+        "A deployment rehearsal passes with the candidate configuration."
+      ],
+      "prioritization": {
+        "impact": 3,
+        "urgency": 2,
+        "risk": 4,
+        "confidence": 5,
+        "effort": 4
+      }
+    },
+    {
+      "id": "BOOK-007",
+      "title": "Correct semantic contradictions in the published learning path",
+      "category": "content-correctness",
+      "status": "resolved",
+      "priority": "P0",
+      "evidence": [
+        "notebooks/course/0.2.environment_validation_lab.py and 0.3.initial_repository_setup.py",
+        "notebooks/course/1.10.market_analysis_communication_case.py",
+        "notebooks/course/2.0.quantitative_foundations.py through 2.6.interactive_volatility_garch_dashboard.py",
+        "src/market_data.py, src/market_risk.py, src/module2_visuals.py, and src/time_series_diagnostics.py",
+        "tests/test_market_data_observations.py, tests/test_market_risk.py, tests/test_module2_visuals.py, tests/test_quantitative_foundations.py, and tests/test_time_series_diagnostics.py"
+      ],
+      "affected_workflows_or_users": [
+        "students running a clean clone",
+        "students interpreting the integrated market case",
+        "students comparing ARCH, GARCH, VaR, and Expected Shortfall"
+      ],
+      "observed_symptom": "Published pages previously passed structural checks while validating a retired path, treating calendar-filled values as observations, plotting or naming the wrong fitted model, or changing the sign of VaR.",
+      "potential_impact": "Readers can reproduce a technically successful but financially mislabeled result.",
+      "engineering_risk": "Notebook pairs and shared quantitative helpers can preserve inconsistent behavior after a prose-only correction.",
+      "concrete_failure_mode": "A clean clone fails setup or a published table or figure reports a different model, sample, or risk sign from the surrounding explanation.",
+      "dependencies": [
+        "canonical percent-format sources",
+        "src quantitative helpers",
+        "Jupytext synchronization",
+        "fresh notebook execution"
+      ],
+      "owner": "published-module editors",
+      "recommended_next_action": "Retain provider-date, no-look-ahead, stationary-parameter, 95%-diagnostic-band, positive-loss VaR and Expected Shortfall, standardized-Student-t, deterministic Jupytext, and fresh-kernel regression checks in the publication gate.",
+      "validation_criteria": [
+        "Setup checks use notebooks/course and pass in a clean clone.",
+        "The integrated case executes the scope declared by its overview.",
+        "Module 02 empirical models use provider-dated Banxico FIX observations rather than forward-filled alignment rows.",
+        "ARIMA, ARCH, and GARCH outputs are bound to the model and sample named by each page.",
+        "ACF and PACF figures use declared 95% bands and dashboard parameters cannot enter a non-stationary state.",
+        "All VaR and ES equations and outputs follow the positive-loss contract."
+      ],
+      "prioritization": {
+        "impact": 5,
+        "urgency": 5,
+        "risk": 5,
+        "confidence": 5,
+        "effort": 4
+      }
+    },
+    {
+      "id": "BOOK-008",
+      "title": "Revalidate source-only quantitative results before promotion",
+      "category": "quantitative-correctness",
+      "status": "resolved",
+      "priority": "P0",
+      "evidence": [
+        "notebooks/course/6.6.yield_curve_bootstrapping.py and 6.9.rate_panel_pca_and_scenarios.py",
+        "notebooks/course/9.2 through 9.4 and notebooks/legacy/modern_portfolio_theory_1.py",
+        "src/term_structure.py, src/portfolio_optimization.py, and tests/test_quantitative_foundations.py",
+        "notebooks/manifest.json publication of Modules 06, 07, and 09"
+      ],
+      "affected_workflows_or_users": [
+        "authors promoting Modules 06, 07, and 09",
+        "students using curve, portfolio, and market-risk calculations",
+        "reviewers relying on generated figures and tables"
+      ],
+      "observed_symptom": "Some source-only calculations omit cash flows, infer curve factors from heterogeneous rates, accept invalid correlation matrices, or use incorrect portfolio formulas.",
+      "potential_impact": "Promotion would turn known mathematical defects into canonical instruction.",
+      "engineering_risk": "Correcting notebook prose without testing reusable helpers can leave the numerical defect active.",
+      "concrete_failure_mode": "A promoted lesson produces an invalid discount factor, factor interpretation, tangency portfolio, or covariance result.",
+      "dependencies": [
+        "src fixed-income, term-structure, market-risk, and portfolio helpers",
+        "focused unit tests",
+        "source-only notebook execution",
+        "subject-matter review"
+      ],
+      "owner": "fixed-income, derivatives, and portfolio editors",
+      "recommended_next_action": "Preserve cash-flow completeness, explicit compounding, positive-semidefinite covariance, fully invested portfolio weights, and factor-label invariants with focused tests and fresh-kernel execution for future quantitative changes.",
+      "validation_criteria": [
+        "Curve construction prices every contractual cash flow or fails explicitly.",
+        "Rate conventions round-trip under a declared compounding basis.",
+        "Portfolio covariance inputs are positive semidefinite and weights satisfy their constraints.",
+        "Every corrected source runs from a fresh kernel."
+      ],
+      "prioritization": {
+        "impact": 5,
+        "urgency": 5,
+        "risk": 5,
+        "confidence": 5,
+        "effort": 5
+      }
+    },
+    {
+      "id": "BOOK-009",
+      "title": "Align empirical sample, construction, and reuse-rights disclosures",
+      "category": "data-provenance",
+      "status": "resolved",
+      "priority": "P1",
+      "evidence": [
+        "chapters/01-markets-data.md common-window and rights contract",
+        "notebooks/course/1.3.data_extraction.py through 1.10.market_analysis_communication_case.py",
+        "data/snapshots/metadata.json coverage, carry methodology, and conservative rights note",
+        "scripts/generate_real_data_snapshots.py"
+      ],
+      "affected_workflows_or_users": [
+        "students comparing results across Module 01",
+        "authors publishing provider-backed snapshots",
+        "maintainers reviewing redistribution constraints"
+      ],
+      "observed_symptom": "Declared sample endpoints differ from analyzed snapshots, constructed carry indices are not explained in the lesson, and provider access does not establish redistribution rights.",
+      "potential_impact": "Readers cannot reproduce cross-page comparisons or determine whether a snapshot is safe to redistribute.",
+      "engineering_risk": "Refreshing a snapshot can silently change lesson dates, units, and rights assumptions.",
+      "concrete_failure_mode": "Two pages claim to use the same panel but analyze different periods, or a committed dataset is treated as licensed without evidence.",
+      "dependencies": [
+        "data/snapshots/metadata.json",
+        "snapshot generator",
+        "provider documentation",
+        "lesson data inventories"
+      ],
+      "owner": "data and publication editors",
+      "recommended_next_action": "On every snapshot refresh, regenerate coverage and carry metadata, display actual observed boundaries, and re-review provider terms before making any redistribution claim.",
+      "validation_criteria": [
+        "Every empirical page reports the actual inclusive sample window.",
+        "Constructed indices declare formula, calendar, and base convention.",
+        "Snapshot metadata distinguishes access method from redistribution rights.",
+        "No publication text claims a license that has not been verified."
+      ],
+      "prioritization": {
+        "impact": 4,
+        "urgency": 4,
+        "risk": 4,
+        "confidence": 5,
+        "effort": 3
+      }
+    }
+  ]
+}

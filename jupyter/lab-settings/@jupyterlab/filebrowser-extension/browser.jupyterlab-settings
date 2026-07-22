@@ -1,0 +1,8 @@
+{
+  "filterDirectories": true,
+  "navigateToCurrentDirectory": true,
+  "showFileSizeColumn": true,
+  "showLastModifiedColumn": true,
+  "sortNotebooksFirst": true,
+  "useFuzzyFilter": true
+}

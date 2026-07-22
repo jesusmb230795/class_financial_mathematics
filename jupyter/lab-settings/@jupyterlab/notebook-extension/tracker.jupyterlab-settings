@@ -1,0 +1,19 @@
+{
+  "autoRenderMarkdownCells": true,
+  "codeCellConfig": {
+    "lineNumbers": true,
+    "lineWrap": true
+  },
+  "enableKernelInitNotification": true,
+  "kernelShutdown": true,
+  "kernelStatus": {
+    "showJumpToRecentExecutionButton": true,
+    "showOnStatusBar": true,
+    "showProgress": true
+  },
+  "maxNumberOutputs": 25,
+  "recordTiming": true,
+  "scrollPastEnd": false,
+  "showMinimap": true,
+  "windowingMode": "contentVisibility"
+}

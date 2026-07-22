@@ -1,0 +1,33 @@
+{
+  "schema_version": 2,
+  "manifest_type": "visual_asset_scope",
+  "scope": "module-05",
+  "title": "Module 5 - Corporate Issuers and Equity Valuation",
+  "assets": [
+    {
+      "order": 26,
+      "id": "m5-corporate-value-creation-valuation-map",
+      "status": "approved",
+      "role": "module_concept_map",
+      "target_path": "img/generated/m5-corporate-value-creation-valuation-map.png",
+      "aspect_ratio": "16:9",
+      "recommended_size": "1920x1080",
+      "alt_text": "Corporate valuation map from capital allocation and operating forecasts through FCFF or FCFE and matched discount rates to enterprise value, equity value, thesis, and monitoring.",
+      "generator_script": "scripts/generate_module_concept_maps.py --asset m5-corporate-value-creation-valuation-map",
+      "production_method": "deterministic_matplotlib",
+      "used_by": [
+        {
+          "file": "chapters/05-corporate-equity-valuation.md",
+          "locator": "Module 5 value-creation and valuation bridge",
+          "mode": "markdown_insert",
+          "target_markdown": "../img/generated/m5-corporate-value-creation-valuation-map.png"
+        }
+      ],
+      "prompt": "Create a 1920x1080 PNG, 16:9. Academic corporate value-creation and equity-valuation map for Module 5. Show governance and capital allocation feeding operating forecasts and ROIC, then two matched valuation paths: FCFF with WACC to enterprise value, and FCFE with cost of equity to equity value. Include the bridge from enterprise value to common equity value, followed by thesis, risks, catalysts, and monitoring. Use short labels only. Off-white background, navy linework, teal cash-flow paths, amber discount-rate highlights, coral risk markers, and a 7% safe margin. No fake company, price target, or numerical valuation.",
+      "production_notes": [
+        "Generated from code to preserve the FCFF-WACC and FCFE-cost-of-equity matching rules.",
+        "The diagram communicates method selection and governance, not an investment recommendation."
+      ]
+    }
+  ]
+}

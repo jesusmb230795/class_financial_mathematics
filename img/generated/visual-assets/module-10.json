@@ -1,0 +1,33 @@
+{
+  "schema_version": 2,
+  "manifest_type": "visual_asset_scope",
+  "scope": "module-10",
+  "title": "Module 10 - Advanced Pathways and Capstone",
+  "assets": [
+    {
+      "order": 28,
+      "id": "m10-capstone-evidence-decision-monitoring-map",
+      "status": "approved",
+      "role": "module_concept_map",
+      "target_path": "img/generated/m10-capstone-evidence-decision-monitoring-map.png",
+      "aspect_ratio": "16:9",
+      "recommended_size": "1920x1080",
+      "alt_text": "Capstone evidence chain from observed evidence through transformations, assumptions, outputs, recommendation, and decision, with monitoring triggers and three professional pathways.",
+      "generator_script": "scripts/generate_module_concept_maps.py --asset m10-capstone-evidence-decision-monitoring-map",
+      "production_method": "deterministic_matplotlib",
+      "used_by": [
+        {
+          "file": "chapters/10-capstone.md",
+          "locator": "Module 10 evidence-to-decision and monitoring map",
+          "mode": "markdown_insert",
+          "target_markdown": "../img/generated/m10-capstone-evidence-decision-monitoring-map.png"
+        }
+      ],
+      "prompt": "Create a 1920x1080 PNG, 16:9. Academic capstone evidence-to-decision map for Module 10. Show the ordered chain observed evidence -> transformations -> assumptions -> outputs -> recommendation -> decision, followed by a monitoring and trigger loop back to review. Keep observed evidence and assumptions visually separate. Add three small pathway labels: Portfolio Management, Private Markets, Private Wealth. Use short exact labels only. Off-white background, navy linework, teal evidence and output accents, muted-blue pathway accents, amber decision highlights, coral trigger and limitation accents, and a 7% safe margin. No client data, fake recommendation, or confidential information.",
+      "production_notes": [
+        "Generated from code so the evidence chain and monitoring loop remain exact.",
+        "The three pathways share one evidence contract; the diagram does not rank them."
+      ]
+    }
+  ]
+}

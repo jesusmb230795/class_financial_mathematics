@@ -112,6 +112,7 @@ celerybeat.pid
 .venv
 .uv-cache/
 .uv-python/
+.uv-tools/
 .data-cache/
 .pre-commit-cache/
 env/
@@ -145,3 +146,19 @@ reset.sh
 *.tex
 /latex
 *.csv
+!data/
+!data/snapshots/
+!data/snapshots/*.csv
+!data/snapshots/*.json
+!img/generated/data/global_exchange_market_caps.csv
+
+# Local agent operating layer (intentionally unversioned)
+/AGENTS.md
+/AGENTS.override.md
+/.codex/
+/chapters/AGENTS.md
+/content/AGENTS.md
+/notebooks/AGENTS.md
+/scripts/AGENTS.md
+/src/AGENTS.md
+/tests/AGENTS.md

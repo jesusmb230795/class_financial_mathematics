@@ -1,0 +1,33 @@
+{
+  "schema_version": 2,
+  "manifest_type": "visual_asset_scope",
+  "scope": "module-03",
+  "title": "Module 3 - Economics, Macro, and Currency",
+  "assets": [
+    {
+      "order": 24,
+      "id": "m3-macro-transmission-currency-map",
+      "status": "approved",
+      "role": "module_concept_map",
+      "target_path": "img/generated/m3-macro-transmission-currency-map.png",
+      "aspect_ratio": "16:9",
+      "recommended_size": "1920x1080",
+      "alt_text": "Macro transmission map from observed releases and vintages through economic mechanisms and scenarios, expected cash flows, discount rates, risk premia, and currency conversion to value, positioning, and monitoring.",
+      "generator_script": "scripts/generate_module3_transmission_map.py",
+      "production_method": "deterministic_matplotlib",
+      "used_by": [
+        {
+          "file": "chapters/03-economics-macro-currency.md",
+          "locator": "Module 3 opening transmission map",
+          "mode": "markdown_insert",
+          "target_markdown": "../img/generated/m3-macro-transmission-currency-map.png"
+        }
+      ],
+      "prompt": "Do not generate this image with an image model. Generate it from code with: uv run python scripts/generate_module3_transmission_map.py. The output must be a 1920x1080 PNG saved to img/generated/m3-macro-transmission-currency-map.png.",
+      "production_notes": [
+        "Generated from code so the evidence sequence and transmission arrows remain exact.",
+        "The figure is conceptual and contains no empirical forecast or fabricated market value."
+      ]
+    }
+  ]
+}

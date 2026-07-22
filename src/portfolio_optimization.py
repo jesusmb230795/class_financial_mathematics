@@ -21,6 +21,105 @@ def _labels_from_covariance(covariance: pd.DataFrame | np.ndarray) -> list[str]:
     return [f"asset_{idx + 1}" for idx in range(np.asarray(covariance).shape[0])]
 
 
+def validate_covariance_matrix(
+    covariance: pd.DataFrame | np.ndarray,
+    *,
+    tolerance: float = 1e-10,
+) -> None:
+    """Validate that a covariance matrix is finite, symmetric, and positive semidefinite."""
+    sigma = _as_array(covariance)
+    if sigma.ndim != 2 or sigma.shape[0] != sigma.shape[1]:
+        raise ValueError("covariance must be a square matrix")
+    if not np.all(np.isfinite(sigma)):
+        raise ValueError("covariance must contain only finite values")
+    if not np.allclose(sigma, sigma.T, atol=tolerance, rtol=0):
+        raise ValueError("covariance must be symmetric")
+    if np.any(np.diag(sigma) <= 0):
+        raise ValueError("covariance diagonal entries must be positive")
+    minimum_eigenvalue = float(np.linalg.eigvalsh(sigma).min())
+    if minimum_eigenvalue < -tolerance:
+        raise ValueError(
+            "covariance must be positive semidefinite; "
+            f"minimum eigenvalue is {minimum_eigenvalue:.6g}"
+        )
+
+
+def project_correlation_to_psd(
+    correlation: pd.DataFrame | np.ndarray,
+    *,
+    minimum_eigenvalue: float = 1e-10,
+) -> pd.DataFrame | np.ndarray:
+    """Project a symmetric correlation scenario to a positive-semidefinite matrix.
+
+    Eigenvalues are clipped and the result is rescaled to a unit diagonal. This
+    transparent classroom guardrail is not an exact nearest-correlation algorithm
+    and is not a replacement for estimating a coherent correlation model.
+    """
+    matrix = _as_array(correlation)
+    if matrix.ndim != 2 or matrix.shape[0] != matrix.shape[1]:
+        raise ValueError("correlation must be a square matrix")
+    if not np.all(np.isfinite(matrix)):
+        raise ValueError("correlation must contain only finite values")
+    if minimum_eigenvalue < 0:
+        raise ValueError("minimum_eigenvalue must be non-negative")
+    symmetric = (matrix + matrix.T) / 2
+    if np.any(np.diag(symmetric) <= 0):
+        raise ValueError("correlation diagonal entries must be positive")
+    eigenvalues, eigenvectors = np.linalg.eigh(symmetric)
+    projected = (eigenvectors * np.maximum(eigenvalues, minimum_eigenvalue)) @ eigenvectors.T
+    scales = np.sqrt(np.diag(projected))
+    projected = projected / np.outer(scales, scales)
+    projected = (projected + projected.T) / 2
+    np.fill_diagonal(projected, 1.0)
+    if isinstance(correlation, pd.DataFrame):
+        return pd.DataFrame(projected, index=correlation.index, columns=correlation.columns)
+    return projected
+
+
+def nearest_correlation_matrix(
+    correlation: pd.DataFrame | np.ndarray,
+    *,
+    minimum_eigenvalue: float = 1e-10,
+) -> pd.DataFrame | np.ndarray:
+    """Compatibility alias for the classroom PSD projection."""
+    return project_correlation_to_psd(
+        correlation,
+        minimum_eigenvalue=minimum_eigenvalue,
+    )
+
+
+def project_covariance_to_psd(
+    covariance: pd.DataFrame | np.ndarray,
+    *,
+    minimum_eigenvalue: float = 1e-10,
+) -> pd.DataFrame | np.ndarray:
+    """Project a covariance matrix to PSD while preserving marginal variances."""
+    sigma = _as_array(covariance)
+    if sigma.ndim != 2 or sigma.shape[0] != sigma.shape[1]:
+        raise ValueError("covariance must be a square matrix")
+    standard_deviations = np.sqrt(np.diag(sigma))
+    if np.any(~np.isfinite(standard_deviations)) or np.any(standard_deviations <= 0):
+        raise ValueError("covariance diagonal entries must be finite and positive")
+    correlation = sigma / np.outer(standard_deviations, standard_deviations)
+    if isinstance(covariance, pd.DataFrame):
+        correlation = pd.DataFrame(
+            correlation,
+            index=covariance.index,
+            columns=covariance.columns,
+        )
+    projected_correlation = project_correlation_to_psd(
+        correlation,
+        minimum_eigenvalue=minimum_eigenvalue,
+    )
+    projected = _as_array(projected_correlation) * np.outer(
+        standard_deviations,
+        standard_deviations,
+    )
+    if isinstance(covariance, pd.DataFrame):
+        return pd.DataFrame(projected, index=covariance.index, columns=covariance.columns)
+    return projected
+
+
 def annualized_mean_returns(
     returns: pd.DataFrame,
     periods_per_year: int = 252,
@@ -52,7 +151,10 @@ def portfolio_variance(
     """Compute portfolio variance."""
     w = _as_array(weights)
     sigma = _as_array(covariance)
-    return float(w.T @ sigma @ w)
+    validate_covariance_matrix(sigma)
+    if w.ndim != 1 or len(w) != sigma.shape[0]:
+        raise ValueError("weights length must match covariance dimensions")
+    return float(max(w.T @ sigma @ w, 0.0))
 
 
 def portfolio_volatility(
@@ -69,13 +171,19 @@ def merton_constants(
 ) -> pd.Series:
     """Return the analytical efficient-frontier constants A, B, C, and D."""
     mu = _as_array(expected_returns)
-    sigma_inv = np.linalg.pinv(_as_array(covariance))
+    sigma = _as_array(covariance)
+    validate_covariance_matrix(sigma)
+    if mu.ndim != 1 or len(mu) != sigma.shape[0]:
+        raise ValueError("expected_returns length must match covariance dimensions")
+    sigma_inv = np.linalg.pinv(sigma)
     ones = np.ones_like(mu)
 
     a = float(ones.T @ sigma_inv @ ones)
     b = float(ones.T @ sigma_inv @ mu)
     c = float(mu.T @ sigma_inv @ mu)
     d = float(a * c - b**2)
+    if d <= 1e-14:
+        raise ValueError("efficient frontier is degenerate for these inputs")
     return pd.Series({"A": a, "B": b, "C": c, "D": d})
 
 
@@ -83,7 +191,9 @@ def global_minimum_variance_weights(
     covariance: pd.DataFrame | np.ndarray,
 ) -> pd.Series:
     """Return unconstrained global minimum variance portfolio weights."""
-    sigma_inv = np.linalg.pinv(_as_array(covariance))
+    sigma = _as_array(covariance)
+    validate_covariance_matrix(sigma)
+    sigma_inv = np.linalg.pinv(sigma)
     ones = np.ones(sigma_inv.shape[0])
     raw = sigma_inv @ ones
     weights = raw / (ones.T @ raw)
@@ -97,7 +207,11 @@ def tangency_weights(
 ) -> pd.Series:
     """Return unconstrained tangency portfolio weights."""
     mu = _as_array(expected_returns)
-    sigma_inv = np.linalg.pinv(_as_array(covariance))
+    sigma = _as_array(covariance)
+    validate_covariance_matrix(sigma)
+    if mu.ndim != 1 or len(mu) != sigma.shape[0]:
+        raise ValueError("expected_returns length must match covariance dimensions")
+    sigma_inv = np.linalg.pinv(sigma)
     excess = mu - risk_free_rate
     raw = sigma_inv @ excess
     denominator = raw.sum()
@@ -115,11 +229,9 @@ def efficient_frontier_variance(
     """Compute analytical minimum variance for each target return."""
     constants = merton_constants(expected_returns, covariance)
     target = np.asarray(target_returns, dtype=float)
-    return (
-        constants["A"] * target**2
-        - 2 * constants["B"] * target
-        + constants["C"]
-    ) / constants["D"]
+    return (constants["A"] * target**2 - 2 * constants["B"] * target + constants["C"]) / constants[
+        "D"
+    ]
 
 
 def efficient_frontier_weights(
@@ -177,7 +289,9 @@ def risk_contributions(
     if np.isclose(volatility, 0):
         raise ValueError("portfolio volatility must be positive")
     contributions = w * (sigma @ w) / volatility
-    return pd.Series(contributions, index=_labels_from_covariance(covariance), name="risk_contribution")
+    return pd.Series(
+        contributions, index=_labels_from_covariance(covariance), name="risk_contribution"
+    )
 
 
 def risk_contribution_percentages(
@@ -238,7 +352,7 @@ def capm_beta(
     risk_free_rate: float | pd.Series = 0.0,
     hac_lags: int | None = None,
 ) -> pd.Series:
-    """Estimate CAPM alpha and beta with optional HAC standard errors."""
+    """Estimate CAPM alpha and beta against an economically valid market proxy."""
     frame = pd.concat(
         [
             asset_returns.rename("asset"),
@@ -269,16 +383,73 @@ def capm_beta(
     )
 
 
+def factor_sensitivity(
+    asset_returns: pd.Series,
+    factor_returns: pd.Series,
+    hac_lags: int | None = None,
+) -> pd.Series:
+    """Estimate an exploratory linear factor sensitivity with HAC standard errors."""
+    frame = pd.concat(
+        [
+            asset_returns.rename("asset"),
+            factor_returns.rename("factor"),
+        ],
+        axis=1,
+    ).dropna()
+    if frame.empty:
+        raise ValueError("factor sensitivity requires overlapping observations")
+    x = sm.add_constant(frame["factor"])
+    if hac_lags is None:
+        hac_lags = int(np.floor(len(frame) ** 0.25))
+    result = sm.OLS(frame["asset"], x).fit(
+        cov_type="HAC",
+        cov_kwds={"maxlags": hac_lags},
+    )
+    return pd.Series(
+        {
+            "intercept": result.params["const"],
+            "sensitivity": result.params["factor"],
+            "intercept_p_value": result.pvalues["const"],
+            "sensitivity_p_value": result.pvalues["factor"],
+            "r_squared": result.rsquared,
+            "nobs": result.nobs,
+            "hac_lags": hac_lags,
+        }
+    )
+
+
 def rolling_beta(
     asset_returns: pd.Series,
     market_returns: pd.Series,
     window: int = 252,
 ) -> pd.Series:
     """Estimate rolling beta using rolling covariance divided by market variance."""
-    frame = pd.concat([asset_returns.rename("asset"), market_returns.rename("market")], axis=1).dropna()
+    frame = pd.concat(
+        [asset_returns.rename("asset"), market_returns.rename("market")], axis=1
+    ).dropna()
     covariance = frame["asset"].rolling(window).cov(frame["market"])
     variance = frame["market"].rolling(window).var()
     return (covariance / variance).rename("rolling_beta")
+
+
+def rolling_factor_sensitivity(
+    asset_returns: pd.Series,
+    factor_returns: pd.Series,
+    window: int = 252,
+) -> pd.Series:
+    """Estimate a rolling linear sensitivity to a documented factor."""
+    if window < 2:
+        raise ValueError("window must be at least 2")
+    frame = pd.concat(
+        [
+            asset_returns.rename("asset"),
+            factor_returns.rename("factor"),
+        ],
+        axis=1,
+    ).dropna()
+    covariance = frame["asset"].rolling(window).cov(frame["factor"])
+    variance = frame["factor"].rolling(window).var()
+    return (covariance / variance).rename("rolling_factor_sensitivity")
 
 
 def correlation_distance(correlation: pd.DataFrame) -> pd.DataFrame:

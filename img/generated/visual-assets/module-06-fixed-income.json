@@ -1,0 +1,36 @@
+{
+  "schema_version": 2,
+  "manifest_type": "visual_asset_scope",
+  "scope": "module-06-fixed-income",
+  "title": "Module 6 - Fixed Income, Credit, and Term Structure (Fixed Income and Credit)",
+  "assets": [
+    {
+      "order": 21,
+      "id": "m6-fixed-income-cash-flow-duration-map",
+      "status": "approved",
+      "role": "module_concept_map",
+      "target_path": "img/generated/m6-fixed-income-cash-flow-duration-map.png",
+      "aspect_ratio": "16:9",
+      "recommended_size": "1920x1080",
+      "alt_text": "Fixed-income map connecting cash flows and discounting to price sensitivity, credit and spread risk, and asset-liability immunization.",
+      "generator_script": "scripts/generate_module_concept_maps.py --asset m6-fixed-income-cash-flow-duration-map",
+      "production_method": "deterministic_matplotlib",
+      "used_by": [
+        {
+          "file": "chapters/06-fixed-income-credit-term-structure.md",
+          "locator": "Module 6 fixed-income, credit, and immunization map",
+          "mode": "markdown_insert",
+          "target_markdown": "../img/generated/m6-fixed-income-cash-flow-duration-map.png"
+        }
+      ],
+      "production_notes": [
+        "Use a timeline and curve schematic rather than a fake bond screen.",
+        "Keep formulas out of the image except short labels; native LaTeX should carry exact equations.",
+        "Highlight duration and convexity as sensitivities, not as visual decoration.",
+        "Include PD, LGD, spread, liquidity, and optionality so the map covers the credit half of the module.",
+        "Generate from code so cash-flow direction and risk labels remain exact."
+      ],
+      "prompt": "Create a 1920x1080 PNG, 16:9. Academic fixed-income concept map for Module 6. Show dated bond cash flows on a timeline flowing into discounting, present value, yield to maturity, duration, convexity, and DV01. Add a distinct credit-and-spread branch with PD, LGD, spread, liquidity, and optionality, then connect both branches to an asset-liability immunization check. Use a schematic curve and liability timeline, not fake bond data. Off-white background, navy linework, teal cash-flow arrows, amber curve highlights, coral credit and rate-shock markers. Keep a 7% safe margin. No fake prices, no logos, no long text."
+    }
+  ]
+}

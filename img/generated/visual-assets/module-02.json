@@ -1,0 +1,83 @@
+{
+  "schema_version": 2,
+  "manifest_type": "visual_asset_scope",
+  "scope": "module-02",
+  "title": "Module 2 - Quantitative Methods and Financial Time Series",
+  "assets": [
+    {
+      "order": 9,
+      "id": "ts-stationarity-properties",
+      "status": "retired",
+      "role": "lesson_diagram",
+      "target_path": "img/generated/ts-stationarity-properties.png",
+      "aspect_ratio": "4:5",
+      "recommended_size": "1440x1800",
+      "alt_text": "Stationary and non-stationary time series compared by mean, variance, and autocovariance.",
+      "legacy_sources": [
+        "img/time_series/image-asset.png"
+      ],
+      "used_by": [],
+      "retirement_reason": "Replaced by a deterministic observed-level and return diagnostic; the stylized autocovariance panels could be mistaken for a sample-path definition of weak stationarity.",
+      "prompt": "Create a 1440x1800 PNG, 4:5 vertical. Tall academic diagram comparing stationary and non-stationary time series in three rows: constant mean versus drifting mean, constant variance versus changing variance, and stable autocovariance versus changing dependence over time. Use paired mini time-series plots in each row. Keep text minimal with short labels only: mean, variance, autocovariance, stationary, non-stationary. Teal lines for stationary examples, coral lines for non-stationary examples, navy axes, off-white background. Keep a 7% safe margin."
+    },
+    {
+      "order": 14,
+      "id": "ts-volatility-from-prices",
+      "status": "retired",
+      "role": "lesson_diagram",
+      "target_path": "img/generated/ts-volatility-from-prices.png",
+      "aspect_ratio": "16:9",
+      "recommended_size": "1920x1080",
+      "alt_text": "Pipeline from asset prices to log returns, variance, and annualized volatility.",
+      "legacy_sources": [
+        "img/time_series/1.png"
+      ],
+      "used_by": [],
+      "retirement_reason": "Replaced by executable calculations with the book's A = 252 annualization notation; the illustration used T ambiguously for both horizon and annualization count.",
+      "prompt": "Create a 1920x1080 PNG, 16:9. Educational quantitative finance pipeline showing how volatility is computed from historical asset prices: price series to log returns to sample variance to annualized volatility. Use simple formula snippets only if legible: R_t = log(P_t / P_{t-1}) and sigma hat. Clean vector-like style, off-white background, navy formulas and axes, teal arrows, amber highlights. Keep a 7% safe margin. This replaces an unreferenced legacy image if the concept is added back to the book."
+    },
+    {
+      "order": 15,
+      "id": "ts-sample-volatility-estimators",
+      "status": "retired",
+      "role": "lesson_diagram",
+      "target_path": "img/generated/ts-sample-volatility-estimators.png",
+      "aspect_ratio": "16:9",
+      "recommended_size": "1920x1080",
+      "alt_text": "Comparison of historical, moving-average, and exponentially weighted volatility estimators.",
+      "legacy_sources": [
+        "img/time_series/2.png"
+      ],
+      "used_by": [],
+      "retirement_reason": "Replaced by explicit formulas and executable diagnostics; the illustration duplicated EMA and EWMA formulas and omitted the centering assumption in variance estimates.",
+      "prompt": "Create a 1920x1080 PNG, 16:9. Academic comparison panel for volatility estimators: historical average, simple moving average, exponential moving average, and exponentially weighted moving average. Show four clean cards connected to a return series, with minimal formula fragments and different decay-weight patterns. Use navy linework, teal current estimate, amber weights, coral warning marker for model risk. Off-white background. Keep a 7% safe margin. This replaces an unreferenced legacy image if the concept is added back to the book."
+    },
+    {
+      "order": 19,
+      "id": "m2-price-return-volume-volatility-bridge",
+      "status": "approved",
+      "role": "lesson_diagram",
+      "target_path": "img/generated/m2-price-return-volume-volatility-bridge.png",
+      "aspect_ratio": "16:9",
+      "recommended_size": "1920x1080",
+      "alt_text": "Bridge diagram linking price, return, volume, liquidity, volatility clustering, and model diagnostics in financial time series.",
+      "generator_script": "scripts/generate_module_concept_maps.py --asset m2-price-return-volume-volatility-bridge",
+      "production_method": "deterministic_matplotlib",
+      "used_by": [
+        {
+          "file": "chapters/02-time-series.md",
+          "locator": "Module 2 opening conceptual bridge",
+          "mode": "markdown_insert",
+          "target_markdown": "../img/generated/m2-price-return-volume-volatility-bridge.png"
+        }
+      ],
+      "production_notes": [
+        "Keep this conceptual; do not include fake market data.",
+        "Use short labels only: price, return, volume, liquidity, volatility, ACF/PACF, GARCH.",
+        "Show volume as context for interpreting volatility, not as a model input requirement.",
+        "Generate from code so every label and causal direction remains exact."
+      ],
+      "prompt": "Create a 1920x1080 PNG, 16:9. Academic time-series bridge diagram for Module 2. Show a clean left-to-right flow: price series -> simple/log returns -> volume and liquidity context -> volatility clustering -> diagnostics (ACF/PACF, residual checks) -> ARCH/GARCH model. Use small schematic charts, not real data. Use teal lines for prices/returns, amber bars for volume, coral clusters for high-volatility periods, navy axes and annotations. Off-white background, 7% safe margin, no fake ticker names, no formulas beyond short labels."
+    }
+  ]
+}

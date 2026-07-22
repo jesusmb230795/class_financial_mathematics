@@ -1,16 +1,37 @@
 repos:
   - repo: local
     hooks:
-      - id: clean-notebook-outputs
-        name: Clean Jupyter notebook outputs
-        entry: uv run python scripts/clean_notebook_outputs.py
+      - id: validate-book-content
+        name: Validate editorial plan and book structure
+        entry: python3 scripts/book_content.py validate
         language: system
-        files: ^notebooks/class/.*\.ipynb$
-        pass_filenames: true
+        pass_filenames: false
+        always_run: true
+
+      - id: sync-jupytext
+        name: Regenerate Jupyter notebooks from canonical percent sources
+        entry: uv run python scripts/sync_notebook_pairs.py
+        language: system
+        files: ^notebooks/(course|labs|legacy)/.*\.(ipynb|py)$
+        pass_filenames: false
+
+      - id: validate-notebook-manifest
+        name: Validate canonical notebook manifest
+        entry: python3 scripts/notebook_manifest.py validate
+        language: system
+        pass_filenames: false
+        always_run: true
 
       - id: validate-notebooks
         name: Validate Jupyter and MyST notebooks
         entry: uv run python scripts/validate_notebooks.py
         language: system
-        files: ^notebooks/class/.*\.(ipynb|md)$
+        files: ^notebooks/(course|labs|legacy)/.*\.(ipynb|md)$
+        pass_filenames: true
+
+      - id: ruff
+        name: Lint reusable Python code
+        entry: uv run ruff check
+        language: system
+        files: ^(src|scripts|tests)/.*\.py$
         pass_filenames: true

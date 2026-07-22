@@ -6,32 +6,128 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import shlex
 import struct
 import sys
+from collections import defaultdict
 from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
 MANIFEST = ROOT / "img" / "generated" / "visual-assets.json"
+MANIFEST_ROOT = MANIFEST.parent
 
 
 def load_manifest() -> dict:
-    return json.loads(MANIFEST.read_text(encoding="utf-8"))
+    data = json.loads(MANIFEST.read_text(encoding="utf-8"))
+    if "asset_files" not in data:
+        data["_manifest_mode"] = "single"
+        return data
+
+    assets: list[dict] = []
+    asset_file_data: dict[str, dict] = {}
+    for entry in data["asset_files"]:
+        file_name = entry["path"]
+        path = MANIFEST_ROOT / file_name
+        if not path.exists():
+            raise SystemExit(
+                f"Asset manifest file is missing: {path.relative_to(ROOT)}"
+            )
+        asset_data = json.loads(path.read_text(encoding="utf-8"))
+        scope = asset_data.get("scope", entry.get("scope", path.stem))
+        title = asset_data.get("title", entry.get("title", scope))
+        asset_file_data[file_name] = asset_data
+        for asset in asset_data.get("assets", []):
+            item = dict(asset)
+            item["_manifest_file"] = file_name
+            item["_scope"] = scope
+            item["_scope_title"] = title
+            assets.append(item)
+
+    merged = dict(data)
+    merged["assets"] = assets
+    merged["_manifest_mode"] = "split"
+    merged["_asset_file_data"] = asset_file_data
+    return merged
 
 
 def save_manifest(data: dict) -> None:
-    MANIFEST.write_text(
+    if data.get("_manifest_mode") != "split":
+        clean_data = {
+            key: value for key, value in data.items() if not key.startswith("_")
+        }
+        write_json(MANIFEST, clean_data)
+        return
+
+    assets_by_file: dict[str, list[dict]] = defaultdict(list)
+    for asset in data["assets"]:
+        file_name = asset.get("_manifest_file")
+        if not file_name:
+            raise SystemExit(f"{asset['id']}: missing source manifest file")
+        assets_by_file[file_name].append(strip_internal_fields(asset))
+
+    for entry in data["asset_files"]:
+        file_name = entry["path"]
+        asset_data = {
+            key: value
+            for key, value in data["_asset_file_data"].get(file_name, {}).items()
+            if not key.startswith("_")
+        }
+        if not asset_data:
+            asset_data = {
+                "schema_version": data["schema_version"],
+                "manifest_type": "visual_asset_scope",
+                "scope": entry.get("scope", Path(file_name).stem),
+                "title": entry.get("title", Path(file_name).stem),
+            }
+        asset_data["assets"] = sorted(
+            assets_by_file.get(file_name, []),
+            key=lambda item: (item["order"], item["id"]),
+        )
+        write_json(MANIFEST_ROOT / file_name, asset_data)
+
+
+def write_json(path: Path, data: dict) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
         json.dumps(data, indent=2, ensure_ascii=False) + "\n",
         encoding="utf-8",
     )
 
 
+def strip_internal_fields(asset: dict) -> dict:
+    return {
+        key: value for key, value in asset.items() if not key.startswith("_")
+    }
+
+
 def asset_map(data: dict) -> dict[str, dict]:
-    return {asset["id"]: asset for asset in data["assets"]}
+    assets: dict[str, dict] = {}
+    for asset in data["assets"]:
+        if asset["id"] in assets:
+            raise SystemExit(f"Duplicate asset id: {asset['id']}")
+        assets[asset["id"]] = asset
+    return assets
 
 
-def selected_assets(data: dict, asset_id: str | None = None) -> list[dict]:
-    assets = sorted(data["assets"], key=lambda item: item["order"])
+def known_scopes(data: dict) -> list[str]:
+    if "asset_files" not in data:
+        return []
+    return [entry["scope"] for entry in data["asset_files"]]
+
+
+def selected_assets(
+    data: dict,
+    asset_id: str | None = None,
+    scope: str | None = None,
+) -> list[dict]:
+    assets = sorted(data["assets"], key=lambda item: (item["order"], item["id"]))
+    if scope is not None:
+        scopes = set(known_scopes(data))
+        if scope not in scopes:
+            choices = ", ".join(sorted(scopes))
+            raise SystemExit(f"Unknown scope: {scope}. Use one of: {choices}")
+        assets = [asset for asset in assets if asset.get("_scope") == scope]
     if asset_id is None:
         return assets
     matches = [asset for asset in assets if asset["id"] == asset_id]
@@ -55,6 +151,13 @@ def read_png_size(path: Path) -> tuple[int, int] | None:
     if len(header) < 24 or header[:8] != b"\x89PNG\r\n\x1a\n":
         return None
     return struct.unpack(">II", header[16:24])
+
+
+def generator_path(command: str) -> Path | None:
+    for token in shlex.split(command):
+        if token.endswith(".py"):
+            return ROOT / token
+    return None
 
 
 def generator_prompt(data: dict, asset: dict) -> str:
@@ -87,20 +190,25 @@ def generator_prompt(data: dict, asset: dict) -> str:
 
 def status_command(args: argparse.Namespace) -> int:
     data = load_manifest()
-    print("Order  Status     File     Book     Size       Asset")
-    print("-----  ---------  -------  -------  ---------  -------------------------------")
-    for asset in selected_assets(data, args.asset):
+    print("Order  Status     Scope      File     Book     Size       Asset")
+    print(
+        "-----  ---------  ---------  -------  -------  ---------  "
+        "-------------------------------"
+    )
+    for asset in selected_assets(data, args.asset, args.scope):
         exists = rel_path(asset["target_path"]).exists()
         file_state = "exists" if exists else "missing"
         book_state = "in-book" if asset.get("used_by") else "unused"
+        scope = asset.get("_scope", "single")
         print(
             f"{asset['order']:>5}  {asset['status']:<9}  "
+            f"{scope:<9}  "
             f"{file_state:<7}  {book_state:<7}  "
             f"{asset['recommended_size']:<9}  {asset['id']}"
         )
 
     pending = [
-        asset for asset in selected_assets(data, args.asset)
+        asset for asset in selected_assets(data, args.asset, args.scope)
         if asset["status"] == "pending"
     ]
     if pending:
@@ -109,8 +217,10 @@ def status_command(args: argparse.Namespace) -> int:
         print(f"Target path: {next_asset['target_path']}")
 
     if args.show_prompts:
-        for asset in selected_assets(data, args.asset):
+        for asset in selected_assets(data, args.asset, args.scope):
             print(f"\n## {asset['order']:02d} {asset['id']}")
+            if asset.get("_scope_title"):
+                print(f"Scope: {asset['_scope_title']}")
             print(f"Target: {asset['target_path']}")
             print(f"Size: {asset['recommended_size']} px ({asset['aspect_ratio']})")
             print(f"Alt text: {asset['alt_text']}")
@@ -132,11 +242,39 @@ def validate_command(args: argparse.Namespace) -> int:
     valid_statuses = set(data["production_status_values"])
     errors: list[str] = []
     warnings: list[str] = []
+    assets = selected_assets(data, args.asset, args.scope)
 
-    for asset in selected_assets(data, args.asset):
+    seen_ids: set[str] = set()
+    seen_orders: set[int] = set()
+    for asset in assets:
+        if asset["id"] in seen_ids:
+            errors.append(f"{asset['id']}: duplicate asset id")
+        seen_ids.add(asset["id"])
+        if asset["order"] in seen_orders:
+            warnings.append(f"{asset['id']}: duplicate order {asset['order']}")
+        seen_orders.add(asset["order"])
+
+    for asset in assets:
         status = asset["status"]
         target = rel_path(asset["target_path"])
         size = asset.get("recommended_size", "")
+        if not asset.get("alt_text", "").strip():
+            errors.append(f"{asset['id']}: alt_text must not be empty")
+        generator = asset.get("generator_script")
+        if asset.get("production_method") == "deterministic_matplotlib" and not generator:
+            errors.append(f"{asset['id']}: deterministic asset is missing generator_script")
+        if generator:
+            script_path = generator_path(generator)
+            if script_path is None:
+                errors.append(f"{asset['id']}: generator_script has no Python script path")
+            elif not script_path.exists():
+                errors.append(
+                    f"{asset['id']}: generator script is missing: "
+                    f"{script_path.relative_to(ROOT)}"
+                )
+        data_path = asset.get("data_path")
+        if status in {"generated", "approved"} and data_path and not rel_path(data_path).exists():
+            errors.append(f"{asset['id']}: generator data is missing: {data_path}")
         if status not in valid_statuses:
             errors.append(f"{asset['id']}: invalid status {status!r}")
         if not re.fullmatch(r"\d+x\d+", size):
@@ -169,6 +307,12 @@ def validate_command(args: argparse.Namespace) -> int:
             source = ROOT / placement["file"]
             if not source.exists():
                 errors.append(f"{asset['id']}: placement source missing: {placement['file']}")
+                continue
+            placement_state = placement_reference_status(placement)
+            if placement_state != "already":
+                errors.append(
+                    f"{asset['id']}: {placement['file']}: {placement_state}"
+                )
 
     for warning in warnings:
         print(f"WARNING: {warning}")
@@ -237,6 +381,20 @@ def markdown_insert_status(path: Path, target_markdown: str) -> str:
     return "already" if target_markdown in text else "missing-reference"
 
 
+def placement_reference_status(placement: dict) -> str:
+    path = ROOT / placement["file"]
+    mode = placement.get("mode")
+    if mode == "text_replace":
+        target_markdown = placement.get("target_ref", "")
+    elif mode in {"markdown_insert", "replace_markdown_cell"}:
+        target_markdown = placement.get("target_markdown", "")
+    else:
+        return f"unsupported-mode:{mode}"
+    if not target_markdown:
+        return "missing-target-reference"
+    return markdown_insert_status(path, target_markdown)
+
+
 def apply_placement(placement: dict) -> tuple[str, str]:
     path = ROOT / placement["file"]
     mode = placement["mode"]
@@ -265,11 +423,15 @@ def apply_command(args: argparse.Namespace) -> int:
 
     if args.existing:
         assets = [
-            asset for asset in selected_assets(data)
+            asset for asset in selected_assets(data, scope=args.scope)
             if rel_path(asset["target_path"]).exists()
         ]
     else:
-        assets = selected_assets(data, args.asset) if not args.all else selected_assets(data)
+        assets = (
+            selected_assets(data, args.asset, args.scope)
+            if not args.all
+            else selected_assets(data, scope=args.scope)
+        )
     failures: list[str] = []
     for asset in assets:
         target = rel_path(asset["target_path"])
@@ -284,6 +446,8 @@ def apply_command(args: argparse.Namespace) -> int:
         for placement in asset["used_by"]:
             file_name, result = apply_placement(placement)
             print(f"{asset['id']}: {file_name}: {result}")
+            if result not in {"already", "changed"}:
+                failures.append(f"{asset['id']}: {file_name}: {result}")
 
     for failure in failures:
         print(f"ERROR: {failure}", file=sys.stderr)
@@ -294,7 +458,7 @@ def sync_command(args: argparse.Namespace) -> int:
     data = load_manifest()
     changed_status = False
     generated_assets = [
-        asset for asset in selected_assets(data)
+        asset for asset in selected_assets(data, scope=args.scope)
         if rel_path(asset["target_path"]).exists()
     ]
 
@@ -314,6 +478,8 @@ def sync_command(args: argparse.Namespace) -> int:
         for placement in asset["used_by"]:
             file_name, result = apply_placement(placement)
             print(f"{asset['id']}: {file_name}: {result}")
+            if result not in {"already", "changed"}:
+                failures.append(f"{asset['id']}: {file_name}: {result}")
 
     if changed_status:
         save_manifest(data)
@@ -346,11 +512,13 @@ def main() -> int:
 
     status_parser = subparsers.add_parser("status", help="Show generation progress")
     status_parser.add_argument("--asset", help="Limit output to one asset id")
+    status_parser.add_argument("--scope", help="Limit output to one manifest scope")
     status_parser.add_argument("--show-prompts", action="store_true", help="Print full prompts")
     status_parser.set_defaults(func=status_command)
 
     validate_parser = subparsers.add_parser("validate", help="Validate manifest and file state")
     validate_parser.add_argument("--asset", help="Limit validation to one asset id")
+    validate_parser.add_argument("--scope", help="Limit validation to one manifest scope")
     validate_parser.set_defaults(func=validate_command)
 
     apply_parser = subparsers.add_parser("apply", help="Point book references at generated assets")
@@ -367,12 +535,17 @@ def main() -> int:
         action="store_true",
         help="Apply references even when the target image file does not exist",
     )
+    apply_parser.add_argument(
+        "--scope",
+        help="Limit all/existing application to one manifest scope",
+    )
     apply_parser.set_defaults(func=apply_command)
 
     sync_parser = subparsers.add_parser(
         "sync",
         help="Mark existing generated files and apply their book placements",
     )
+    sync_parser.add_argument("--scope", help="Limit sync to one manifest scope")
     sync_parser.set_defaults(func=sync_command)
 
     mark_parser = subparsers.add_parser("mark", help="Update one asset status")

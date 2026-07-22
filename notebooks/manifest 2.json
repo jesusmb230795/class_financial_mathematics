@@ -1,0 +1,81 @@
+{
+  "schema_version": 1,
+  "defaults": {
+    "kernel": "python3",
+    "timeout_seconds": 120,
+    "max_output_bytes": 1048576,
+    "data_mode": "offline"
+  },
+  "published": [
+    "notebooks/course/0.1.reproducible_computing_stack.md",
+    "notebooks/course/0.3.initial_repository_setup.ipynb",
+    "notebooks/course/0.2.environment_validation_lab.ipynb",
+    "notebooks/course/0.4.classroom_environment_setup.ipynb",
+    "notebooks/course/1.1.stock_markets.md",
+    "notebooks/course/1.3.data_extraction.ipynb",
+    "notebooks/course/1.6.market_data_quality_framework.ipynb",
+    "notebooks/course/1.4.EDA_stock_data.ipynb",
+    "notebooks/course/1.5.EDA_macroeconomic_data.ipynb",
+    "notebooks/course/1.7.mexican_market_data_pipeline.ipynb",
+    "notebooks/course/1.8.macro_dashboard_banxico_dbnomics.ipynb",
+    "notebooks/course/1.9.return_explorer_dashboard.ipynb",
+    "notebooks/course/1.10.market_analysis_communication_case.ipynb",
+    "notebooks/course/2.1.time_series_1.ipynb",
+    "notebooks/course/2.3.time_series_diagnostics_and_volatility_extensions.ipynb",
+    "notebooks/course/2.4.arima_diagnostic_workflow.ipynb",
+    "notebooks/course/2.2.time_series_2.ipynb",
+    "notebooks/course/2.5.garch_volatility_risk_workflow.ipynb",
+    "notebooks/course/2.6.interactive_volatility_garch_dashboard.ipynb",
+    "notebooks/course/3.1.economic_foundations.md",
+    "notebooks/course/3.2.macro_indicators_policy.md",
+    "notebooks/course/3.3.currency_parity_fx.md",
+    "notebooks/course/3.4.macro_scenarios_cme.md"
+  ],
+  "labs": [
+    "notebooks/labs/4.2.analytical_efficient_frontier.ipynb",
+    "notebooks/labs/4.3.robust_portfolio_construction.ipynb",
+    "notebooks/labs/4.4.interactive_efficient_frontier_dashboard.ipynb",
+    "notebooks/labs/5.1.time_value_of_money.ipynb",
+    "notebooks/labs/5.2.bond_pricing_duration_convexity.ipynb",
+    "notebooks/labs/5.3.interactive_bond_sensitivity.ipynb",
+    "notebooks/labs/5.4.mexican_government_bond_valuation.ipynb",
+    "notebooks/labs/5.5.ytm_dv01_and_immunization_lab.ipynb",
+    "notebooks/labs/6.1.yield_curve_bootstrapping.ipynb",
+    "notebooks/labs/6.2.short_rate_models.ipynb",
+    "notebooks/labs/6.3.nelson_siegel_curve_fitting.ipynb",
+    "notebooks/labs/6.4.yield_curve_pca_and_scenarios.ipynb",
+    "notebooks/labs/6.5.short_rate_calibration_lab.ipynb",
+    "notebooks/labs/7.1.options_black_scholes.ipynb",
+    "notebooks/labs/7.2.binomial_and_monte_carlo.ipynb",
+    "notebooks/labs/7.3.interactive_black_scholes_dashboard.ipynb",
+    "notebooks/labs/7.4.linear_derivatives_and_carry.ipynb",
+    "notebooks/labs/7.5.implied_volatility_and_smiles.ipynb",
+    "notebooks/labs/7.6.american_and_exotic_options.ipynb",
+    "notebooks/labs/7.7.stochastic_volatility_heston_lab.ipynb",
+    "notebooks/labs/7.8.value_at_risk_foundations.ipynb",
+    "notebooks/labs/7.9.downside_risk_var_methods.ipynb",
+    "notebooks/labs/7.10.var_backtesting_and_stress_testing.ipynb",
+    "notebooks/labs/7.11.interactive_var_cvar_simulator.ipynb"
+  ],
+  "legacy": [
+    "notebooks/legacy/macro_dashboard_banxico_fred.ipynb",
+    "notebooks/legacy/modern_portfolio_theory_1.ipynb"
+  ],
+  "live_capable": [
+    "notebooks/course/1.3.data_extraction.ipynb",
+    "notebooks/course/1.7.mexican_market_data_pipeline.ipynb",
+    "notebooks/course/1.8.macro_dashboard_banxico_dbnomics.ipynb",
+    "notebooks/course/1.9.return_explorer_dashboard.ipynb",
+    "notebooks/legacy/macro_dashboard_banxico_fred.ipynb",
+    "notebooks/legacy/modern_portfolio_theory_1.ipynb"
+  ],
+  "overrides": {
+    "notebooks/course/2.1.time_series_1.ipynb": {
+      "max_output_bytes": 786432
+    },
+    "notebooks/legacy/modern_portfolio_theory_1.ipynb": {
+      "data_mode": "live",
+      "execute": false
+    }
+  }
+}
