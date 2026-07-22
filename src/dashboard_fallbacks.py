@@ -783,15 +783,34 @@ def build_var_cvar_dashboard_fallback(
             for item in finite_metrics.items()
             if "expected_shortfall" in item[0].lower() or "cvar" in item[0].lower()
         ]
-        reference_items = historical_items[:1] + es_items[:1]
-        for index, (metric, value) in enumerate(reference_items):
-            is_es = "expected_shortfall" in metric.lower() or "cvar" in metric.lower()
+        if historical_items:
+            _, value = historical_items[0]
             distribution_axis.axvline(
                 value,
-                color=(SEMANTIC_COLORS["negative"] if is_es else SEMANTIC_COLORS["highlight"]),
-                linestyle=_MATPLOTLIB_THRESHOLD_STYLES[index % len(_MATPLOTLIB_THRESHOLD_STYLES)],
+                color=SEMANTIC_COLORS["highlight"],
+                linestyle=_MATPLOTLIB_THRESHOLD_STYLES[0],
                 linewidth=1.4,
-                label=("ES tail mean" if is_es else "Historical VaR threshold"),
+                label="Historical VaR threshold",
+            )
+        if es_items:
+            _, value = es_items[0]
+            distribution_axis.scatter(
+                [value],
+                [0],
+                color=SEMANTIC_COLORS["negative"],
+                marker="D",
+                s=42,
+                zorder=4,
+                clip_on=False,
+                label="ES tail mean",
+            )
+            distribution_axis.annotate(
+                "ES tail mean",
+                xy=(value, 0),
+                xytext=(5, 7),
+                textcoords="offset points",
+                color=SEMANTIC_COLORS["negative"],
+                fontsize=8,
             )
         distribution_axis.set_title("Observed loss distribution")
         distribution_axis.set_xlabel("One-period loss")

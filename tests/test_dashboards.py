@@ -254,7 +254,7 @@ def test_financial_dashboards_return_figures_and_auditable_outputs() -> None:
     assert np.allclose(weights.sum(axis=0), 1)
     assert len(bond.data) == 3
     assert len(options.data) == 2
-    assert len(risk.layout.shapes) == 2
+    assert len(risk.layout.shapes) == 1
     assert frontier.data[0].line.color == SEMANTIC_COLORS["primary"]
     assert frontier.data[1].marker.color == SEMANTIC_COLORS["highlight"]
     assert frontier.data[2].marker.color == SEMANTIC_COLORS["comparison"]
@@ -278,7 +278,12 @@ def test_financial_dashboards_return_figures_and_auditable_outputs() -> None:
     assert risk.layout.xaxis.title.text == "One-period loss"
     assert risk.layout.xaxis2.title.text == "Non-negative loss estimate"
     assert risk.layout.shapes[0].line.color == SEMANTIC_COLORS["highlight"]
-    assert risk.layout.shapes[1].line.color == SEMANTIC_COLORS["negative"]
+    assert risk.data[1].name == "ES tail mean"
+    assert risk.data[1].marker.symbol == "diamond"
+    assert risk.data[1].marker.color == SEMANTIC_COLORS["negative"]
+    assert risk.data[1].x[0] == pytest.approx(0.025)
+    assert risk.data[1].y[0] == 0
+    assert risk.data[2].marker.symbol == "diamond"
 
 
 def test_macro_raw_mode_separates_incompatible_native_units() -> None:

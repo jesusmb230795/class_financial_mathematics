@@ -22,6 +22,7 @@ from src.module7_visuals import (
     build_heston_diagnostics_figure,
     build_implied_volatility_figure,
     build_option_payoff_figure,
+    build_skewness_tail_diagram_figure,
     build_tail_risk_figure,
     build_var_backtest_figure,
 )
@@ -195,7 +196,8 @@ def test_tail_risk_figure_uses_loss_space_and_marks_es_as_a_tail_mean() -> None:
     try:
         _assert_inline_size(figure)
         axis = figure.axes[0]
-        assert axis.get_xlabel() == "One-period portfolio loss (%; gains are negative)"
+        assert axis.get_xlabel() == "One-period signed loss (%; gains are negative)"
+        assert axis.get_title(loc="left") == "Observed distribution in signed-loss space"
         assert any(isinstance(item, PathCollection) for item in axis.collections)
         text = _all_figure_text(figure)
         assert "Mean/integral of tail loss" in text
@@ -278,8 +280,18 @@ def test_var_backtest_marks_exact_strict_exceptions_and_accumulates_them() -> No
             if isinstance(collection, PathCollection)
         )
         assert len(exception_points.get_offsets()) == 2
+        np.testing.assert_allclose(
+            exception_points.get_paths()[0].vertices,
+            [[-0.5, -0.5], [0.5, 0.5], [-0.5, 0.5], [0.5, -0.5]],
+        )
         np.testing.assert_array_equal(count_axis.lines[0].get_ydata(), [0, 1, 1, 2])
-        assert risk_axis.get_ylabel() == "Loss or VaR (%)"
+        assert (
+            risk_axis.get_title(loc="left")
+            == "Realized signed loss against the ex ante VaR threshold"
+        )
+        assert risk_axis.get_ylabel() == "Signed loss or VaR (%)"
+        assert "Realized signed loss" in _all_figure_text(figure)
+        assert "Exception: signed loss > VaR" in _all_figure_text(figure)
         assert "strict rule L_t > VaR_t" in _all_figure_text(figure)
         pd.testing.assert_series_equal(forecast, original_forecast)
     finally:
@@ -293,6 +305,37 @@ def test_var_backtest_rejects_equality_as_an_exception() -> None:
 
     with pytest.raises(ValueError, match="strict condition"):
         build_var_backtest_figure(returns, forecast, incorrect)
+
+
+def test_skewness_diagram_standardizes_every_density_to_zero_mean_unit_variance() -> None:
+    figure = build_skewness_tail_diagram_figure()
+
+    def integrate(values: np.ndarray, coordinates: np.ndarray) -> float:
+        widths = np.diff(coordinates)
+        return float(np.sum(widths * (values[:-1] + values[1:]) / 2.0))
+
+    try:
+        assert [axis.get_title(loc="left") for axis in figure.axes] == [
+            "Positive skew",
+            "Symmetric",
+            "Negative skew",
+        ]
+        for axis in figure.axes:
+            coordinates = np.asarray(axis.lines[0].get_xdata(), dtype=float)
+            density = np.asarray(axis.lines[0].get_ydata(), dtype=float)
+            mass = integrate(density, coordinates)
+            mean = integrate(coordinates * density, coordinates) / mass
+            variance = integrate((coordinates - mean) ** 2 * density, coordinates) / mass
+
+            assert mass == pytest.approx(1.0, abs=5e-4)
+            assert mean == pytest.approx(0.0, abs=2e-3)
+            assert variance == pytest.approx(1.0, abs=2e-3)
+
+        text = _all_figure_text(figure)
+        assert "mean 0 and variance 1" in text
+        assert "transformed to mean 0 and variance 1" in text
+    finally:
+        plt.close(figure)
 
 
 def test_static_risk_assets_are_deterministic_rgb_exports_with_complete_manifest() -> None:

@@ -66,7 +66,7 @@
       "target_path": "img/generated/risk-skewness-tail-orientation.png",
       "aspect_ratio": "16:9",
       "recommended_size": "1920x1080",
-      "alt_text": "Three standardized return-density panels compare positive, symmetric, and negative skew; each panel shades its characteristic tail and marks the median calculated from the plotted distribution.",
+      "alt_text": "Three mean-zero, unit-variance skew-normal return-density panels compare positive, zero, and negative skew; each panel shades its characteristic tail and marks its model median.",
       "generator_script": "scripts/generate_module7_risk_diagrams.py --asset risk-skewness-tail-orientation",
       "production_method": "deterministic_matplotlib",
       "source": "Author-created deterministic skew-normal teaching models; no external data or third-party image.",
@@ -75,13 +75,14 @@
           "file": "notebooks/course/7.9.value_at_risk_foundations.ipynb",
           "locator": "Tail-risk notation after the asymmetric-tail discussion",
           "mode": "markdown_insert",
-          "target_markdown": "![Three standardized return-density panels compare positive, symmetric, and negative skew; each panel shades its characteristic tail and marks the median calculated from the plotted distribution.](../../img/generated/risk-skewness-tail-orientation.png)"
+          "target_markdown": "![Three mean-zero, unit-variance skew-normal return-density panels compare positive, zero, and negative skew; each panel shades its characteristic tail and marks its model median.](../../img/generated/risk-skewness-tail-orientation.png)"
         }
       ],
-      "prompt": "Do not generate this image with an image model. Render an exact 1920x1080 PNG with `uv run python scripts/generate_module7_risk_diagrams.py --asset risk-skewness-tail-orientation`. Use separate positive-skew, symmetric, and negative-skew panels; calculate each median from the plotted distribution and shade the relevant tail direction.",
+      "prompt": "Do not generate this image with an image model. Render an exact 1920x1080 PNG with `uv run python scripts/generate_module7_risk_diagrams.py --asset risk-skewness-tail-orientation`. Use separate positive-skew, zero-skew, and negative-skew panels; standardize every skew-normal model to mean zero and variance one, calculate each median from the plotted distribution, and shade the relevant tail direction.",
       "production_notes": [
         "Original deterministic figure authored in this repository for the book; no external image or third-party data are incorporated.",
-        "All dashed median markers are calculated with the same skew-normal distributions used to draw the densities.",
+        "Every skew-normal model is analytically transformed to mean zero and variance one before its density, quantiles, and median are drawn.",
+        "All dashed median markers are calculated with the same standardized skew-normal distributions used to draw the densities.",
         "Separate panels, direct labels, hatching, and line style preserve meaning without relying on color alone."
       ]
     }

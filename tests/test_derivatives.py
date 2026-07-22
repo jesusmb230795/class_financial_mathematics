@@ -248,6 +248,54 @@ def test_heston_full_truncation_paths_are_finite_non_negative_and_reproducible()
     np.testing.assert_array_equal(first_variances, second_variances)
 
 
+def test_heston_full_truncation_preserves_latent_variance_recovery() -> None:
+    """A negative latent state must recover from itself, not from a zero projection."""
+    parameters = {
+        "spot": 100.0,
+        "variance0": 0.0001,
+        "rate": 0.0,
+        "maturity": 1.0,
+        "kappa": 4.0,
+        "theta": 0.04,
+        "vol_of_vol": 2.0,
+        "rho": 0.0,
+        "steps": 4,
+        "paths": 1,
+        "seed": 3,
+    }
+
+    rng = np.random.default_rng(parameters["seed"])
+    dt = parameters["maturity"] / parameters["steps"]
+    latent_variance = parameters["variance0"]
+    displayed_reference = [latent_variance]
+    latent_reference = [latent_variance]
+    for _ in range(parameters["steps"]):
+        z1 = rng.normal(size=1)
+        z2 = (
+            parameters["rho"] * z1
+            + np.sqrt(1 - parameters["rho"] ** 2) * rng.normal(size=1)
+        )
+        variance_positive = max(latent_variance, 0.0)
+        latent_variance = float(
+            latent_variance
+            + parameters["kappa"]
+            * (parameters["theta"] - variance_positive)
+            * dt
+            + parameters["vol_of_vol"]
+            * np.sqrt(variance_positive)
+            * np.sqrt(dt)
+            * z2[0]
+        )
+        latent_reference.append(latent_variance)
+        displayed_reference.append(max(latent_variance, 0.0))
+
+    _, simulated_variances = simulate_heston_paths(**parameters)
+
+    assert latent_reference[2] < 0 < latent_reference[3]
+    assert latent_reference[3] != pytest.approx(parameters["kappa"] * parameters["theta"] * dt)
+    np.testing.assert_allclose(simulated_variances[:, 0], displayed_reference)
+
+
 def test_derivative_helpers_reject_invalid_contract_inputs() -> None:
     with pytest.raises(ValueError, match="positive"):
         forward_price(0.0, 0.03, 1.0)

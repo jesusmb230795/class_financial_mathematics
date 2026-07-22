@@ -61,6 +61,9 @@
 # =\sqrt{N}\,\frac{\bar r-\tau}{\sigma_-(\tau)}.
 # $$
 #
+# This downside-risk performance formulation follows Sortino and Price
+# {cite}`sortinoPrice1994`.
+#
 # VaR and ES are reported as positive loss magnitudes:
 #
 # $$
@@ -88,7 +91,7 @@
 # $$
 #
 # The course applies a moment guardrail rather than treating this asymptotic
-# expansion as universally reliable.
+# expansion as universally reliable {cite}`cornishFisher1938`.
 #
 # ## Setup
 
@@ -175,8 +178,8 @@ pd.Series(
 # %%
 pd.DataFrame(
     {
-        "mean_simple_return": asset_returns.mean(),
-        "volatility": asset_returns.std(),
+        "mean_simple_return_per_observed_interval": asset_returns.mean(),
+        "volatility_per_observed_interval": asset_returns.std(),
         "skewness": asset_returns.apply(lambda series: skew(series, bias=False)),
         "excess_kurtosis": asset_returns.apply(
             lambda series: kurtosis(series, fisher=True, bias=False)
@@ -187,8 +190,8 @@ pd.DataFrame(
 # %%
 pd.Series(
     {
-        "portfolio_mean": portfolio_returns.mean(),
-        "portfolio_volatility": portfolio_returns.std(),
+        "portfolio_mean_simple_return_per_observed_interval": portfolio_returns.mean(),
+        "portfolio_volatility_per_observed_interval": portfolio_returns.std(),
         "portfolio_skewness": skew(portfolio_returns, bias=False),
         "portfolio_excess_kurtosis": kurtosis(
             portfolio_returns,

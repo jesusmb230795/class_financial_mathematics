@@ -24,7 +24,7 @@
 # Value at Risk (VaR) forecasts before the corresponding return, tests exception
 # frequency and clustering, presents the historical Basel 250-day traffic-light
 # diagnostic in its proper context, and adds a deterministic adverse scenario
-# {cite}`kupiec1995techniques,christoffersen1998evaluating,basel1996MarketRiskAmendment,basel2019marketRisk`.
+# {cite}`kupiec1995techniques,christoffersen1998evaluating,basel1996MarketRiskAmendment,basel2019marketRisk,baselFrameworkMAR33`.
 #
 # ## Learning objectives
 #
@@ -209,7 +209,7 @@ pd.DataFrame(
     }
 ).fillna(0).astype(int).rename_axis("exception")
 
-# %% mystnb={"image": {"alt": "Two aligned time-series panels show equal-weight US equity portfolio simple returns, a one-percent rolling historical Value at Risk loss threshold fixed one interval earlier, and red markers at realized exceptions."}}
+# %% mystnb={"image": {"alt": "Two aligned time-series panels show the equal-weight US equity portfolio's realized signed loss, a one-percent rolling historical Value at Risk threshold fixed one interval earlier, x-shaped markers where signed loss strictly exceeds Value at Risk, and the cumulative exception count."}}
 backtest_figure = build_var_backtest_figure(
     portfolio_returns,
     historical_var_forecast,
@@ -313,11 +313,12 @@ pd.Series(
 #
 # ## Regulatory context
 #
-# The current Basel market-risk framework is not the 1996 traffic-light table.
-# The Fundamental Review of the Trading Book uses Expected Shortfall and explicit
+# The consolidated Basel market-risk framework is not the 1996 traffic-light
+# table. Its internal-models approach uses Expected Shortfall and explicit
 # liquidity horizons within a much broader capital framework. VaR backtesting,
 # ES measurement, stress testing, model approval, and capital calculation are
-# related but distinct claims {cite}`basel2019marketRisk`.
+# related but distinct claims
+# {cite}`basel2019marketRisk,baselFrameworkMAR33`.
 #
 # ## Model limitations
 #

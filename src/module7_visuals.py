@@ -620,8 +620,8 @@ def build_tail_risk_figure(
             arrowprops={"arrowstyle": "->", "color": TEAL, "linewidth": 1.0},
         )
         axis.axvline(0, color=INK, linestyle="-", linewidth=0.8, alpha=0.6)
-        axis.set_title("Observed return distribution expressed as portfolio loss")
-        axis.set_xlabel("One-period portfolio loss (%; gains are negative)")
+        axis.set_title("Observed distribution in signed-loss space")
+        axis.set_xlabel("One-period signed loss (%; gains are negative)")
         axis.set_ylabel("Density")
         axis.legend(loc="upper left", fontsize=8.3)
         style_axes(axis, grid_axis="y")
@@ -736,7 +736,7 @@ def build_var_backtest_figure(
     var_forecast: pd.Series | Sequence[float] | np.ndarray | float,
     exceptions: pd.Series | Sequence[bool] | np.ndarray,
 ) -> Figure:
-    """Plot positive realized losses, VaR forecasts, and exact strict exceptions."""
+    """Plot realized signed losses, VaR forecasts, and exact strict exceptions."""
 
     return_series = _numeric_series(returns, "returns", minimum_observations=3)
     if isinstance(var_forecast, Real) and not isinstance(var_forecast, bool):
@@ -793,7 +793,7 @@ def build_var_backtest_figure(
             color=MUTED_BLUE,
             linewidth=0.9,
             alpha=0.8,
-            label="Realized loss",
+            label="Realized signed loss",
         )
         risk_axis.plot(
             forecast_percent.index,
@@ -810,11 +810,11 @@ def build_var_backtest_figure(
             marker="x",
             s=34,
             linewidth=1.5,
-            label="Exception: loss > VaR",
+            label="Exception: signed loss > VaR",
             zorder=5,
         )
-        risk_axis.set_title("Realized positive loss against the ex ante VaR threshold")
-        risk_axis.set_ylabel("Loss or VaR (%)")
+        risk_axis.set_title("Realized signed loss against the ex ante VaR threshold")
+        risk_axis.set_ylabel("Signed loss or VaR (%)")
         risk_axis.legend(loc="best", ncol=3, fontsize=8)
         style_axes(risk_axis, grid_axis="y", show_zero_line=True)
 
@@ -985,7 +985,7 @@ def build_expected_shortfall_diagram_figure() -> Figure:
 def build_skewness_tail_diagram_figure() -> Figure:
     """Build the export-only three-panel skewness and tail-orientation diagram."""
 
-    x_values = np.linspace(-4.5, 4.5, 900)
+    x_values = np.linspace(-5.5, 5.5, 1_100)
     specifications = (
         ("Positive skew", 6.0, TEAL, "Longer right tail", "right"),
         ("Symmetric", 0.0, MUTED_BLUE, "Balanced tails", "both"),
@@ -999,8 +999,15 @@ def build_skewness_tail_diagram_figure() -> Figure:
             specifications,
             strict=True,
         ):
-            density = skewnorm.pdf(x_values, shape)
-            median = float(skewnorm.ppf(0.5, shape))
+            delta = shape / np.sqrt(1.0 + shape**2)
+            unscaled_mean = delta * np.sqrt(2.0 / np.pi)
+            unscaled_variance = 1.0 - (2.0 * delta**2 / np.pi)
+            standard_deviation = np.sqrt(unscaled_variance)
+            location = -unscaled_mean / standard_deviation
+            scale = 1.0 / standard_deviation
+
+            density = skewnorm.pdf(x_values, shape, loc=location, scale=scale)
+            median = float(skewnorm.ppf(0.5, shape, loc=location, scale=scale))
             axis.plot(x_values, density, color=color, linewidth=2.1)
             axis.axvline(
                 median,
@@ -1010,14 +1017,14 @@ def build_skewness_tail_diagram_figure() -> Figure:
                 label=f"Calculated median = {median:.2f}",
             )
             if tail_side == "right":
-                boundary = float(skewnorm.ppf(0.95, shape))
+                boundary = float(skewnorm.ppf(0.95, shape, loc=location, scale=scale))
                 shade = x_values >= boundary
             elif tail_side == "left":
-                boundary = float(skewnorm.ppf(0.05, shape))
+                boundary = float(skewnorm.ppf(0.05, shape, loc=location, scale=scale))
                 shade = x_values <= boundary
             else:
-                lower = float(skewnorm.ppf(0.025, shape))
-                upper = float(skewnorm.ppf(0.975, shape))
+                lower = float(skewnorm.ppf(0.025, shape, loc=location, scale=scale))
+                upper = float(skewnorm.ppf(0.975, shape, loc=location, scale=scale))
                 left_shade = x_values <= lower
                 right_shade = x_values >= upper
                 axis.fill_between(
@@ -1054,7 +1061,7 @@ def build_skewness_tail_diagram_figure() -> Figure:
         figure.text(
             0.07,
             0.885,
-            "Dashed lines are distribution medians calculated from each plotted model.",
+            "Each model has mean 0 and variance 1; dashed lines mark its calculated median.",
             color=INK,
             fontsize=11,
             ha="left",
@@ -1062,8 +1069,9 @@ def build_skewness_tail_diagram_figure() -> Figure:
         add_figure_note(
             figure,
             "Source: author-created deterministic skew-normal teaching models; no external "
-            "data. Model note: panels compare shape and tail orientation only; densities are "
-            "standardized and do not represent empirical return estimates.",
+            "data. Model note: panels compare shape and tail orientation only; every "
+            "skew-normal density is transformed to mean 0 and variance 1 and does not "
+            "represent an empirical return estimate.",
         )
         figure.subplots_adjust(left=0.07, right=0.97, top=0.77, bottom=0.20, wspace=0.22)
         return figure

@@ -159,6 +159,7 @@
         "chapters/legacy/07-derivatives.md"
       ],
       "gaps": [
+        "The current Yahoo-derived adjusted-price snapshot has recorded provenance but remains blocked on owner-authorized redistribution and downstream-use rights review.",
         "Credit derivatives, counterparty credit, xVA, collateral, margin, and production lifecycle controls remain advanced extensions.",
         "Multi-maturity arbitrage-checked volatility surfaces remain an advanced extension beyond the published same-maturity quote diagnostics.",
         "Institutional overlay, cash-equitization, risk-budgeting, and capital-allocation cases still require transaction-cost modeling and rights-reviewed observed inputs."

@@ -407,11 +407,16 @@ def test_var_cvar_fallback_skips_unavailable_metric_and_renders_png() -> None:
         assert len(figure.axes) == 2
         assert figure.axes[0].get_xlabel() == "One-period loss"
         assert figure.axes[0].get_ylabel() == "Frequency"
-        assert len(figure.axes[0].lines) == 2
+        assert len(figure.axes[0].lines) == 1
         assert figure.axes[0].lines[0].get_color() == SEMANTIC_COLORS["highlight"]
         assert figure.axes[0].lines[0].get_linestyle() == "--"
-        assert figure.axes[0].lines[1].get_color() == SEMANTIC_COLORS["negative"]
-        assert figure.axes[0].lines[1].get_linestyle() == ":"
+        assert len(figure.axes[0].collections) == 1
+        es_marker = figure.axes[0].collections[0]
+        assert es_marker.get_label() == "ES tail mean"
+        np.testing.assert_allclose(es_marker.get_offsets(), [[0.029, 0]])
+        assert es_marker.get_facecolors()[0].tolist() == list(
+            matplotlib.colors.to_rgba(SEMANTIC_COLORS["negative"])
+        )
         assert figure.axes[1].get_xlabel() == "Loss estimate"
         assert figure.get_figwidth() <= 7.5
         assert render_png(figure).startswith(b"\x89PNG\r\n\x1a\n")

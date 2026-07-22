@@ -162,7 +162,7 @@ pd.Series(
 # view instead of browser-dependent widget controls.
 
 
-# %% tags=["interactive"] mystnb={"image": {"alt": "Interactive or static two-panel dashboard for an equal-weight US equity portfolio: a positive-loss histogram marks the historical Value at Risk threshold and Expected Shortfall tail mean, while a dot plot compares all available non-negative loss estimates."}}
+# %% tags=["interactive"] mystnb={"image": {"alt": "Interactive or static two-panel dashboard for an equal-weight US equity portfolio: a positive-loss histogram marks the historical Value at Risk threshold with a vertical line and the Expected Shortfall tail mean with a diamond, while diamond markers compare all available non-negative loss estimates."}}
 def plot_tail_risk_dashboard(
     alpha=0.01,
     lambda_=0.94,

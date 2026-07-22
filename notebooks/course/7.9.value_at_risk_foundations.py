@@ -97,7 +97,7 @@
 # VaR is not generally coherent, whereas ES satisfies the coherent-risk axioms
 # under its standard loss formulation {cite}`artzner1999coherent,acerbiTasche2002`.
 #
-# ![Three standardized return-density panels compare positive, symmetric, and negative skew; each panel shades its characteristic tail and marks the median calculated from the plotted distribution.](../../img/generated/risk-skewness-tail-orientation.png)
+# ![Three mean-zero, unit-variance skew-normal return-density panels compare positive, zero, and negative skew; each panel shades its characteristic tail and marks its model median.](../../img/generated/risk-skewness-tail-orientation.png)
 #
 # Skewness changes tail shape. For a long position, loss risk still comes from
 # negative returns even when the diagram also highlights the characteristic

@@ -903,15 +903,35 @@ def build_var_cvar_dashboard(
         for item in finite_metrics.items()
         if "expected_shortfall" in item[0].lower() or "cvar" in item[0].lower()
     ]
-    reference_items = historical_items[:1] + es_items[:1]
-    for index, (metric, value) in enumerate(reference_items):
-        is_es = "expected_shortfall" in metric.lower() or "cvar" in metric.lower()
+    if historical_items:
+        _, value = historical_items[0]
         figure.add_vline(
             x=value,
-            line_color=(SEMANTIC_COLORS["negative"] if is_es else SEMANTIC_COLORS["highlight"]),
-            line_dash=_PLOTLY_THRESHOLD_DASHES[index % len(_PLOTLY_THRESHOLD_DASHES)],
-            annotation_text=("ES tail mean" if is_es else "Historical VaR threshold"),
+            line_color=SEMANTIC_COLORS["highlight"],
+            line_dash=_PLOTLY_THRESHOLD_DASHES[0],
+            annotation_text="Historical VaR threshold",
             annotation_position="top left",
+            row=1,
+            col=1,
+        )
+    if es_items:
+        _, value = es_items[0]
+        figure.add_trace(
+            go.Scatter(
+                x=[value],
+                y=[0],
+                mode="markers+text",
+                name="ES tail mean",
+                marker={
+                    "color": SEMANTIC_COLORS["negative"],
+                    "size": 11,
+                    "symbol": "diamond",
+                },
+                text=["ES tail mean"],
+                textposition="top right",
+                cliponaxis=False,
+                hovertemplate="ES tail mean: %{x:.2%}<extra></extra>",
+            ),
             row=1,
             col=1,
         )

@@ -134,7 +134,7 @@ def test_ewma_can_use_a_declared_initial_variance_without_look_ahead() -> None:
 
 
 def test_ewma_next_forecast_incorporates_the_last_observation() -> None:
-    returns = pd.Series([0.01, -0.02, 0.08])
+    returns = pd.Series([-0.01, -0.02, 0.08])
     lambda_ = 0.94
     initial_variance = 0.0004
     filtered = ewma_volatility(
@@ -151,7 +151,26 @@ def test_ewma_next_forecast_incorporates_the_last_observation() -> None:
         lambda_=lambda_,
         initial_variance=initial_variance,
     ) == pytest.approx(expected_next)
-    assert volatility_weighted_historical_var(returns, alpha=0.34, lambda_=lambda_) >= 0
+
+    weighting_state = ewma_volatility(returns, lambda_=lambda_)
+    forecast_volatility = ewma_next_volatility(returns, lambda_=lambda_)
+    standardized_returns = returns / weighting_state
+    expected_var = max(
+        0.0,
+        -float(standardized_returns.quantile(0.34)) * forecast_volatility,
+    )
+    lagged_var = max(
+        0.0,
+        -float(standardized_returns.quantile(0.34)) * float(weighting_state.iloc[-1]),
+    )
+    actual_var = volatility_weighted_historical_var(
+        returns,
+        alpha=0.34,
+        lambda_=lambda_,
+    )
+
+    assert actual_var == pytest.approx(expected_var)
+    assert actual_var != pytest.approx(lagged_var)
 
 
 def test_rebalanced_portfolio_returns_requires_exact_labels_and_preserves_provenance() -> None:

@@ -83,9 +83,6 @@ target/
 .ipynb_checkpoints
 .jupyter-config/
 .matplotlib-cache/
-.mpl-cache/
-.mplconfig/
-.local-backups/
 
 # IPython
 profile_default/

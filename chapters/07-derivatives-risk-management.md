@@ -7,8 +7,8 @@ residual risk, stress, limit, owner, and escalation rule
 {cite}`hull2022options,blackScholes1973,merton1973,mcneil2015quantitative`.
 
 Readers should first understand discount factors and rate sensitivity from
-Module 6, return and volatility models from Module 2, and macro/FX scenarios
-from Module 3.
+Module 6, return and volatility models from Module 2, and macro and
+foreign-exchange (FX) scenarios from Module 3.
 
 ## Expected outcome
 
@@ -16,7 +16,8 @@ By the end of this module, readers should be able to:
 
 - define linear and option payoffs with consistent position signs;
 - apply no-arbitrage, replication, risk-neutral, tree, and Monte Carlo logic;
-- calculate and interpret Delta, Gamma, Vega, Theta, Rho, duration, and DV01;
+- calculate and interpret Delta, Gamma, Vega, Theta, Rho, duration, and dollar
+  value of a basis point (DV01);
 - distinguish implied volatility, smile/skew, stochastic volatility, and
   model-price error;
 - estimate VaR and Expected Shortfall as non-negative loss magnitudes;
@@ -88,18 +89,19 @@ observations. A successful notebook execution does not validate a risk model:
 signs, units, exceptions, output size, economic interpretation, and governance
 remain separate gates. The 1996 Basel traffic-light procedure is presented as
 historical backtesting context, not as a substitute for the current market-risk
-framework {cite}`kupiec1995techniques,christoffersen1998evaluating,basel1996MarketRiskAmendment,basel2019marketRisk`.
+framework {cite}`kupiec1995techniques,christoffersen1998evaluating,basel1996MarketRiskAmendment,basel2019marketRisk,baselFrameworkMAR33`.
 
 ## Evidence and reference map
 
-The module uses primary sources wherever a model or diagnostic is introduced:
+The module anchors its principal models and diagnostics in primary sources:
 Black--Scholes--Merton for European pricing, Cox--Ross--Rubinstein and
 Leisen--Reimer for trees, Boyle for Monte Carlo pricing, Breeden--Litzenberger
 for strike-convex call prices, Kemna--Vorst and Broadie--Glasserman--Kou for
 path-dependent options, Heston and full-truncation research for stochastic
-volatility, and the original backtesting and Expected Shortfall literature for
+volatility, Sortino and Cornish--Fisher for downside and distributional
+diagnostics, and the original backtesting and Expected Shortfall literature for
 portfolio tail risk
-{cite}`blackScholes1973,merton1973,coxRossRubinstein1979,leisenReimer1996,boyle1977,breedenLitzenberger1978,kemnaVorst1990,broadieGlassermanKou1997,heston1993,lordKoekkoekVanDijk2010fullTruncation,kupiec1995techniques,christoffersen1998evaluating,acerbiTasche2002,rockafellarUryasev2002`.
+{cite}`blackScholes1973,merton1973,coxRossRubinstein1979,leisenReimer1996,boyle1977,breedenLitzenberger1978,kemnaVorst1990,broadieGlassermanKou1997,heston1993,lordKoekkoekVanDijk2010fullTruncation,sortinoPrice1994,cornishFisher1938,kupiec1995techniques,christoffersen1998evaluating,acerbiTasche2002,rockafellarUryasev2002`.
 
 ## Reading sequence
 
@@ -128,4 +130,5 @@ assumptions and numerical limitations must travel with every promoted page.
 
 Module 8 applies discounting, risk premia, scenario assumptions, and
 uncertainty to asset valuation. Module 9 then combines instrument-level
-exposures into an IPS, allocation, and performance process.
+exposures into an investment policy statement (IPS), allocation, and
+performance process.

@@ -142,25 +142,25 @@ parts:
       - file: notebooks/course/7.2.european_option_pricing_and_greeks
         title: European Option Pricing and Greeks
       - file: notebooks/course/7.3.binomial_and_monte_carlo
-        title: Binomial and Monte Carlo Pricing
+        title: Binomial Trees and Monte Carlo Option Pricing
       - file: notebooks/course/7.4.implied_volatility_and_smiles
-        title: Implied Volatility and Smiles
+        title: Implied Volatility, Smiles, and Skews
       - file: notebooks/course/7.5.interactive_option_pricing_dashboard
         title: Interactive Option Pricing Dashboard
       - file: notebooks/course/7.6.american_and_exotic_options
-        title: American and Exotic Options
+        title: American and Exotic Option Methods
       - file: notebooks/course/7.7.stochastic_volatility_heston_lab
-        title: Stochastic Volatility and Heston
+        title: Stochastic Volatility and Heston Lab
       - file: notebooks/course/7.8.hedging_risk_governance
-        title: Hedging and Risk Governance
+        title: Hedging, Risk Limits, and Governance
       - file: notebooks/course/7.9.value_at_risk_foundations
-        title: Value at Risk Foundations
+        title: Value at Risk and Expected Shortfall Foundations
       - file: notebooks/course/7.10.downside_risk_var_methods
         title: Downside Risk and VaR Methods
       - file: notebooks/course/7.11.var_backtesting_and_stress_testing
         title: VaR Backtesting and Stress Testing
       - file: notebooks/course/7.12.interactive_var_cvar_simulator
-        title: Interactive VaR and Expected Shortfall
+        title: Interactive VaR and Expected Shortfall Dashboard
 
   - caption: Module 8 - Alternative Investments
     chapters:
