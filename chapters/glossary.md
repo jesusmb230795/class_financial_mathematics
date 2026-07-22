@@ -33,7 +33,7 @@ This glossary defines core terms used throughout the Jupyter Book.
 | Correlation | Standardized measure of linear co-movement between two variables. | Markets, Instruments, and Data |
 | Cost of carry | Net financing, income, storage, or convenience yield effect linking spot and forward prices. | Derivatives and Risk Management |
 | Covered interest parity | No-arbitrage relationship linking spot FX, forward FX, and domestic and foreign interest rates when currency risk is hedged. | Economics, Macro, and Currency |
-| CVaR | Conditional Value at Risk; average loss conditional on exceeding the VaR threshold. Also called Expected Shortfall. | Derivatives and Risk Management |
+| CVaR | Conditional Value at Risk; a common name for Expected Shortfall. In this book, the finite-sample measure is the average of exactly the worst \(\alpha\) probability mass, including fractional boundary mass when needed. | Derivatives and Risk Management |
 | Data mode | Explicit notebook setting, such as `DATA_MODE=offline` or `DATA_MODE=live`, that determines whether a dashboard uses a versioned publication snapshot or provider-backed live data. | Markets, Instruments, and Data |
 | Data source inventory | Structured record of provider, instrument or variable, frequency, date range, field, currency, calendar, and limitations before modeling. | Markets, Instruments, and Data |
 | Discount factor | Present value at the valuation date of one currency unit paid at a stated future date under the declared curve and conventions. | Fixed Income, Credit, and Term Structure |
@@ -48,14 +48,14 @@ This glossary defines core terms used throughout the Jupyter Book.
 | EBITDA | Earnings before interest, taxes, depreciation, and amortization; an intermediate performance measure whose calculation and any further adjustments must be stated because it is not a standardized IFRS line item. | Financial Statement Analysis and Financial Modeling |
 | Efficient frontier | Set of portfolios with minimum variance for each expected-return target. | Portfolio Management, Asset Allocation, and Performance |
 | Exchange rate | Price of one currency expressed in terms of another currency. | Economics, Macro, and Currency |
-| Expected Shortfall | Average tail loss beyond a selected quantile threshold. | Derivatives and Risk Management |
+| Expected Shortfall | Non-negative average loss over the worst \(\alpha\) probability mass. It is a tail mean rather than a second loss threshold. | Derivatives and Risk Management |
 | Exposure at default (EAD) | Amount exposed when default occurs under the stated credit-loss convention. | Fixed Income, Credit, and Term Structure |
 | FCFE | Free cash flow to equity; cash flow available to common equity after operating needs, investment, and net debt financing under the stated forecast. | Corporate Issuers and Equity Valuation |
 | FCFF | Free cash flow to the firm; after-tax operating cash flow available to debt and equity capital providers after required reinvestment. | Corporate Issuers and Equity Valuation |
 | FIBRA | Mexican real-estate investment trust certificate, broadly analogous to a REIT, with exchange-traded ownership of income-producing real assets. | Markets, Instruments, and Data |
 | FFO | Funds from operations; a real-estate performance measure that begins with net income and applies the declared Nareit-style adjustments. | Alternative Investments |
 | Fiscal policy | Government tax, spending, deficit, and debt policy that affects demand, rates, sovereign risk, and growth expectations. | Economics, Macro, and Currency |
-| Feller condition | CIR parameter condition \(2\kappa\theta\geq\sigma^2\), used to assess whether the continuous-time short rate stays strictly positive rather than merely non-negative. | Fixed Income, Credit, and Term Structure |
+| Feller condition | Square-root-diffusion condition \(2\kappa\theta\geq\xi^2\), used in CIR and Heston-style variance processes to assess whether the continuous-time state stays strictly positive rather than merely non-negative. | Fixed Income, Credit, and Term Structure |
 | Forward rate | Rate implied today for borrowing or discounting between two future dates under the declared compounding convention. | Fixed Income, Credit, and Term Structure |
 | Forward premium | Situation in which a forward exchange rate implies that the base currency trades at a premium relative to the spot rate under the chosen quote convention. | Economics, Macro, and Currency |
 | DB.NOMICS | Public macroeconomic data platform and API that aggregates series from official providers. | Markets, Instruments, and Data |
@@ -128,7 +128,7 @@ This glossary defines core terms used throughout the Jupyter Book.
 | UDI | Mexican inflation-indexed unit of account whose peso value is published by Banco de México. | Markets, Instruments, and Data |
 | UDIBONOS | Mexican inflation-linked government bonds denominated in UDIS and settled in MXN. | Fixed Income, Credit, and Term Structure |
 | Uncovered interest parity | Benchmark relationship linking expected exchange-rate change with an interest-rate differential when currency risk is not hedged. | Economics, Macro, and Currency |
-| Value at Risk | Quantile-based loss threshold over a chosen horizon and confidence level. | Derivatives and Risk Management |
+| Value at Risk | Non-negative quantile-based loss threshold over a chosen horizon and confidence level; it does not describe the average severity beyond that threshold. | Derivatives and Risk Management |
 | VaR exception | Realized loss exceeding the forecast VaR threshold. | Derivatives and Risk Management |
 | Vasicek model | Gaussian mean-reverting short-rate model with constant volatility; it can generate negative rates. | Fixed Income, Credit, and Term Structure |
 | Vega | Option Greek measuring sensitivity to volatility. | Derivatives and Risk Management |

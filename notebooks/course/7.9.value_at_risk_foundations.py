@@ -14,23 +14,28 @@
 # ---
 
 # %% [markdown]
-# # VaR and Expected Shortfall Foundations
+# # Value at Risk and Expected Shortfall Foundations
 #
 # Module: Derivatives and Risk Management
 #
 # ## Lesson summary
 #
-# This notebook establishes the sign convention, notation, and first empirical estimates for Value at Risk and Expected Shortfall. The examples use real returns from the versioned Banxico official price-like snapshot, so the published output can be reproduced without inventing a return series {cite}`banxicoSIE2025,jorion2007var,mcneil2015quantitative`.
+# This notebook fixes one sign convention and one data contract before comparing
+# tail-risk estimators. It uses simple returns from a committed panel of five
+# provider-adjusted US equity closes; no synthetic price or return history is
+# mixed into the sample. Value at Risk (VaR) remains a quantile, whereas Expected
+# Shortfall (ES) measures the average loss over exactly the worst probability
+# mass {cite}`jorion2007var,mcneil2015quantitative,acerbiTasche2002,rockafellarUryasev2002`.
 #
 # ## Learning objectives
 #
 # By the end of this notebook, students should be able to:
 #
-# - convert portfolio returns into loss variables and non-negative risk metrics;
-# - estimate historical VaR and Expected Shortfall from observed returns;
-# - compare empirical tail estimates against Gaussian VaR;
-# - explain why Expected Shortfall is more tail-sensitive than VaR;
-# - read a tail-loss chart without confusing returns and losses.
+# - convert a simple return into a signed loss and a non-negative reported risk;
+# - distinguish a lower-tail probability from a confidence level;
+# - estimate empirical VaR and ES without mishandling a finite-sample boundary;
+# - compare empirical tail estimates with Gaussian VaR; and
+# - read VaR and ES annotations in positive-loss space without reversing signs.
 #
 # ## Prerequisites
 #
@@ -40,95 +45,135 @@
 #
 # ## Tail-risk notation
 #
-# Let $R_t$ be a one-period return and $L_t=-R_t$ the corresponding signed
-# loss. For tail probability $\alpha$, first define the raw loss quantile
-# \(v_\alpha=Q_{1-\alpha}(L)\). This book reports risk as a non-negative loss:
-#
-# $$
-# \operatorname{VaR}_{\alpha}
-# =\max\left(0,-Q_\alpha(R)\right)
-# =\max(0,v_\alpha),
-# $$
-#
-# ![Value at Risk left-tail loss diagram](../../img/generated/risk-var-tail-loss.png)
-#
-# and
-#
-# $$
-# \operatorname{ES}_{\alpha}
-# =\max\left(0,-\mathbb{E}\left[R\mid R\leq Q_\alpha(R)\right]\right)
-# =\max\left(0,\mathbb{E}\left[L\mid L\geq v_\alpha\right]\right).
-# $$
-#
-# ![Conditional Value at Risk expected shortfall diagram](../../img/generated/risk-cvar-expected-shortfall.png)
-#
-# If returns are modeled as $R\sim\mathcal{N}(\mu,\sigma^2)$, Gaussian VaR under the same positive-loss convention is
+# Let $R$ denote the simple return over one observed US trading interval and
+# $L=-R$ the corresponding signed loss. For a lower-tail probability
+# $\alpha\in(0,1)$, this book reports VaR as a non-negative loss magnitude:
 #
 # $$
 # \operatorname{VaR}_{\alpha}(R)
+# =\max\left\{0,-Q_{\alpha}(R)\right\}.
+# $$
+#
+# ![A one-period loss density with gains to the left, a dashed 99 percent Value at Risk cutoff, and the worst 1 percent probability mass shaded to the right as more severe loss.](../../img/generated/risk-var-tail-loss.png)
+#
+# VaR is a threshold, not the worst possible loss. The diagram is drawn in
+# loss space, so larger losses appear farther to the right.
+#
+# The definition of ES that remains valid for discrete empirical samples is the
+# lower-quantile integral:
+#
+# $$
+# \operatorname{ES}_{\alpha}(R)
+# =\max\left\{0,-\frac{1}{\alpha}
+# \int_{0}^{\alpha}Q_u(R)\,du\right\}.
+# $$
+#
+# For a continuous return distribution with no probability mass at
+# $Q_\alpha(R)$, this reduces to
+#
+# $$
+# \operatorname{ES}_{\alpha}(R)
+# =\max\left\{0,-\mathbb{E}\!\left[R\mid
+# R\leq Q_\alpha(R)\right]\right\}.
+# $$
+#
+# In a finite sample, the implementation averages complete worst observations
+# plus the fraction of the boundary observation needed to represent exactly
+# $\alpha T$ observations. A conditional average below an interpolated sample
+# quantile need not produce that same estimator {cite}`acerbiTasche2002,rockafellarUryasev2002`.
+#
+# ![A one-period loss density with the worst 1 percent tail shaded beyond the 99 percent Value at Risk cutoff and a diamond marking Expected Shortfall as the average loss within that tail, not as another cutoff.](../../img/generated/risk-cvar-expected-shortfall.png)
+#
+# Expected Shortfall summarizes the entire selected probability mass rather
+# than only its boundary.
+#
+# If $R\sim\mathcal{N}(\mu,\sigma^2)$, Gaussian VaR under the same convention is
+#
+# $$
+# \operatorname{VaR}_{\alpha}^{\mathrm{Gaussian}}(R)
 # =\max\left\{0,-\left(\mu+\sigma\Phi^{-1}(\alpha)\right)\right\}.
 # $$
 #
-# VaR is a threshold. Expected Shortfall is an average beyond that threshold, which is why the two metrics can rank portfolios differently when tails are asymmetric or heavy {cite}`artzner1999coherent`.
+# VaR is not generally coherent, whereas ES satisfies the coherent-risk axioms
+# under its standard loss formulation {cite}`artzner1999coherent,acerbiTasche2002`.
 #
-# ![Skewness and tail orientation in return distributions](../../img/generated/risk-skewness-tail-orientation.png)
+# ![Three standardized return-density panels compare positive, symmetric, and negative skew; each panel shades its characteristic tail and marks the median calculated from the plotted distribution.](../../img/generated/risk-skewness-tail-orientation.png)
+#
+# Skewness changes tail shape. For a long position, loss risk still comes from
+# negative returns even when the diagram also highlights the characteristic
+# direction of positive or negative skew.
 #
 # ## Setup
 
 # %% tags=["setup", "hide-input"]
 import pandas as pd
-import matplotlib.pyplot as plt
 
-from src.market_data import official_price_panel, returns_from_prices
+from src.market_data import nasdaq_stock_price_panel, returns_from_prices
 from src.market_risk import expected_shortfall, gaussian_var, historical_var
+from src.module7_visuals import build_tail_risk_figure
 
 pd.options.display.float_format = "{:.6f}".format
 
 # %% [markdown]
-# ## Official return sample
+# ## Versioned observed return sample
 #
-# The first empirical example uses daily USD/MXN FIX returns from the committed Banxico snapshot. Later notebooks reuse the same panel for portfolio-level risk, backtesting, and dashboards.
+# The committed snapshot contains provider-adjusted closing prices in USD for
+# AAPL, MSFT, NVDA, AMZN, and GOOGL. The requested price window runs from
+# 2021-01-04 through 2026-06-05 on provider trading dates. Simple returns begin
+# one observed interval later because the first price has no prior observation.
+# The snapshot was generated on 2026-06-07 through `yfinance` from Yahoo-derived
+# data {cite}`yfinance2025,yahooFinanceCoverage2026,yahooTerms2026`.
 
 # %%
-price_panel = official_price_panel(start="2021-01-01", end="2026-06-05")
-asset_returns = returns_from_prices(price_panel, method="log").dropna()
+price_panel = nasdaq_stock_price_panel(start="2021-01-04", end="2026-06-05")
+asset_returns = returns_from_prices(price_panel, method="simple").dropna(how="any")
+asset_returns.attrs = {
+    **price_panel.attrs,
+    "method": "simple return over each observed US trading interval",
+}
 
-asset = "usd_mxn"
-returns = asset_returns[asset].rename("usd_mxn_log_return")
-losses = (-returns).rename("usd_mxn_loss")
+asset = "AAPL"
+returns = asset_returns[asset].rename("AAPL_simple_return")
+returns.attrs = dict(asset_returns.attrs)
+losses = (-returns).rename("AAPL_signed_loss")
 
 sample = pd.concat(
-    [price_panel[asset].rename("usd_mxn_fix"), returns, losses],
+    [price_panel[asset].rename("AAPL_adjusted_close_USD"), returns, losses],
     axis=1,
 ).dropna()
-
 sample.tail()
 
 # %% [markdown]
-# **Output interpretation.** The table keeps the price level, return, and signed
-# loss side by side. A negative return becomes a positive loss. The VaR and
-# Expected Shortfall helpers additionally floor reported risk at zero so an
-# all-gain sample is not labeled as a positive risk charge.
+# **Output interpretation.** A negative simple return becomes a positive signed
+# loss. The risk helpers additionally floor the reported metric at zero, so an
+# all-gain sample is not presented as a positive loss charge.
 
 # %%
 pd.Series(
     {
-        "source": price_panel.attrs.get("sources", "not recorded"),
-        "start": returns.index.min().strftime("%Y-%m-%d"),
-        "end": returns.index.max().strftime("%Y-%m-%d"),
+        "source": price_panel.attrs["sources"],
+        "field_and_currency": "provider-adjusted close, USD",
+        "price_sample": f"{price_panel.index.min():%Y-%m-%d} to {price_panel.index.max():%Y-%m-%d}",
+        "return_sample": f"{returns.index.min():%Y-%m-%d} to {returns.index.max():%Y-%m-%d}",
+        "frequency": "observed US trading intervals; no calendar filling",
+        "snapshot_generated_at": "2026-06-07T04:55:41.700953+00:00",
         "observations": int(returns.shape[0]),
-        "mean_return": returns.mean(),
-        "volatility": returns.std(),
-        "worst_return": returns.min(),
-        "largest_loss": losses.max(),
+        "rights_review": "provenance recorded; redistribution rights not independently verified",
     },
-    name="usd_mxn_sample",
+    name="data_contract",
 )
 
 # %% [markdown]
-# ## Historical and Gaussian tail estimates
+# Recording a provider, field, currency, dates, and transformation makes the
+# calculation reproducible. It does not itself establish redistribution or
+# downstream-use rights; those rights require a separate review.
 #
-# Historical VaR reads the empirical quantile directly from observed returns. Gaussian VaR compresses the same sample into a mean and standard deviation, then uses the normal quantile. Expected Shortfall averages losses at or beyond the empirical VaR threshold.
+# ## Historical, Gaussian, and tail-average estimates
+#
+# Historical VaR reads the empirical quantile. Gaussian VaR compresses the
+# sample into a mean and standard deviation. Empirical ES integrates the worst
+# $\alpha$ probability mass, including a fractional boundary observation when
+# $\alpha T$ is not an integer.
 
 # %%
 alpha_levels = [0.05, 0.025, 0.01]
@@ -143,39 +188,41 @@ risk_table = pd.DataFrame(
         for alpha in alpha_levels
     }
 ).T
-
+risk_table.index.name = "lower_return_tail_probability"
+risk_table.columns.name = "positive_loss_per_observed_US_trading_interval"
 risk_table
 
 # %% [markdown]
-# **Output interpretation.** The rows are tail probabilities, not confidence levels. `alpha_0.010` corresponds to a 99% one-day loss threshold. When Expected Shortfall is materially larger than VaR, the realized tail contains losses beyond the threshold that should not be hidden by the quantile alone.
-
-# %% [markdown]
+# **Output interpretation.** `alpha_0.010` means a 1% lower return tail, or a
+# 99% confidence convention. It does not mean that 1% is itself the confidence
+# level. ES is at least as tail-sensitive as the VaR boundary because it uses
+# losses throughout the selected probability mass.
+#
 # ## Tail-loss chart
 
-# %%
+# %% mystnb={"image": {"alt": "A histogram expresses AAPL simple returns as signed losses over observed US trading intervals; the positive-loss axis marks historical Value at Risk, Gaussian Value at Risk, and the Expected Shortfall tail mean at alpha equal to one percent."}}
 alpha = 0.01
 var_99 = historical_var(returns, alpha=alpha)
 es_99 = expected_shortfall(returns, alpha=alpha)
 gaussian_99 = gaussian_var(returns, alpha=alpha)
 
-fig, ax = plt.subplots(figsize=(9, 4.8))
-returns.hist(bins=70, ax=ax, color="#4f6f8f", alpha=0.78)
-ax.axvline(-var_99, color="#b42318", linestyle="--", linewidth=2, label="Historical VaR")
-ax.axvline(-es_99, color="#7f1d1d", linestyle=":", linewidth=2.5, label="Expected Shortfall")
-ax.axvline(-gaussian_99, color="#175cd3", linestyle="-.", linewidth=2, label="Gaussian VaR")
-ax.set_title("USD/MXN daily log returns and 1% tail thresholds")
-ax.set_xlabel("Daily log return")
-ax.set_ylabel("Frequency")
-ax.legend()
-fig.tight_layout()
+tail_figure = build_tail_risk_figure(
+    returns,
+    historical_var=var_99,
+    expected_shortfall=es_99,
+    gaussian_var=gaussian_99,
+)
+tail_figure
 
 # %% [markdown]
-# **Output interpretation.** The chart is drawn in return space, so the risk thresholds appear on the left tail as negative returns. The reported table stores the same thresholds as positive losses.
-
-# %% [markdown]
+# **Output interpretation.** The figure converts returns into signed loss space,
+# so larger adverse outcomes appear farther to the right. ES is shown as a tail
+# average, not as an additional empirical quantile.
+#
 # ## Cross-asset comparison
 #
-# The official panel combines USD/MXN, UDI, and carry indexes constructed from official Mexican rate series. Comparing the same tail metrics across all columns shows why a portfolio risk report must state its data source, horizon, and sign convention before discussing model choice.
+# Applying the same convention to all five equities isolates cross-sectional
+# differences without combining incompatible units or synthetic carry indexes.
 
 # %%
 asset_tail_table = pd.DataFrame(
@@ -183,22 +230,26 @@ asset_tail_table = pd.DataFrame(
         "historical_var_1pct": asset_returns.apply(historical_var, alpha=0.01),
         "gaussian_var_1pct": asset_returns.apply(gaussian_var, alpha=0.01),
         "expected_shortfall_1pct": asset_returns.apply(expected_shortfall, alpha=0.01),
-        "volatility": asset_returns.std(),
+        "simple_return_volatility": asset_returns.std(),
     }
 ).sort_values("expected_shortfall_1pct", ascending=False)
-
+asset_tail_table.columns.name = "per_observed_US_trading_interval"
 asset_tail_table
 
 # %% [markdown]
 # ## Model limitations
 #
-# - VaR is not a worst-case loss; it is a quantile under a chosen horizon and sample.
-# - Expected Shortfall is more informative about the average tail loss, but it can be noisy when few observations fall beyond the VaR threshold.
-# - Gaussian VaR can be useful as a benchmark, but it should not be treated as evidence that the empirical tail is normal.
-# - Tail estimates from a reproducible snapshot are appropriate for publication, while live-data runs should record provider, timestamp, transformation, and cache metadata.
+# - VaR is not a worst-case loss; it is a quantile for a stated horizon and sample.
+# - Empirical ES is more informative about the selected tail mass, but a 1% tail
+#   remains statistically sparse in a sample of this length.
+# - Gaussian VaR is a benchmark, not evidence that observed equity returns are normal.
+# - Provider-adjusted closes embed the provider's corporate-action treatment;
+#   the notebook does not independently reconstruct those adjustments.
+# - No transaction costs, taxes, foreign-exchange conversion, or investor-specific
+#   constraints enter this single-asset illustration.
 #
 # ## Handoff
 #
-# The next notebook extends this foundation from a single asset to portfolio
-# semideviation, Sortino ratio, guarded Cornish-Fisher VaR, and EWMA volatility
-# weighting.
+# The next notebook extends this foundation to an exactly rebalanced five-equity
+# portfolio, downside deviation, guarded Cornish-Fisher VaR, Gaussian Monte Carlo,
+# and volatility-weighted historical simulation.

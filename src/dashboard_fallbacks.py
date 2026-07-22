@@ -687,7 +687,7 @@ def build_black_scholes_dashboard_fallback(
 
     with matplotlib_style():
         figure, axis = plt.subplots(
-            figsize=(10, 5.8),
+            figsize=(7.2, 4.8),
             dpi=INLINE_FIGURE_DPI,
             constrained_layout=True,
         )
@@ -707,23 +707,32 @@ def build_black_scholes_dashboard_fallback(
             linewidth=1.8,
             label="Black-Scholes value",
         )
-        axis.axvline(
-            current_spot,
-            color=SEMANTIC_COLORS["comparison"],
-            linestyle="--",
-            linewidth=1.2,
-            label="Current spot",
-        )
-        axis.axvline(
-            strike,
-            color=SEMANTIC_COLORS["highlight"],
-            linestyle=":",
-            linewidth=1.4,
-            label="Strike",
-        )
+        if np.isclose(current_spot, strike):
+            axis.axvline(
+                current_spot,
+                color=SEMANTIC_COLORS["highlight"],
+                linestyle="--",
+                linewidth=1.4,
+                label="Current spot = strike",
+            )
+        else:
+            axis.axvline(
+                current_spot,
+                color=SEMANTIC_COLORS["comparison"],
+                linestyle="--",
+                linewidth=1.2,
+                label="Current spot",
+            )
+            axis.axvline(
+                strike,
+                color=SEMANTIC_COLORS["highlight"],
+                linestyle=":",
+                linewidth=1.4,
+                label="Strike",
+            )
         axis.set_title("Payoff and model value")
-        axis.set_xlabel("Underlying price")
-        axis.set_ylabel("Option value")
+        axis.set_xlabel("Underlying price (currency units)")
+        axis.set_ylabel("Option value (currency units)")
         axis.legend(frameon=False, ncols=2)
         style_axes(axis, grid_axis="y")
         figure.suptitle(title, fontsize=14, wrap=True)
@@ -734,7 +743,7 @@ def build_var_cvar_dashboard_fallback(
     returns: pd.Series,
     risk_metrics: pd.Series,
 ) -> Figure:
-    """Build a publication-safe loss-distribution view with VaR/ES thresholds."""
+    """Build a publication-safe positive-loss VaR/ES comparison."""
     observed_returns = pd.to_numeric(returns, errors="coerce")
     if observed_returns.empty or not np.all(np.isfinite(observed_returns)):
         raise ValueError("returns must contain finite observations")
@@ -748,46 +757,75 @@ def build_var_cvar_dashboard_fallback(
     if (finite_metrics < 0).any():
         raise ValueError("risk_metrics must be non-negative loss estimates")
 
-    threshold_colors = (
-        SEMANTIC_COLORS["negative"],
-        SEMANTIC_COLORS["highlight"],
-        SEMANTIC_COLORS["primary"],
-        SEMANTIC_COLORS["comparison"],
-        SEMANTIC_COLORS["reference"],
-    )
     with matplotlib_style():
-        figure, axis = plt.subplots(
-            figsize=(10, 5.8),
+        figure, (distribution_axis, comparison_axis) = plt.subplots(
+            1,
+            2,
+            figsize=(7.5, 4.8),
             dpi=INLINE_FIGURE_DPI,
             constrained_layout=True,
+            gridspec_kw={"width_ratios": (1.8, 1.0)},
         )
-        axis.hist(
-            observed_returns,
+        distribution_axis.hist(
+            -observed_returns,
             bins=70,
             color=SEMANTIC_COLORS["comparison"],
             edgecolor=PLOT_BACKGROUND,
             linewidth=0.5,
             alpha=0.8,
-            label="Observed returns",
+            label="Observed losses",
         )
-        for index, (metric, value) in enumerate(finite_metrics.items()):
-            axis.axvline(
-                -value,
-                color=threshold_colors[index % len(threshold_colors)],
+        historical_items = [
+            item for item in finite_metrics.items() if item[0].lower() == "historical_var"
+        ]
+        es_items = [
+            item
+            for item in finite_metrics.items()
+            if "expected_shortfall" in item[0].lower() or "cvar" in item[0].lower()
+        ]
+        reference_items = historical_items[:1] + es_items[:1]
+        for index, (metric, value) in enumerate(reference_items):
+            is_es = "expected_shortfall" in metric.lower() or "cvar" in metric.lower()
+            distribution_axis.axvline(
+                value,
+                color=(SEMANTIC_COLORS["negative"] if is_es else SEMANTIC_COLORS["highlight"]),
                 linestyle=_MATPLOTLIB_THRESHOLD_STYLES[index % len(_MATPLOTLIB_THRESHOLD_STYLES)],
                 linewidth=1.4,
-                label=metric.replace("_", " "),
+                label=("ES tail mean" if is_es else "Historical VaR threshold"),
             )
-        axis.set_title("Observed return distribution and loss thresholds")
-        axis.set_xlabel("Daily return")
-        axis.set_ylabel("Frequency")
-        axis.xaxis.set_major_formatter(PercentFormatter(xmax=1, decimals=2))
-        axis.legend(frameon=False, fontsize=9, ncols=2)
-        style_axes(axis, grid_axis="y")
+        distribution_axis.set_title("Observed loss distribution")
+        distribution_axis.set_xlabel("One-period loss")
+        distribution_axis.set_ylabel("Frequency")
+        distribution_axis.xaxis.set_major_formatter(PercentFormatter(xmax=1, decimals=2))
+        distribution_axis.legend(frameon=False, fontsize=8)
+        style_axes(distribution_axis, grid_axis="y")
+
+        labels = [metric.replace("_", " ").title() for metric in finite_metrics.index]
+        y_positions = np.arange(len(finite_metrics))
+        colors = [
+            SEMANTIC_COLORS["negative"]
+            if "expected_shortfall" in metric.lower() or "cvar" in metric.lower()
+            else SEMANTIC_COLORS["primary"]
+            for metric in finite_metrics.index
+        ]
+        comparison_axis.scatter(
+            finite_metrics.to_numpy(dtype=float),
+            y_positions,
+            color=colors,
+            marker="D",
+            s=34,
+            zorder=3,
+        )
+        comparison_axis.set_yticks(y_positions, labels)
+        comparison_axis.invert_yaxis()
+        comparison_axis.set_title("Method comparison")
+        comparison_axis.set_xlabel("Loss estimate")
+        comparison_axis.xaxis.set_major_formatter(PercentFormatter(xmax=1, decimals=2))
+        style_axes(comparison_axis, grid_axis="x")
+        comparison_axis.margins(x=0.18)
         figure.suptitle(
-            "VaR and Expected Shortfall from official returns "
-            f"| lookback = {len(observed_returns)}",
-            fontsize=14,
+            f"Tail-risk estimates | {len(observed_returns)} observed intervals",
+            fontsize=12.5,
         )
         _add_context_note(figure, returns)
     return figure

@@ -19,6 +19,7 @@ from src.market_data import (
     official_macro_panel,
     official_price_panel,
     rate_to_decimal,
+    returns_from_prices,
     wfe_equity_market_scale_snapshot,
 )
 
@@ -112,6 +113,24 @@ def test_snapshot_loaders_reject_requested_windows_without_observations(
 
     with pytest.raises(ValueError, match=message):
         loader(start="2026-01-01", end="2026-01-31")
+
+
+def test_return_construction_preserves_source_provenance_and_declares_method() -> None:
+    prices = pd.DataFrame(
+        {"A": [100.0, 102.0, 101.0]},
+        index=pd.date_range("2026-01-01", periods=3),
+    )
+    prices.attrs = {
+        "sources": "versioned adjusted-close fixture",
+        "currency": "USD",
+    }
+
+    returns = returns_from_prices(prices, method="simple")
+
+    assert returns.attrs["sources"] == prices.attrs["sources"]
+    assert returns.attrs["currency"] == "USD"
+    assert returns.attrs["return_method"] == "simple"
+    assert returns.attrs["return_construction"] == "P_t / P_{t-1} - 1"
 
 
 class FakeProvider:

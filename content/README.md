@@ -48,10 +48,15 @@ introduces and contrasts another convention:
 - **Losses and tail risk:** define loss as `L = -R`. VaR and Expected Shortfall
   are reported as non-negative loss magnitudes. If `alpha` is the lower-tail
   probability, `VaR_alpha = max(0, -Q_alpha(R))` and
-  `ES_alpha = max(0, -E[R | R <= Q_alpha(R)])`. Before applying the reporting
-  floor, `-Q_alpha(R) = Q_(1-alpha)(L)`. A negative return quantile is a
-  *return threshold*, not a positive-loss VaR. Pages using a confidence level
-  must label it as `confidence = 1 - alpha`.
+  `ES_alpha = max(0, -(1/alpha) integral_0^alpha Q_u(R) du)`. For a continuous
+  distribution without mass at the quantile, this equals
+  `max(0, -E[R | R <= Q_alpha(R)])`; finite empirical samples must include the
+  fractional boundary observation needed to represent exactly `alpha * n`
+  observations. Before applying the reporting floor,
+  `-Q_alpha(R) = Q_(1-alpha)(L)`. A negative return quantile is a *return
+  threshold*, not a positive-loss VaR, and Expected Shortfall is a tail mean,
+  not a second threshold. Pages using a confidence level must label it as
+  `confidence = 1 - alpha`.
 - **Volatility models:** for `GARCH(p, q)` in this book and in the `arch`
   package, `p` counts lagged squared shocks and `q` counts lagged conditional
   variances. State any alternative textbook convention before using it.

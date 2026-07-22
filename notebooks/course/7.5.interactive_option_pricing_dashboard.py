@@ -20,10 +20,11 @@
 #
 # ## Lesson summary
 #
-# This notebook creates an interactive Black-Scholes pricer for European options.
-# Students can move the spot price, strike, maturity, risk-free rate, and
-# volatility to observe option prices, payoff diagrams, and Greeks
-# {cite}`hull2022options`.
+# This notebook creates an interactive Black-Scholes-Merton pricer for European
+# options. Students can move the spot price, strike, maturity, continuously
+# compounded risk-free rate, continuous dividend yield, and volatility to
+# observe option prices, payoff diagrams, and Greeks
+# {cite}`blackScholes1973,merton1973,hull2022options`.
 #
 # The objective is to connect the formula with economic intuition: moneyness, time value, volatility exposure, and local hedging sensitivity.
 #
@@ -31,8 +32,9 @@
 #
 # By the end of this lesson, students should be able to:
 #
-# - compute European call and put prices with Black-Scholes;
-# - explain how spot, strike, maturity, rates, and volatility affect option value;
+# - compute European call and put prices with Black-Scholes-Merton;
+# - explain how spot, strike, maturity, rates, dividend yield, and volatility
+#   affect option value;
 # - interpret Delta, Gamma, Vega, Theta, and Rho;
 # - verify put-call parity interactively;
 # - use payoff and price curves to explain nonlinear exposure.
@@ -44,12 +46,15 @@
 # state the units and hedge sign of each Greek, and treat slider comparisons as
 # scenarios rather than statistical validation.
 #
-# ## Black-Scholes formulas
+# ## Black-Scholes-Merton formulas and units
 #
-# The dashboard uses the standard European option inputs:
+# Let $S_0$ and $K$ be in the same currency units per underlying unit,
+# $r$ and $q$ be continuously compounded annual decimal rates, $\sigma$ be
+# annualized decimal volatility, and $T$ be years. With $\Phi$ denoting the
+# standard normal cumulative distribution function,
 #
 # $$
-# d_1=\frac{\ln(S_0/K)+(r+\sigma^2/2)T}{\sigma\sqrt{T}},
+# d_1=\frac{\ln(S_0/K)+(r-q+\sigma^2/2)T}{\sigma\sqrt{T}},
 # \qquad
 # d_2=d_1-\sigma\sqrt{T}.
 # $$
@@ -57,20 +62,26 @@
 # For a call and a put:
 #
 # $$
-# C=S_0N(d_1)-Ke^{-rT}N(d_2),
+# C=S_0e^{-qT}\Phi(d_1)-Ke^{-rT}\Phi(d_2),
 # $$
 #
 # $$
-# P=Ke^{-rT}N(-d_2)-S_0N(-d_1).
+# P=Ke^{-rT}\Phi(-d_2)-S_0e^{-qT}\Phi(-d_1).
 # $$
 #
-# The local sensitivities shown in the dashboard are Greeks such as:
+# The local sensitivities shown in the dashboard include:
 #
 # $$
-# \Delta=\frac{\partial V}{\partial S},\qquad
-# \Gamma=\frac{\partial^2 V}{\partial S^2},\qquad
-# \nu=\frac{\partial V}{\partial \sigma}.
+# \Delta=\frac{\partial V}{\partial S_0},\qquad
+# \Gamma=\frac{\partial^2 V}{\partial S_0^2},\qquad
+# \nu=\frac{\partial V}{\partial \sigma},\qquad
+# \rho_r=\frac{\partial V}{\partial r}.
 # $$
+#
+# The implementation reports vega and interest-rate rho for a **one percentage
+# point** change, so it divides derivatives taken with respect to decimal
+# $\sigma$ and $r$ by 100. Theta is reported per calendar day. These scaled
+# quantities must not be combined with decimal shocks without conversion.
 #
 # ## Python setup
 
@@ -82,98 +93,59 @@ import numpy as np
 import pandas as pd
 from IPython.display import display
 from ipywidgets import Dropdown, FloatSlider, interact
-from scipy.stats import norm
 
 from src.dashboard_fallbacks import build_black_scholes_dashboard_fallback
 from src.dashboards import build_black_scholes_dashboard
+from src.derivatives import (
+    black_scholes_greeks,
+    black_scholes_price,
+    option_payoff,
+    put_call_parity_gap,
+)
 
 RUN_INTERACTIVE_WIDGETS = os.getenv("RUN_INTERACTIVE_WIDGETS", "1") == "1"
 
 
 # %% [markdown]
-# ## Pricing and Greeks
-
-
-# %%
-def black_scholes_inputs(S0, K, r, sigma, T):
-    d1 = (np.log(S0 / K) + (r + 0.5 * sigma**2) * T) / (sigma * np.sqrt(T))
-    d2 = d1 - sigma * np.sqrt(T)
-    return d1, d2
-
-
-def black_scholes_price(S0, K, r, sigma, T, option_type):
-    d1, d2 = black_scholes_inputs(S0, K, r, sigma, T)
-    if option_type == "call":
-        return S0 * norm.cdf(d1) - K * np.exp(-r * T) * norm.cdf(d2)
-    if option_type == "put":
-        return K * np.exp(-r * T) * norm.cdf(-d2) - S0 * norm.cdf(-d1)
-    raise ValueError("option_type must be 'call' or 'put'")
-
-
-def black_scholes_greeks(S0, K, r, sigma, T, option_type):
-    d1, d2 = black_scholes_inputs(S0, K, r, sigma, T)
-    gamma = norm.pdf(d1) / (S0 * sigma * np.sqrt(T))
-    vega = S0 * norm.pdf(d1) * np.sqrt(T)
-
-    if option_type == "call":
-        delta = norm.cdf(d1)
-        theta = -S0 * norm.pdf(d1) * sigma / (2 * np.sqrt(T)) - r * K * np.exp(-r * T) * norm.cdf(
-            d2
-        )
-        rho = K * T * np.exp(-r * T) * norm.cdf(d2)
-    else:
-        delta = norm.cdf(d1) - 1
-        theta = -S0 * norm.pdf(d1) * sigma / (2 * np.sqrt(T)) + r * K * np.exp(-r * T) * norm.cdf(
-            -d2
-        )
-        rho = -K * T * np.exp(-r * T) * norm.cdf(-d2)
-
-    return pd.Series(
-        {
-            "delta": delta,
-            "gamma": gamma,
-            "vega": vega / 100,
-            "theta_per_day": theta / 365,
-            "rho": rho / 100,
-        }
-    )
-
-
-# %% [markdown]
 # ## Interactive dashboard
 #
-# Run this cell in JupyterLab with `uv run jupyter lab`.
+# Run this cell in JupyterLab with `uv run jupyter lab`. The displayed curves
+# are deterministic model scenarios, not observed option quotes or a calibrated
+# volatility surface.
 
 
-# %% tags=["interactive"]
+# %% tags=["interactive"] mystnb={"image": {"alt": "Interactive or static chart comparing a European option payoff at maturity with its Black-Scholes-Merton value across underlying prices. Separate vertical markers identify the current spot and strike, while a compact table reports the price, five Greeks with units, the delta hedge, and put-call parity gap."}}
 def plot_black_scholes_dashboard(
     option_type="call",
     S0=100,
-    K=100,
+    K=105,
     T=1.0,
     r=0.06,
+    q=0.02,
     sigma=0.25,
 ):
-    price = black_scholes_price(S0, K, r, sigma, T, option_type)
-    greeks = black_scholes_greeks(S0, K, r, sigma, T, option_type)
+    price = black_scholes_price(S0, K, r, sigma, T, option_type, q)
+    greeks = black_scholes_greeks(S0, K, r, sigma, T, option_type, q)
 
     spot_grid = np.linspace(max(1, S0 * 0.40), S0 * 1.80, 200)
-    payoff = np.maximum(spot_grid - K, 0) if option_type == "call" else np.maximum(K - spot_grid, 0)
-    option_values = [black_scholes_price(spot, K, r, sigma, T, option_type) for spot in spot_grid]
+    payoff = option_payoff(spot_grid, K, option_type)
+    option_values = [
+        black_scholes_price(spot, K, r, sigma, T, option_type, q) for spot in spot_grid
+    ]
 
-    parity_gap = (
-        black_scholes_price(S0, K, r, sigma, T, "call")
-        + K * np.exp(-r * T)
-        - black_scholes_price(S0, K, r, sigma, T, "put")
-        - S0
+    call_price = black_scholes_price(S0, K, r, sigma, T, "call", q)
+    put_price = black_scholes_price(S0, K, r, sigma, T, "put", q)
+    parity_gap = put_call_parity_gap(
+        call_price,
+        put_price,
+        S0,
+        K,
+        r,
+        T,
+        q,
     )
 
-    title = (
-        f"{option_type.title()} price: {price:.4f} | "
-        f"Delta: {greeks['delta']:.4f} | Gamma: {greeks['gamma']:.4f} | "
-        f"Vega/1pct: {greeks['vega']:.4f} | Theta/day: {greeks['theta_per_day']:.4f} | "
-        f"Parity gap: {parity_gap:.2e}"
-    )
+    title = f"Black-Scholes-Merton {option_type.title()}: {price:.4f} price units"
     builder = (
         build_black_scholes_dashboard
         if RUN_INTERACTIVE_WIDGETS
@@ -193,15 +165,23 @@ def plot_black_scholes_dashboard(
     display(
         pd.Series(
             {
+                "option_type": option_type,
+                "spot_price_units": S0,
+                "strike_price_units": K,
+                "maturity_years": T,
+                "continuous_rate_pct": 100 * r,
+                "continuous_dividend_yield_pct": 100 * q,
+                "annualized_volatility_pct": 100 * sigma,
                 "option_price": price,
                 "delta": greeks["delta"],
                 "underlying_units_for_long_option_delta_hedge": -greeks["delta"],
                 "gamma": greeks["gamma"],
-                "vega_per_1pct": greeks["vega"],
+                "vega_per_1_percentage_point": greeks["vega_per_1pct"],
                 "theta_per_day": greeks["theta_per_day"],
+                "rho_per_1_percentage_point": greeks["rho_per_1pct"],
                 "put_call_parity_gap": parity_gap,
             },
-            name="pricing and local hedge report",
+            name="synthetic pricing and local hedge report",
         )
     )
 
@@ -211,9 +191,10 @@ if RUN_INTERACTIVE_WIDGETS:
         plot_black_scholes_dashboard,
         option_type=Dropdown(options=["call", "put"], value="call"),
         S0=FloatSlider(value=100, min=20, max=250, step=1),
-        K=FloatSlider(value=100, min=20, max=250, step=1),
+        K=FloatSlider(value=105, min=20, max=250, step=1),
         T=FloatSlider(value=1.0, min=0.05, max=5.0, step=0.05, readout_format=".2f"),
         r=FloatSlider(value=0.06, min=0.00, max=0.20, step=0.005, readout_format=".3f"),
+        q=FloatSlider(value=0.02, min=0.00, max=0.15, step=0.005, readout_format=".3f"),
         sigma=FloatSlider(value=0.25, min=0.05, max=1.00, step=0.01, readout_format=".2f"),
     )
 else:
@@ -224,16 +205,22 @@ else:
 #
 # | Greek | Practical interpretation |
 # | --- | --- |
-# | Delta | Approximate option price change for a one-unit change in the underlying price |
-# | Gamma | Curvature of the option value with respect to the underlying price |
-# | Vega | Approximate price change for a one percentage point change in volatility |
-# | Theta | Approximate daily time decay |
-# | Rho | Approximate price change for a one percentage point change in the risk-free rate |
+# | Delta | Option-price units per one underlying-price unit |
+# | Gamma | Change in delta per one underlying-price unit |
+# | Vega | Option-price units per one volatility percentage point |
+# | Theta | Option-price units per calendar day, holding other inputs fixed |
+# | Rho | Option-price units per one risk-free-rate percentage point |
 #
 # ## Model limitations
 #
-# - The dashboard is a Black-Scholes teaching tool and keeps volatility, rates, and market frictions simplified.
-# - Slider sensitivity is local; it does not replace scenario analysis with market-calibrated surfaces.
+# - The dashboard is a Black-Scholes-Merton teaching tool and keeps volatility,
+#   rates, dividend yield, and market frictions constant over the option's life.
+# - It assumes a European payoff, continuous trading, no transaction costs, and
+#   lognormal underlying dynamics; these assumptions define the calculation but
+#   do not validate it against market prices.
+# - Slider repricing is scenario-based over the selected range; only the Greeks
+#   are local sensitivities. Neither replaces analysis with market-calibrated
+#   surfaces.
 # - Hedging interpretations should account for discrete rebalancing, transaction costs, and liquidity.
 #
 # The hedge row is the position in the underlying that offsets the delta of one

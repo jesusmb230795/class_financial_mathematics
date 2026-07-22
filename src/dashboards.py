@@ -820,22 +820,30 @@ def build_black_scholes_dashboard(
             line={"color": SEMANTIC_COLORS["primary"], "dash": "solid"},
         )
     )
-    figure.add_vline(
-        x=current_spot,
-        line_dash="dash",
-        line_color=SEMANTIC_COLORS["comparison"],
-        annotation_text="Current spot",
-    )
-    figure.add_vline(
-        x=strike,
-        line_dash="dot",
-        line_color=SEMANTIC_COLORS["highlight"],
-        annotation_text="Strike",
-    )
+    if np.isclose(current_spot, strike):
+        figure.add_vline(
+            x=current_spot,
+            line_dash="dash",
+            line_color=SEMANTIC_COLORS["highlight"],
+            annotation_text="Current spot = strike",
+        )
+    else:
+        figure.add_vline(
+            x=current_spot,
+            line_dash="dash",
+            line_color=SEMANTIC_COLORS["comparison"],
+            annotation_text="Current spot",
+        )
+        figure.add_vline(
+            x=strike,
+            line_dash="dot",
+            line_color=SEMANTIC_COLORS["highlight"],
+            annotation_text="Strike",
+        )
     apply_plotly_style(figure, title=title, height=520)
     figure.update_layout(
-        xaxis_title="Underlying price",
-        yaxis_title="Option value",
+        xaxis_title="Underlying price (currency units)",
+        yaxis_title="Option value (currency units)",
         showlegend=True,
     )
     return figure
@@ -845,7 +853,7 @@ def build_var_cvar_dashboard(
     returns: pd.Series,
     risk_metrics: pd.Series,
 ) -> go.Figure:
-    """Build a loss-distribution dashboard with VaR/ES thresholds."""
+    """Build a positive-loss VaR/ES dashboard with a method comparison."""
     observed_returns = pd.to_numeric(returns, errors="coerce")
     if observed_returns.empty or not np.all(np.isfinite(observed_returns)):
         raise ValueError("returns must contain finite observations")
@@ -859,46 +867,89 @@ def build_var_cvar_dashboard(
     if (finite_metrics < 0).any():
         raise ValueError("risk_metrics must be non-negative loss estimates")
 
-    figure = go.Figure()
+    labels = [metric.replace("_", " ").title() for metric in finite_metrics.index]
+    colors = [
+        SEMANTIC_COLORS["negative"]
+        if "expected_shortfall" in metric.lower() or "cvar" in metric.lower()
+        else SEMANTIC_COLORS["primary"]
+        for metric in finite_metrics.index
+    ]
+    figure = make_subplots(
+        rows=1,
+        cols=2,
+        column_widths=[0.68, 0.32],
+        horizontal_spacing=0.12,
+        subplot_titles=("Observed loss distribution", "Risk-method comparison"),
+    )
     figure.add_trace(
         go.Histogram(
-            x=observed_returns,
+            x=-observed_returns,
             nbinsx=70,
-            name="Observed returns",
+            name="Observed losses",
             marker={
                 "color": SEMANTIC_COLORS["comparison"],
                 "line": {"color": PLOT_BACKGROUND, "width": 0.5},
             },
             opacity=0.8,
-        )
+        ),
+        row=1,
+        col=1,
     )
-    threshold_colors = (
-        SEMANTIC_COLORS["negative"],
-        SEMANTIC_COLORS["highlight"],
-        SEMANTIC_COLORS["primary"],
-        SEMANTIC_COLORS["comparison"],
-        SEMANTIC_COLORS["reference"],
-    )
-    for index, (metric, value) in enumerate(finite_metrics.items()):
+    historical_items = [
+        item for item in finite_metrics.items() if item[0].lower() == "historical_var"
+    ]
+    es_items = [
+        item
+        for item in finite_metrics.items()
+        if "expected_shortfall" in item[0].lower() or "cvar" in item[0].lower()
+    ]
+    reference_items = historical_items[:1] + es_items[:1]
+    for index, (metric, value) in enumerate(reference_items):
+        is_es = "expected_shortfall" in metric.lower() or "cvar" in metric.lower()
         figure.add_vline(
-            x=-value,
-            line_color=threshold_colors[index % len(threshold_colors)],
+            x=value,
+            line_color=(SEMANTIC_COLORS["negative"] if is_es else SEMANTIC_COLORS["highlight"]),
             line_dash=_PLOTLY_THRESHOLD_DASHES[index % len(_PLOTLY_THRESHOLD_DASHES)],
-            annotation_text=metric.replace("_", " "),
+            annotation_text=("ES tail mean" if is_es else "Historical VaR threshold"),
             annotation_position="top left",
+            row=1,
+            col=1,
         )
+    figure.add_trace(
+        go.Scatter(
+            x=finite_metrics.to_numpy(dtype=float),
+            y=labels,
+            mode="markers",
+            name="Risk estimates",
+            marker={"color": colors, "size": 10, "symbol": "diamond"},
+            hovertemplate="%{y}: %{x:.2%}<extra></extra>",
+        ),
+        row=1,
+        col=2,
+    )
     apply_plotly_style(
         figure,
         title=(
-            f"VaR and Expected Shortfall from official returns | lookback = {len(observed_returns)}"
+            "Tail-risk estimates: VaR thresholds and ES tail means "
+            f"| n = {len(observed_returns)} intervals"
         ),
         height=520,
     )
     figure.update_layout(
-        xaxis_title="Daily return",
-        yaxis_title="Frequency",
-        showlegend=True,
+        showlegend=False,
     )
-    figure.update_xaxes(tickformat=".2%")
+    figure.update_xaxes(
+        title_text="One-period loss",
+        tickformat=".2%",
+        row=1,
+        col=1,
+    )
+    figure.update_yaxes(title_text="Frequency", row=1, col=1)
+    figure.update_xaxes(
+        title_text="Non-negative loss estimate",
+        tickformat=".2%",
+        row=1,
+        col=2,
+    )
     _add_plotly_context_note(figure, returns)
     return figure

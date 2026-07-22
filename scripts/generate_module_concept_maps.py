@@ -1674,7 +1674,7 @@ FLOW_SPECS: dict[str, FlowSpec] = {
             ConceptNode("Payoff &\nreplication", "call · put · no-arbitrage", TEAL),
             ConceptNode("Pricing inputs", "spot · strike · time · rates", AMBER),
             ConceptNode("Price & Greeks", "delta · gamma · vega · theta", TEAL),
-            ConceptNode("Volatility &\nexercise", "smile · American features", CORAL),
+            ConceptNode("Volatility &\nexercise", "smile · American features", AMBER),
             ConceptNode("Hedge", "instruments · frequency", MUTED_BLUE),
             ConceptNode("Residual P&L\n& stress", "model · basis · scenarios", CORAL),
             ConceptNode("Limits &\ngovernance", "escalation · review", AMBER),

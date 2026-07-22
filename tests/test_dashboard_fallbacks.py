@@ -320,8 +320,9 @@ def test_black_scholes_fallback_preserves_payoff_and_model_curves() -> None:
     try:
         assert isinstance(figure, Figure)
         assert len(figure.axes) == 1
-        assert figure.axes[0].get_xlabel() == "Underlying price"
-        assert figure.axes[0].get_ylabel() == "Option value"
+        assert figure.axes[0].get_xlabel() == "Underlying price (currency units)"
+        assert figure.axes[0].get_ylabel() == "Option value (currency units)"
+        assert figure.get_figwidth() <= 7.5
         assert len(figure.axes[0].lines) == 4
         assert figure._suptitle.get_text() == "Call pricing diagnostic"
         assert figure.axes[0].lines[0].get_color() == SEMANTIC_COLORS["reference"]
@@ -403,14 +404,16 @@ def test_var_cvar_fallback_skips_unavailable_metric_and_renders_png() -> None:
 
     try:
         assert isinstance(figure, Figure)
-        assert len(figure.axes) == 1
-        assert figure.axes[0].get_xlabel() == "Daily return"
+        assert len(figure.axes) == 2
+        assert figure.axes[0].get_xlabel() == "One-period loss"
         assert figure.axes[0].get_ylabel() == "Frequency"
         assert len(figure.axes[0].lines) == 2
-        assert figure.axes[0].lines[0].get_color() == SEMANTIC_COLORS["negative"]
+        assert figure.axes[0].lines[0].get_color() == SEMANTIC_COLORS["highlight"]
         assert figure.axes[0].lines[0].get_linestyle() == "--"
-        assert figure.axes[0].lines[1].get_color() == SEMANTIC_COLORS["highlight"]
+        assert figure.axes[0].lines[1].get_color() == SEMANTIC_COLORS["negative"]
         assert figure.axes[0].lines[1].get_linestyle() == ":"
+        assert figure.axes[1].get_xlabel() == "Loss estimate"
+        assert figure.get_figwidth() <= 7.5
         assert render_png(figure).startswith(b"\x89PNG\r\n\x1a\n")
     finally:
         plt.close(figure)

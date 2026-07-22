@@ -421,10 +421,17 @@ def returns_from_prices(
 ) -> pd.Series | pd.DataFrame:
     """Compute simple or log returns from prices."""
     if method == "log":
-        return log_returns(prices)
-    if method == "simple":
-        return simple_returns(prices)
-    raise ValueError("method must be 'log' or 'simple'")
+        result = log_returns(prices)
+    elif method == "simple":
+        result = simple_returns(prices)
+    else:
+        raise ValueError("method must be 'log' or 'simple'")
+    result.attrs = dict(prices.attrs)
+    result.attrs["return_method"] = method
+    result.attrs["return_construction"] = (
+        "log(P_t / P_{t-1})" if method == "log" else "P_t / P_{t-1} - 1"
+    )
+    return result
 
 
 def align_time_series(

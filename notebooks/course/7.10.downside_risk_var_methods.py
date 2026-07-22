@@ -20,54 +20,75 @@
 #
 # ## Lesson summary
 #
-# This lab builds a reproducible workflow for downside risk, Value at Risk, and Expected Shortfall. It compares empirical, Gaussian, Cornish-Fisher, and volatility-weighted estimates on the same official-data portfolio return series {cite}`jorion2007var,mcneil2015quantitative`.
+# This lab compares downside deviation, historical and parametric Value at Risk
+# (VaR), Expected Shortfall (ES), Gaussian Monte Carlo, and an exponentially
+# weighted moving-average (EWMA) volatility adjustment. Every estimator uses the
+# same simple-return series for an equal-weight portfolio rebalanced at each
+# observed US trading interval {cite}`jorion2007var,mcneil2015quantitative,riskMetrics1996`.
 #
 # ## Learning objectives
 #
 # By the end of this lab, students should be able to:
 #
-# - distinguish volatility from downside-only risk;
-# - compute target semideviation and the Sortino ratio;
-# - estimate historical, Gaussian, and Cornish-Fisher VaR;
-# - explain why Expected Shortfall is more tail-sensitive than VaR;
-# - use EWMA volatility to make historical simulation more responsive to recent market regimes.
+# - distinguish total volatility from target semideviation;
+# - compute and interpret an annualized Sortino ratio;
+# - compare historical, Gaussian, Cornish-Fisher, and Gaussian Monte Carlo VaR;
+# - estimate ES from exactly the worst empirical probability mass; and
+# - explain the timing of an EWMA one-step-ahead volatility forecast.
 #
 # ## Prerequisites
 #
-# Complete VaR and Expected Shortfall Foundations first. Students should
-# preserve the non-negative loss convention and understand why alpha is a lower
-# return-tail probability rather than a confidence level.
+# Complete Value at Risk and Expected Shortfall Foundations first. Preserve the
+# non-negative loss convention and remember that $\alpha$ is a lower return-tail
+# probability, not a confidence level.
 #
 # ## Risk metric definitions
 #
-# For target return $\tau$, target semideviation measures only downside observations:
+# For per-interval target return $\tau$ and $T$ observations, target
+# semideviation is
 #
 # $$
-# \sigma_-(\tau)=\sqrt{\frac{1}{T}\sum_{t=1}^{T}\min(r_t-\tau,0)^2}.
+# \sigma_-(\tau)
+# =\sqrt{\frac{1}{T}\sum_{t=1}^{T}\min(r_t-\tau,0)^2}.
 # $$
 #
-# For loss $L=-R$, Value at Risk is the loss quantile:
+# With $N$ observed intervals per year, the course helper annualizes both the
+# arithmetic excess return and the semideviation:
 #
 # $$
-# v_\alpha=Q_{1-\alpha}(L),\qquad
-# \operatorname{VaR}_{\alpha}
-# =\max\left(0,-Q_\alpha(R)\right)
-# =\max(0,v_\alpha).
+# \operatorname{Sortino}_{N}
+# =\frac{N(\bar r-\tau)}{\sqrt{N}\,\sigma_-(\tau)}
+# =\sqrt{N}\,\frac{\bar r-\tau}{\sigma_-(\tau)}.
 # $$
 #
-# Expected Shortfall averages losses beyond the VaR threshold:
+# VaR and ES are reported as positive loss magnitudes:
 #
 # $$
-# \operatorname{ES}_{\alpha}
-# =\max\left(0,-\mathbb{E}\left[R\mid R\leq Q_\alpha(R)\right]\right)
-# =\max\left(0,\mathbb{E}\left[L\mid L\geq v_\alpha\right]\right).
+# \operatorname{VaR}_{\alpha}(R)
+# =\max\{0,-Q_\alpha(R)\},
 # $$
 #
-# The Cornish-Fisher adjustment modifies a Gaussian quantile with sample skewness $S$ and excess kurtosis $K$:
+# $$
+# \operatorname{ES}_{\alpha}(R)
+# =\max\left\{0,-\frac{1}{\alpha}
+# \int_0^\alpha Q_u(R)\,du\right\}.
+# $$
+#
+# The conditional-tail expectation is equivalent only under suitable
+# continuity at the quantile. The empirical helper instead uses complete worst
+# observations plus the fractional boundary observation required to represent
+# exactly $\alpha T$ observations {cite}`acerbiTasche2002,rockafellarUryasev2002`.
+#
+# The Cornish-Fisher approximation modifies a Gaussian quantile with sample
+# skewness $S$ and excess kurtosis $K$:
 #
 # $$
-# z_{CF}=z+\frac{1}{6}(z^2-1)S+\frac{1}{24}(z^3-3z)K-\frac{1}{36}(2z^3-5z)S^2.
+# z_{CF}=z+\frac{z^2-1}{6}S+\frac{z^3-3z}{24}K
+# -\frac{2z^3-5z}{36}S^2.
 # $$
+#
+# The course applies a moment guardrail rather than treating this asymptotic
+# expansion as universally reliable.
 #
 # ## Setup
 
@@ -75,56 +96,86 @@
 import pandas as pd
 from scipy.stats import kurtosis, skew
 
-from src.market_data import official_price_panel, returns_from_prices
+from src.market_data import nasdaq_stock_price_panel, returns_from_prices
 from src.market_risk import (
     cornish_fisher_moment_report,
     cornish_fisher_var,
+    ewma_next_volatility,
     ewma_volatility,
     expected_shortfall,
+    gaussian_monte_carlo_var,
     gaussian_var,
     historical_var,
+    rebalanced_portfolio_returns,
     sortino_ratio,
     target_semideviation,
     volatility_weighted_historical_var,
 )
+from src.module7_visuals import build_ewma_volatility_figure
 
 pd.options.display.float_format = "{:.6f}".format
 
 # %% [markdown]
-# ## Official portfolio returns
+# ## Observed equal-weight equity portfolio
 #
-# The portfolio below uses log returns derived from the committed Banxico official price-like snapshot. The columns combine USD/MXN, UDI, and carry indexes built from official CETES, TIIE, and policy-rate series. This keeps downside-risk calculations reproducible without fabricating return histories.
+# The committed snapshot contains provider-adjusted closes in USD for AAPL,
+# MSFT, NVDA, AMZN, and GOOGL. Prices cover 2021-01-04 through 2026-06-05;
+# simple returns begin on the next observed trading date. The fixed 20% weights
+# are restored after every observed interval, so the portfolio return is
+# $R_{p,t}=\sum_i w_iR_{i,t}$. This is an explicit rebalancing assumption, not a
+# buy-and-hold reconstruction {cite}`yfinance2025,yahooFinanceCoverage2026,yahooTerms2026`.
 
 # %%
-price_panel = official_price_panel(start="2021-01-01", end="2026-06-05")
-asset_returns = returns_from_prices(price_panel, method="log").dropna()
+price_panel = nasdaq_stock_price_panel(start="2021-01-04", end="2026-06-05")
+asset_returns = returns_from_prices(price_panel, method="simple").dropna(how="any")
+asset_returns.attrs = {
+    **price_panel.attrs,
+    "method": "simple returns; equal weights rebalanced each observed interval",
+}
 
 weights = pd.Series(
     {
-        "usd_mxn": 0.25,
-        "udi": 0.20,
-        "cetes_28d_carry": 0.20,
-        "tiie_28d_carry": 0.20,
-        "policy_rate_carry": 0.15,
+        "AAPL": 0.20,
+        "MSFT": 0.20,
+        "NVDA": 0.20,
+        "AMZN": 0.20,
+        "GOOGL": 0.20,
     },
     name="weight",
 )
-weights = weights.reindex(asset_returns.columns).fillna(0.0)
-weights = weights / weights.sum()
-portfolio_returns = asset_returns.dot(weights).rename("portfolio_return")
+portfolio_returns = rebalanced_portfolio_returns(asset_returns, weights)
+portfolio_returns.name = "equal_weight_portfolio_simple_return"
 
 asset_returns.head()
 
-# %% [markdown]
-# **Output interpretation.** Each column is a real snapshot-backed return series. The weights are reindexed to the available columns before normalization, which prevents silent portfolio drift when the data schema changes.
+# %%
+pd.Series(
+    {
+        "source": price_panel.attrs["sources"],
+        "field_and_currency": "provider-adjusted close, USD",
+        "price_sample": f"{price_panel.index.min():%Y-%m-%d} to {price_panel.index.max():%Y-%m-%d}",
+        "return_sample": (
+            f"{portfolio_returns.index.min():%Y-%m-%d} to {portfolio_returns.index.max():%Y-%m-%d}"
+        ),
+        "frequency": "observed US trading intervals; no calendar filling",
+        "snapshot_generated_at": "2026-06-07T04:55:41.700953+00:00",
+        "portfolio_rule": "20% each; rebalanced after every observed interval",
+        "omitted": "transaction costs, taxes, and FX conversion",
+        "rights_review": "provenance recorded; redistribution rights not independently verified",
+    },
+    name="data_and_portfolio_contract",
+)
 
 # %% [markdown]
+# The versioned snapshot makes the calculation reproducible, but its provenance
+# does not independently establish redistribution or downstream-use rights.
+#
 # ## Distribution diagnostics
 
 # %%
 pd.DataFrame(
     {
-        "mean": asset_returns.mean(),
+        "mean_simple_return": asset_returns.mean(),
         "volatility": asset_returns.std(),
         "skewness": asset_returns.apply(lambda series: skew(series, bias=False)),
         "excess_kurtosis": asset_returns.apply(
@@ -139,41 +190,59 @@ pd.Series(
         "portfolio_mean": portfolio_returns.mean(),
         "portfolio_volatility": portfolio_returns.std(),
         "portfolio_skewness": skew(portfolio_returns, bias=False),
-        "portfolio_excess_kurtosis": kurtosis(portfolio_returns, fisher=True, bias=False),
+        "portfolio_excess_kurtosis": kurtosis(
+            portfolio_returns,
+            fisher=True,
+            bias=False,
+        ),
     },
-    name="portfolio_diagnostics",
+    name="per_observed_US_trading_interval",
 )
 
 # %% [markdown]
 # ## Downside risk
 #
-# Volatility penalizes positive and negative surprises symmetrically. Semideviation focuses only on returns below the selected target.
+# Volatility penalizes positive and negative surprises symmetrically.
+# Semideviation measures only shortfalls from the stated target. The following
+# annualization assumes 252 intervals per year; it is a scaling convention, not
+# a claim that every calendar year contains exactly 252 observations.
 
 # %%
+periods_per_year = 252
+target = 0.0
+
 downside_report = pd.Series(
     {
-        "daily_target_semideviation": target_semideviation(portfolio_returns, target=0.0),
+        "target_per_interval": target,
+        "target_semideviation_per_interval": target_semideviation(
+            portfolio_returns,
+            target=target,
+        ),
         "annualized_target_semideviation": target_semideviation(
             portfolio_returns,
-            target=0.0,
-            periods_per_year=252,
+            target=target,
+            periods_per_year=periods_per_year,
         ),
-        "sortino_ratio": sortino_ratio(portfolio_returns, target=0.0),
+        "annualized_sortino_ratio": sortino_ratio(
+            portfolio_returns,
+            target=target,
+            periods_per_year=periods_per_year,
+        ),
     },
     name="downside_report",
 )
-
 downside_report
 
 # %% [markdown]
-# **Output interpretation.** The Sortino ratio uses downside deviation rather than total volatility. If downside deviation is small because the sample contains few negative days, the ratio can look strong even when tail losses still matter.
-
-# %% [markdown]
-# ## VaR and Expected Shortfall
+# **Output interpretation.** A high Sortino ratio can still coexist with a
+# material tail loss. It is a mean-to-downside-deviation ratio, not a replacement
+# for VaR, ES, stress testing, or a drawdown analysis.
 #
-# All VaR and Expected Shortfall estimates are reported as non-negative loss
-# numbers. For example, a daily VaR of `0.025` means a 2.5% one-day portfolio
-# loss threshold.
+# ## VaR, Expected Shortfall, and Gaussian Monte Carlo
+#
+# Gaussian Monte Carlo below simulates independent one-interval draws using the
+# sample mean and standard deviation. The fixed seed makes the numerical
+# benchmark reproducible; it does not make the Gaussian model empirically true.
 
 # %%
 alpha = 0.01
@@ -188,7 +257,13 @@ except ValueError as exc:
 risk_table = pd.Series(
     {
         "historical_var": historical_var(portfolio_returns, alpha=alpha),
-        "gaussian_var": gaussian_var(portfolio_returns, alpha=alpha),
+        "gaussian_closed_form_var": gaussian_var(portfolio_returns, alpha=alpha),
+        "gaussian_monte_carlo_var": gaussian_monte_carlo_var(
+            portfolio_returns,
+            confidence=1 - alpha,
+            simulations=100_000,
+            seed=20260722,
+        ),
         "cornish_fisher_var": cornish_fisher_estimate,
         "volatility_weighted_historical_var": volatility_weighted_historical_var(
             portfolio_returns,
@@ -197,9 +272,8 @@ risk_table = pd.Series(
         ),
         "expected_shortfall": expected_shortfall(portfolio_returns, alpha=alpha),
     },
-    name="positive_daily_loss",
+    name="positive_loss_per_observed_US_trading_interval",
 ).to_frame()
-
 risk_table
 
 # %%
@@ -212,47 +286,74 @@ pd.concat(
 
 # %% [markdown]
 # **Output interpretation.** Differences across rows are model-risk evidence.
-# Historical VaR reads the sample tail, Gaussian VaR imposes symmetry,
-# Cornish-Fisher reacts to skewness and kurtosis, and volatility-weighted
-# historical VaR gives more influence to the latest volatility state.
-# Cornish-Fisher is reported as unavailable rather than extrapolated when the
-# displayed sample moments exceed the course guardrail.
-
-# %% [markdown]
-# ## EWMA volatility state
+# Historical VaR reads the observed sample tail; Gaussian methods impose
+# symmetry; Cornish-Fisher reacts to sample skewness and kurtosis; and
+# volatility-weighted historical VaR rescales observations to the latest EWMA
+# state. A close Monte Carlo and closed-form Gaussian result checks the
+# simulation implementation, not the normality assumption.
 #
-# EWMA volatility is a simple way to make risk estimates respond faster after volatility shocks. The RiskMetrics convention often uses $\lambda=0.94$ for daily returns.
+# ## EWMA timing and next-state forecast
+#
+# With decay $\lambda$, the forecast available after observing return $r_t$ is
+#
+# $$
+# \widehat\sigma_{t+1\mid t}^{2}
+# =\lambda\widehat\sigma_{t\mid t-1}^{2}
+# +(1-\lambda)r_t^2.
+# $$
+#
+# The value used to scale the next interval must therefore incorporate the last
+# observed return. The commonly cited RiskMetrics daily convention uses
+# $\lambda=0.94$ {cite}`riskMetrics1996`.
 
 # %%
-ewma_state = ewma_volatility(portfolio_returns, lambda_=0.94)
+lambda_ = 0.94
+ewma_state = ewma_volatility(portfolio_returns, lambda_=lambda_)
+next_ewma_forecast = ewma_next_volatility(portfolio_returns, lambda_=lambda_)
 
-pd.DataFrame(
+pd.Series(
     {
-        "portfolio_return": portfolio_returns,
-        "ewma_volatility": ewma_state,
-    }
-).tail()
+        "last_observed_return": portfolio_returns.iloc[-1],
+        "sigma_t_given_t_minus_1": ewma_state.iloc[-1],
+        "sigma_t_plus_1_given_t": next_ewma_forecast,
+        "lambda": lambda_,
+    },
+    name="EWMA_timing_check",
+)
+
+# %% mystnb={"image": {"alt": "Two aligned time-series panels show equal-weight portfolio simple returns and the descriptive EWMA volatility state for observed US trading intervals from January 2021 through June 2026."}}
+ewma_figure = build_ewma_volatility_figure(portfolio_returns, ewma_state)
+ewma_figure
 
 # %% [markdown]
+# The full-sample default used to initialize this descriptive EWMA path is not a
+# valid no-look-ahead backtest initialization. A production filter would set its
+# initial variance from a prior training period and preserve the complete state
+# history.
+#
 # ## Interpretation checklist
 #
-# | Question | What to inspect |
+# | Question | Evidence to inspect |
 # | --- | --- |
-# | Is the distribution symmetric? | Skewness and large negative jumps |
-# | Is Gaussian VaR plausible? | Difference between Gaussian and historical VaR |
-# | Is tail loss material? | Gap between VaR and Expected Shortfall |
-# | Is the latest volatility regime unusual? | EWMA volatility relative to unconditional volatility |
-# | Is Cornish-Fisher stable? | Whether skewness and kurtosis are within a defensible range |
+# | Is the sample symmetric? | Skewness and large negative simple returns |
+# | Does the Gaussian model matter? | Gaussian versus historical VaR |
+# | Does simulation reproduce its own model? | Monte Carlo versus closed-form Gaussian VaR |
+# | Is the tail material? | Gap between historical VaR and empirical ES |
+# | Has volatility moved recently? | EWMA path and the $t+1\mid t$ state |
+# | Is Cornish-Fisher defensible here? | Moment report and guardrail status |
 #
 # ## Model limitations
 #
-# - VaR depends strongly on the selected horizon, confidence level, sign convention, and return distribution.
-# - Historical methods reuse past losses and can miss new risks when market structure changes.
-# - Expected Shortfall is more tail-sensitive than VaR, but it still inherits the sample and model assumptions used to estimate the tail.
-
-# %% [markdown]
+# - All estimates depend on horizon, sample, weighting, sign, and return conventions.
+# - Equal weights rebalanced every interval are hypothetical and omit transaction
+#   costs, taxes, foreign-exchange conversion, capacity, and trading constraints.
+# - Historical methods cannot reveal events absent from the sample.
+# - Gaussian Monte Carlo preserves the fitted normal model's omissions, including
+#   nonlinear dependence, volatility clustering, and heavy tails.
+# - Empirical ES is tail-sensitive but statistically noisy at small $\alpha$.
+#
 # ## Handoff
 #
-# Carry the selected tail models into the next lab. Estimation alone is not
-# validation: VaR Backtesting and Stress Testing checks exception frequency,
-# exception clustering, and deterministic scenario loss.
+# The next lab separates estimation from validation. It freezes each rolling
+# forecast before observing the corresponding return, tests exception coverage
+# and dependence, and adds an adverse deterministic scenario.

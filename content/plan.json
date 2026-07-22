@@ -159,7 +159,9 @@
         "chapters/legacy/07-derivatives.md"
       ],
       "gaps": [
-        "Counterparty credit, xVA, collateral, margin, and arbitrage-checked volatility surfaces remain advanced extensions."
+        "Credit derivatives, counterparty credit, xVA, collateral, margin, and production lifecycle controls remain advanced extensions.",
+        "Multi-maturity arbitrage-checked volatility surfaces remain an advanced extension beyond the published same-maturity quote diagnostics.",
+        "Institutional overlay, cash-equitization, risk-budgeting, and capital-allocation cases still require transaction-cost modeling and rights-reviewed observed inputs."
       ],
       "next_text_target": "An arbitrage-checked volatility-surface or counterparty-risk case with explicit numerical governance."
     },

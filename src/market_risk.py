@@ -35,6 +35,38 @@ def _positive_loss(value: float) -> float:
     return float(max(0.0, value))
 
 
+def rebalanced_portfolio_returns(
+    simple_returns: pd.DataFrame,
+    weights: pd.Series,
+) -> pd.Series:
+    """Aggregate simple asset returns for a portfolio rebalanced each interval."""
+    if simple_returns.empty:
+        raise ValueError("simple_returns must contain at least one observation")
+    if simple_returns.columns.has_duplicates or weights.index.has_duplicates:
+        raise ValueError("asset labels must be unique")
+    missing_weights = simple_returns.columns.difference(weights.index)
+    extra_weights = weights.index.difference(simple_returns.columns)
+    if not missing_weights.empty or not extra_weights.empty:
+        raise ValueError(
+            "weights must match the return columns exactly; "
+            f"missing={missing_weights.tolist()}, extra={extra_weights.tolist()}"
+        )
+    numeric_returns = simple_returns.astype(float)
+    numeric_weights = weights.reindex(simple_returns.columns).astype(float)
+    if not np.isfinite(numeric_returns.to_numpy()).all():
+        raise ValueError("simple_returns must contain only finite values")
+    if not np.isfinite(numeric_weights.to_numpy()).all():
+        raise ValueError("weights must contain only finite values")
+    if not np.isclose(float(numeric_weights.sum()), 1.0, atol=1e-10, rtol=0.0):
+        raise ValueError("weights must sum to 1")
+    result = numeric_returns.mul(numeric_weights, axis="columns").sum(axis="columns")
+    result.name = "portfolio_simple_return"
+    result.attrs = dict(simple_returns.attrs)
+    result.attrs["portfolio_rule"] = "constant weights rebalanced each observed interval"
+    result.attrs["weights"] = numeric_weights.to_dict()
+    return result
+
+
 def parametric_var(mean: float, volatility: float, quantile: float) -> float:
     """Return one-step VaR as a non-negative loss.
 
@@ -113,14 +145,23 @@ def historical_var(returns: pd.Series, alpha: float = 0.01) -> float:
 
 
 def expected_shortfall(returns: pd.Series, alpha: float = 0.01) -> float:
-    """Return Expected Shortfall as a non-negative average tail loss."""
+    """Return empirical Expected Shortfall from the worst ``alpha`` probability mass.
+
+    The finite-sample estimate averages complete worst observations plus the
+    fractional boundary observation needed to represent exactly ``alpha * n``
+    observations. This is the empirical quantile-integral definition and avoids
+    over-weighting ties at an interpolated VaR threshold.
+    """
     _validate_alpha(alpha)
     clean = _clean_series(returns)
-    threshold = clean.quantile(alpha)
-    tail = clean[clean <= threshold]
-    if tail.empty:
-        return historical_var(clean, alpha=alpha)
-    return _positive_loss(-tail.mean())
+    ordered = np.sort(clean.to_numpy())
+    tail_mass = alpha * ordered.size
+    complete_observations = int(np.floor(tail_mass))
+    fractional_observation = tail_mass - complete_observations
+    tail_sum = float(ordered[:complete_observations].sum())
+    if fractional_observation > 0:
+        tail_sum += fractional_observation * float(ordered[complete_observations])
+    return _positive_loss(-(tail_sum / tail_mass))
 
 
 def gaussian_var(returns: pd.Series, alpha: float = 0.01) -> float:
@@ -132,6 +173,39 @@ def gaussian_var(returns: pd.Series, alpha: float = 0.01) -> float:
         volatility=float(clean.std(ddof=1)),
         quantile=float(norm.ppf(alpha)),
     )
+
+
+def gaussian_monte_carlo_var(
+    returns: pd.Series,
+    *,
+    confidence: float = 0.99,
+    simulations: int = 100_000,
+    seed: int = 42,
+) -> float:
+    """Estimate one-period Gaussian VaR with reproducible fitted simulations.
+
+    ``confidence`` is the reported loss confidence level, so the simulated
+    left-tail return probability is ``1 - confidence``. The fitted mean and
+    sample standard deviation retain the units of ``returns``.
+    """
+    if not 0 < confidence < 1:
+        raise ValueError("confidence must be between 0 and 1")
+    if not isinstance(simulations, (int, np.integer)) or isinstance(simulations, bool):
+        raise ValueError("simulations must be an integer of at least 2")
+    if simulations < 2:
+        raise ValueError("simulations must be an integer of at least 2")
+    if not isinstance(seed, (int, np.integer)) or isinstance(seed, bool):
+        raise ValueError("seed must be an integer")
+    clean = _clean_series(returns)
+    if clean.size < 2:
+        raise ValueError("returns must contain at least two observations")
+    rng = np.random.default_rng(int(seed))
+    simulated_returns = rng.normal(
+        loc=float(clean.mean()),
+        scale=float(clean.std(ddof=1)),
+        size=int(simulations),
+    )
+    return _positive_loss(-float(np.quantile(simulated_returns, 1 - confidence)))
 
 
 def cornish_fisher_z(alpha: float, skewness: float, excess_kurtosis: float) -> float:
@@ -231,6 +305,24 @@ def ewma_volatility(
     return pd.Series(np.sqrt(variance), index=clean.index, name="ewma_volatility")
 
 
+def ewma_next_volatility(
+    returns: pd.Series,
+    lambda_: float = 0.94,
+    initial_variance: float | None = None,
+) -> float:
+    """Return the EWMA volatility forecast after incorporating the last return."""
+    clean = _clean_series(returns)
+    volatility = ewma_volatility(
+        clean,
+        lambda_=lambda_,
+        initial_variance=initial_variance,
+    )
+    next_variance = (
+        lambda_ * float(volatility.iloc[-1]) ** 2 + (1 - lambda_) * float(clean.iloc[-1]) ** 2
+    )
+    return float(np.sqrt(next_variance))
+
+
 def volatility_weighted_historical_var(
     returns: pd.Series,
     alpha: float = 0.01,
@@ -243,8 +335,8 @@ def volatility_weighted_historical_var(
     standardized = (clean / volatility).replace([np.inf, -np.inf], np.nan).dropna()
     if standardized.empty:
         return historical_var(clean, alpha=alpha)
-    latest_volatility = float(volatility.iloc[-1])
-    return _positive_loss(-standardized.quantile(alpha) * latest_volatility)
+    forecast_volatility = ewma_next_volatility(clean, lambda_=lambda_)
+    return _positive_loss(-standardized.quantile(alpha) * forecast_volatility)
 
 
 def exception_series(returns: pd.Series, var_forecast: pd.Series | float) -> pd.Series:
@@ -270,13 +362,24 @@ def _bernoulli_log_likelihood(successes: int, trials: int, probability: float) -
     return float(xlogy(successes, probability) + xlogy(failures, 1 - probability))
 
 
+def _validated_exceptions(exceptions: pd.Series | np.ndarray) -> pd.Series:
+    """Return a missing-free binary exception series without truthy coercion."""
+    observed = pd.Series(exceptions).dropna()
+    if observed.empty:
+        raise ValueError("exceptions must contain at least one observation")
+    if pd.api.types.is_bool_dtype(observed.dtype):
+        return observed.astype(int)
+    numeric = pd.to_numeric(observed, errors="coerce")
+    if not np.isfinite(numeric.to_numpy(dtype=float)).all() or not numeric.isin([0, 1]).all():
+        raise ValueError("exceptions must contain only binary 0/1 or boolean values")
+    return numeric.astype(int)
+
+
 def kupiec_pof_test(exceptions: pd.Series | np.ndarray, alpha: float = 0.01) -> pd.Series:
     """Run Kupiec's unconditional coverage test for VaR exceptions."""
     _validate_alpha(alpha)
-    observed = pd.Series(exceptions).dropna().astype(bool)
+    observed = _validated_exceptions(exceptions)
     n_obs = int(observed.shape[0])
-    if n_obs == 0:
-        raise ValueError("exceptions must contain at least one observation")
 
     n_exceptions = int(observed.sum())
     empirical_alpha = n_exceptions / n_obs
@@ -298,7 +401,7 @@ def kupiec_pof_test(exceptions: pd.Series | np.ndarray, alpha: float = 0.01) -> 
 
 def christoffersen_independence_test(exceptions: pd.Series | np.ndarray) -> pd.Series:
     """Run Christoffersen's independence test for exception clustering."""
-    observed = pd.Series(exceptions).dropna().astype(int)
+    observed = _validated_exceptions(exceptions)
     if observed.shape[0] < 2:
         raise ValueError("exceptions must contain at least two observations")
 
@@ -349,10 +452,14 @@ def conditional_coverage_test(
 
 def basel_traffic_light(exception_count: int) -> pd.Series:
     """Map 250-day VaR exceptions to Basel traffic-light zones and multipliers."""
-    if exception_count < 0:
-        raise ValueError("exception_count cannot be negative")
+    if (
+        not isinstance(exception_count, (int, np.integer))
+        or isinstance(exception_count, bool)
+        or not 0 <= exception_count <= 250
+    ):
+        raise ValueError("exception_count must be an integer between 0 and 250")
 
-    amber_multipliers = {
+    yellow_multipliers = {
         5: 3.40,
         6: 3.50,
         7: 3.65,
@@ -366,8 +473,8 @@ def basel_traffic_light(exception_count: int) -> pd.Series:
         zone = "red"
         multiplier = 4.00
     else:
-        zone = "amber"
-        multiplier = amber_multipliers[exception_count]
+        zone = "yellow"
+        multiplier = yellow_multipliers[exception_count]
 
     return pd.Series(
         {
@@ -380,7 +487,21 @@ def basel_traffic_light(exception_count: int) -> pd.Series:
 
 def stress_scenario_loss(weights: pd.Series, shocks: pd.Series) -> pd.Series:
     """Compute asset and total portfolio losses from deterministic return shocks."""
-    aligned = pd.concat([weights.rename("weight"), shocks.rename("shock")], axis=1).dropna()
+    if weights.index.has_duplicates or shocks.index.has_duplicates:
+        raise ValueError("weights and shocks must use unique asset labels")
+    missing_shocks = weights.index.difference(shocks.index)
+    extra_shocks = shocks.index.difference(weights.index)
+    if not missing_shocks.empty or not extra_shocks.empty:
+        raise ValueError(
+            "weights and shocks must have identical labels; "
+            f"missing_shocks={missing_shocks.tolist()}, extra_shocks={extra_shocks.tolist()}"
+        )
+    aligned = pd.concat(
+        [weights.rename("weight"), shocks.reindex(weights.index).rename("shock")],
+        axis=1,
+    ).astype(float)
+    if not np.isfinite(aligned.to_numpy()).all():
+        raise ValueError("weights and shocks must contain only finite values")
     asset_losses = -(aligned["weight"] * aligned["shock"])
     asset_losses.loc["portfolio_total"] = asset_losses.sum()
     return asset_losses.rename("scenario_loss")

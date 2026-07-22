@@ -14,91 +14,215 @@
 # ---
 
 # %% [markdown]
-# # Implied Volatility and Smiles
+# # Implied Volatility, Smiles, and Skews
 #
 # Module: Derivatives and Risk Management
 #
 # ## Lesson summary
 #
-# Black-Scholes takes volatility as an input. Markets quote option prices, so
-# analysts invert the model to recover implied volatility. The resulting
-# volatilities vary by strike and maturity, creating a smile or skew that exposes
-# the limits of constant-volatility pricing {cite}`hull2022options`.
+# Black-Scholes-Merton takes volatility as an input. An implied volatility is the
+# value of $\sigma$ that makes a model price match a specified option quote. When
+# the recovered values vary across strikes, the cross-section may form a smile,
+# smirk, or skew rather than a constant line
+# {cite}`blackScholes1973,merton1973,hull2022options`.
+#
+# This lesson uses a deterministic synthetic call chain with a *downward skew*.
+# It performs price-bound, monotonicity, vertical-spread, and convexity checks
+# before inversion, then verifies both volatility recovery and repricing. No
+# value in the chain is an observed market quote.
 #
 # ## Learning objectives
 #
 # By the end of this lesson, students should be able to:
 #
-# - solve implied volatility from a market option price;
-# - build a simple implied-volatility smile by strike;
-# - distinguish model price, market price, and implied volatility;
-# - identify basic no-arbitrage checks before inversion;
-# - explain why implied volatility is not a direct historical volatility forecast.
+# - state model-independent European option price bounds;
+# - test a same-maturity call chain for basic static-arbitrage violations;
+# - solve a Black-Scholes-Merton implied volatility from an admissible quote;
+# - verify volatility recovery and repricing numerically;
+# - distinguish a monotone skew from a U-shaped smile;
+# - explain why implied volatility is a model coordinate, not a realized-volatility forecast.
 #
 # ## Prerequisites
 #
 # Complete European Option Pricing and Greeks and the numerical-pricing lesson
-# first. Students should understand option-price bounds, put-call parity, vega,
-# numerical root finding, and the difference between a calibrated model input
-# and a forecast of realized volatility.
+# first. Students should understand continuous discounting, put-call parity,
+# Vega, root finding, and the difference between calibration and forecasting.
+#
+# ## Price bounds before inversion
+#
+# With continuous dividend yield $q$, a European call and put satisfy
+# {cite}`hull2022options`:
+#
+# $$
+# \max\!\left(0,S_0e^{-qT}-Ke^{-rT}\right)
+# \leq C_0\leq S_0e^{-qT},
+# $$
+#
+# $$
+# \max\!\left(0,Ke^{-rT}-S_0e^{-qT}\right)
+# \leq P_0\leq Ke^{-rT}.
+# $$
+#
+# A quote outside these bounds cannot have a valid Black-Scholes-Merton implied
+# volatility. A quote exactly at the lower bound corresponds to zero limiting
+# volatility; a quote at the finite upper bound has no finite implied volatility.
+#
+# For ordered strikes at one maturity, an arbitrage-screened call curve is
+# non-increasing and convex in strike. In smooth notation,
+#
+# $$
+# \frac{\partial C}{\partial K}\leq0,
+# \qquad
+# \frac{\partial^2 C}{\partial K^2}\geq0.
+# $$
+#
+# Under additional regularity, the Breeden-Litzenberger identity connects call
+# curvature to the risk-neutral terminal density
+# {cite}`breedenLitzenberger1978`:
+#
+# $$
+# f_{\mathbb{Q}}(K)=e^{rT}\frac{\partial^2 C(K,T)}{\partial K^2}.
+# $$
+#
+# A finite quote grid only approximates these derivatives, so passing the checks
+# is necessary evidence, not proof that a complete surface is arbitrage free.
 #
 # ## Python setup
 
 # %% tags=["setup", "hide-input"]
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
+from IPython.display import display
 
 from src.derivatives import (
     black_scholes_greeks,
     black_scholes_price,
+    call_price_arbitrage_diagnostics,
     implied_volatility,
+    option_price_bounds,
     put_call_parity_gap,
 )
+from src.module7_visuals import build_implied_volatility_figure
 
 # %% [markdown]
-# ## Synthetic option chain
+# ## Deterministic synthetic call chain
 #
-# The market prices below are generated from a deterministic skew function. In a live-data lab, this table would come from an option chain, but the same root-finding workflow applies.
+# The chain is generated from a deliberately specified decreasing volatility
+# function. Spot and option prices are currency units per share; $r$, $q$, and
+# volatility are annual decimals; rates use continuous compounding; and maturity
+# is in years.
 
 # %%
 spot = 100.0
 rate = 0.055
 dividend_yield = 0.01
 maturity = 0.75
-strikes = np.array([75, 85, 95, 100, 105, 115, 125])
+strikes = np.array([75.0, 85.0, 95.0, 100.0, 105.0, 115.0, 125.0])
 
-true_smile = 0.22 + 0.10 * ((strikes / spot) - 1) ** 2 - 0.08 * ((strikes / spot) - 1)
-market_calls = [
-    black_scholes_price(
-        spot,
-        strike,
-        rate,
-        vol,
-        maturity,
-        option_type="call",
-        dividend_yield=dividend_yield,
-    )
-    for strike, vol in zip(strikes, true_smile)
-]
+generating_skew = 0.22 + 0.10 * ((strikes / spot) - 1.0) ** 2 - 0.08 * ((strikes / spot) - 1.0)
+synthetic_call_prices = np.array(
+    [
+        black_scholes_price(
+            spot,
+            strike,
+            rate,
+            volatility,
+            maturity,
+            option_type="call",
+            dividend_yield=dividend_yield,
+        )
+        for strike, volatility in zip(strikes, generating_skew)
+    ]
+)
 
 chain = pd.DataFrame(
     {
         "strike": strikes,
-        "market_call_price": market_calls,
-        "generating_volatility": true_smile,
+        "synthetic_call_price": synthetic_call_prices,
+        "generating_volatility": generating_skew,
     }
 )
 chain
 
 # %% [markdown]
-# ## Invert Black-Scholes
+# **Interpretation.** Generating volatility falls as strike rises over the
+# displayed domain, so this example is a downward skew rather than a U-shaped
+# smile. The prices are exact model outputs, deliberately free from bid-ask
+# spreads, rounding, stale timestamps, and microstructure noise.
 #
-# Implied volatility solves:
+# ## Pointwise no-arbitrage bounds
+
+# %%
+call_bounds = [
+    option_price_bounds(
+        spot,
+        strike,
+        rate,
+        maturity,
+        option_type="call",
+        dividend_yield=dividend_yield,
+    )
+    for strike in strikes
+]
+chain[["call_lower_bound", "call_upper_bound"]] = pd.DataFrame(
+    call_bounds,
+    index=chain.index,
+)
+chain["inside_pointwise_bounds"] = (
+    chain["synthetic_call_price"] >= chain["call_lower_bound"] - 1e-10
+) & (chain["synthetic_call_price"] <= chain["call_upper_bound"] + 1e-10)
+chain[
+    [
+        "strike",
+        "synthetic_call_price",
+        "call_lower_bound",
+        "call_upper_bound",
+        "inside_pointwise_bounds",
+    ]
+].round(8)
+
+# %%
+assert chain["inside_pointwise_bounds"].all()
+
+# %% [markdown]
+# ## Same-maturity call-curve diagnostics
+#
+# The shared diagnostic evaluates discrete price bounds, non-increasing call
+# prices, the discounted vertical-spread slope bound, and convexity. It expects
+# strictly increasing strikes and synchronized same-maturity prices.
+
+# %%
+arbitrage_checks = call_price_arbitrage_diagnostics(
+    chain["strike"].to_numpy(),
+    chain["synthetic_call_price"].to_numpy(),
+    spot,
+    rate,
+    maturity,
+    dividend_yield=dividend_yield,
+)
+arbitrage_checks
+
+# %%
+if not bool(arbitrage_checks["all_checks_pass"]):
+    raise RuntimeError("Synthetic call chain failed the pre-inversion arbitrage screen")
+
+# %% [markdown]
+# **Interpretation.** The deterministic grid passes the implemented checks.
+# These checks do not cover calendar-spread arbitrage because the chain has only
+# one maturity, and they do not validate an interpolation rule between strikes.
+#
+# ## Invert Black-Scholes-Merton
+#
+# For each admissible synthetic quote, implied volatility solves
 #
 # $$
-# C_{BS}(\sigma_{imp}) - C_{market} = 0.
+# C_{\mathrm{BSM}}(S_0,K,r,q,T,\sigma_{\mathrm{imp}})
+# -C_{\mathrm{quote}}=0.
 # $$
+#
+# Root finding is numerical. A result must therefore be followed by both a
+# repricing check and, in this controlled synthetic example, a recovery check.
 
 # %%
 chain["implied_volatility"] = [
@@ -111,102 +235,168 @@ chain["implied_volatility"] = [
         option_type="call",
         dividend_yield=dividend_yield,
     )
-    for price, strike in zip(chain["market_call_price"], chain["strike"])
+    for price, strike in zip(chain["synthetic_call_price"], chain["strike"])
 ]
-chain["repricing_error"] = [
+chain["repriced_call"] = [
     black_scholes_price(
         spot,
         strike,
         rate,
-        vol,
+        volatility,
         maturity,
         option_type="call",
         dividend_yield=dividend_yield,
     )
-    - price
-    for price, strike, vol in zip(
-        chain["market_call_price"],
-        chain["strike"],
-        chain["implied_volatility"],
-    )
+    for strike, volatility in zip(chain["strike"], chain["implied_volatility"])
 ]
+chain["repricing_error"] = chain["repriced_call"] - chain["synthetic_call_price"]
+chain["volatility_recovery_error"] = chain["implied_volatility"] - chain["generating_volatility"]
 chain["vega_per_1pct"] = [
     black_scholes_greeks(
         spot,
         strike,
         rate,
-        vol,
+        volatility,
         maturity,
         option_type="call",
         dividend_yield=dividend_yield,
     )["vega_per_1pct"]
-    for strike, vol in zip(chain["strike"], chain["implied_volatility"])
+    for strike, volatility in zip(chain["strike"], chain["implied_volatility"])
 ]
-chain
-
-# %% [markdown]
-# ## Smile visualization
+chain[
+    [
+        "strike",
+        "synthetic_call_price",
+        "generating_volatility",
+        "implied_volatility",
+        "vega_per_1pct",
+        "repricing_error",
+        "volatility_recovery_error",
+    ]
+].round(10)
 
 # %%
-ax = chain.plot(
-    x="strike",
-    y=["generating_volatility", "implied_volatility"],
-    marker="o",
-    figsize=(8, 4),
+np.testing.assert_allclose(
+    chain["repriced_call"],
+    chain["synthetic_call_price"],
+    atol=1e-9,
+    rtol=0.0,
 )
-ax.set_title("Synthetic Implied Volatility Smile")
-ax.set_xlabel("Strike")
-ax.set_ylabel("Volatility")
-ax.grid(True, alpha=0.3)
-plt.show()
+np.testing.assert_allclose(
+    chain["implied_volatility"],
+    chain["generating_volatility"],
+    atol=1e-9,
+    rtol=0.0,
+)
 
 # %% [markdown]
-# ## Put-call parity with dividends
+# **Interpretation.** Recovery succeeds because the same model generated and
+# inverted the quotes. In real data there is no known generating volatility, and
+# small price changes can cause large implied-volatility changes when Vega is low.
 #
-# For continuous dividend yield $q$:
+# ## Downward-skew visualization
+
+# %% mystnb={"image": {"alt": "A deterministic line chart compares the decreasing volatility used to generate seven synthetic call prices with the implied volatilities recovered by inversion across strikes from 75 to 125; the two series overlap within numerical tolerance."}}
+skew_figure = build_implied_volatility_figure(chain)
+display(skew_figure)
+plt.close(skew_figure)
+
+# %% [markdown]
+# ## Put-call parity at the central strike
+#
+# For synchronized European options with the same strike and maturity,
 #
 # $$
-# C + K e^{-rT} = P + S_0 e^{-qT}.
+# C_0+Ke^{-rT}=P_0+S_0e^{-qT}.
 # $$
 
 # %%
-strike = 100
-volatility = chain.loc[chain["strike"] == strike, "implied_volatility"].iloc[0]
-call = black_scholes_price(spot, strike, rate, volatility, maturity, "call", dividend_yield)
-put = black_scholes_price(spot, strike, rate, volatility, maturity, "put", dividend_yield)
-
+central_strike = 100.0
+central_volatility = chain.loc[
+    chain["strike"] == central_strike,
+    "implied_volatility",
+].iloc[0]
+central_call = black_scholes_price(
+    spot,
+    central_strike,
+    rate,
+    central_volatility,
+    maturity,
+    "call",
+    dividend_yield,
+)
+central_put = black_scholes_price(
+    spot,
+    central_strike,
+    rate,
+    central_volatility,
+    maturity,
+    "put",
+    dividend_yield,
+)
+central_parity_gap = put_call_parity_gap(
+    central_call,
+    central_put,
+    spot,
+    central_strike,
+    rate,
+    maturity,
+    dividend_yield,
+)
 pd.Series(
     {
-        "call": call,
-        "put": put,
-        "parity_gap": put_call_parity_gap(
-            call,
-            put,
-            spot,
-            strike,
-            rate,
-            maturity,
-            dividend_yield,
-        ),
-    }
+        "synthetic_call_price": central_call,
+        "synthetic_put_price": central_put,
+        "parity_gap_currency_per_share": central_parity_gap,
+    },
+    name="central_strike_parity_check",
 )
 
+# %%
+assert abs(central_parity_gap) < 1e-10
+
 # %% [markdown]
-# ## Surface extension
+# ## From a strike slice to a surface
 #
-# An implied volatility surface extends the smile across maturities. A production-quality surface must also be checked for calendar-spread and butterfly arbitrage. In this course, the first objective is operational: invert prices carefully, document inputs, and avoid treating noisy points as a smooth truth.
+# A volatility surface extends the strike slice across maturities. Production
+# construction requires synchronized quote timestamps, contract and dividend
+# conventions, bid-ask filters, and checks for strike and calendar arbitrage.
+# Breeden-Litzenberger explains why convexity in strike is economically
+# consequential: negative call curvature would imply a negative state-price
+# density under its assumptions {cite}`breedenLitzenberger1978`.
+#
+# Interpolation and extrapolation are model choices. A visually smooth surface
+# is not necessarily an arbitrage-free or stable surface, and implied volatility
+# should not be presented as a direct forecast of realized volatility.
+#
+# ## Source and model notes
+#
+# - The constant-volatility pricing map being inverted originates in
+#   Black-Scholes and Merton {cite}`blackScholes1973,merton1973`; price bounds,
+#   parity, and inversion conventions follow the standard derivatives treatment
+#   in {cite:t}`hull2022options`.
+# - The connection between call-price curvature and risk-neutral distributions
+#   follows Breeden and Litzenberger {cite}`breedenLitzenberger1978`.
+# - The seven call prices are generated deterministically inside this notebook
+#   from the displayed downward-skew function; they are not observed quotes.
+# - The recovery test is intentionally in-sample and same-model. It verifies code
+#   consistency, not empirical fit or forecasting value.
 #
 # ## Model limitations
 #
-# - Implied volatility is model-implied, not directly observed volatility.
-# - Failed inversions can come from bad quotes, arbitrage violations, stale data, or numerical bounds.
-# - A smile fit at one maturity does not define a complete arbitrage-free volatility surface.
+# - The diagnostic checks only one finite strike grid at one maturity; it cannot
+#   establish global surface arbitrage freedom.
+# - Implied volatility depends on the pricing model and all non-volatility inputs,
+#   including dividends, rates, exercise style, and settlement convention.
+# - Live quotes can be stale, crossed, illiquid, or asynchronous. Bid-ask width
+#   should be propagated into implied-volatility intervals rather than hidden.
+# - Very low Vega makes inversion ill-conditioned even when a quote passes
+#   simple price bounds.
 #
 # ## Handoff
 #
-# Implied volatility makes model prices match market quotes at a point. Vega
-# translates a volatility-surface shock into local P&L; sticky-strike versus
-# sticky-delta rules, smile dynamics, and failed no-arbitrage checks are model-risk
-# scenarios that must be carried into hedging and limit reports. The interactive
-# dashboard next consolidates price, parity, and Greek diagnostics before the
-# sequence moves to early exercise, path dependence, and stochastic volatility.
+# Implied volatility calibrates a model to a quote at a point. Vega maps local
+# volatility changes into P&L, while smile dynamics, interpolation, stale quotes,
+# and failed no-arbitrage checks become model-risk scenarios. The next lessons
+# add interactive sensitivity analysis, early exercise, path dependence, and
+# stochastic volatility.

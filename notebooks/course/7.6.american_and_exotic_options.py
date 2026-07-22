@@ -22,9 +22,11 @@
 #
 # Many options cannot be handled by a single closed-form Black-Scholes price.
 # American exercise, path dependence, averaging, and barriers require numerical
-# methods. This lesson compares CRR convergence, Leisen-Reimer American put
-# pricing, Asian option control variates, and a continuity correction for
-# discretely monitored barriers {cite}`hull2022options`.
+# methods. This lesson compares Cox-Ross-Rubinstein (CRR) convergence,
+# Leisen-Reimer American put pricing, Asian option control variates, and the
+# Broadie-Glasserman-Kou (BGK) continuity correction for discretely monitored
+# barriers
+# {cite}`hull2022options,leisenReimer1996,kemnaVorst1990,broadieGlassermanKou1997`.
 #
 # ## Learning objectives
 #
@@ -48,6 +50,7 @@
 # %% tags=["setup", "hide-input"]
 import pandas as pd
 import matplotlib.pyplot as plt
+from IPython.display import display
 
 from src.derivatives import (
     arithmetic_asian_call_control_variate,
@@ -56,11 +59,15 @@ from src.derivatives import (
     crr_binomial_option_price,
     leisen_reimer_american_put,
 )
+from src.module7_visuals import build_convergence_figure
 
 # %% [markdown]
 # ## CRR convergence
 #
-# The CRR tree converges to Black-Scholes for European options, but the convergence can oscillate because terminal nodes do not always align well with the payoff kink.
+# The CRR tree converges to Black-Scholes-Merton for European options under
+# matched inputs. Convergence can oscillate because terminal nodes do not always
+# align with the payoff kink. This deterministic synthetic comparison is an
+# implementation diagnostic, not evidence about market prices.
 
 # %%
 spot = 100.0
@@ -89,16 +96,17 @@ convergence["crr_call"] = [
 ]
 convergence["black_scholes_call"] = benchmark
 convergence["error"] = convergence["crr_call"] - benchmark
+convergence.attrs = {
+    "source": "deterministic synthetic calculation from src.derivatives",
+    "data_mode": "synthetic",
+    "units": "generic option-price units",
+}
 convergence
 
-# %%
-ax = convergence.plot(x="steps", y="error", marker="o", figsize=(8, 4), legend=False)
-ax.axhline(0, color="black", linewidth=0.8)
-ax.set_title("CRR Convergence Error")
-ax.set_xlabel("Steps")
-ax.set_ylabel("Price error")
-ax.grid(True, alpha=0.3)
-plt.show()
+# %% mystnb={"image": {"alt": "Two aligned panels show a synthetic European call's Cox-Ross-Rubinstein price converging toward its Black-Scholes-Merton benchmark and the signed price error across seven tree sizes from 5 to 500 steps."}}
+convergence_figure = build_convergence_figure(convergence)
+display(convergence_figure)
+plt.close(convergence_figure)
 
 # %% [markdown]
 # ## American put early exercise
@@ -106,8 +114,22 @@ plt.show()
 # American options require an optimal stopping check at every node:
 #
 # $$
-# V = \max(\text{continuation value}, \text{intrinsic value}).
+# V_n = \max\!\left(\text{continuation value}_n,
+#                         \text{intrinsic value}_n\right).
 # $$
+#
+# Under otherwise identical assumptions, define the American put
+# early-exercise premium as
+#
+# $$
+# \operatorname{EEP}=P_{\mathrm{American}}-P_{\mathrm{European}}\ge 0.
+# $$
+#
+# The Leisen-Reimer construction uses an odd-step probability transformation to
+# improve lattice convergence around the payoff kink
+# {cite}`leisenReimer1996`. A positive numerical premium is meaningful only
+# after checking that both prices share spot, strike, carry, maturity, and
+# volatility conventions.
 
 # %%
 american_comparison = pd.DataFrame(
@@ -139,12 +161,28 @@ american_comparison = pd.DataFrame(
 american_comparison["early_exercise_premium"] = (
     american_comparison["put_price"] - american_comparison.loc[0, "put_price"]
 )
+assert (american_comparison["early_exercise_premium"] >= -1e-10).all()
 american_comparison
 
 # %% [markdown]
 # ## Asian option control variate
 #
-# Arithmetic Asian options usually need simulation. A geometric Asian option is a useful control variate because it is highly correlated with the arithmetic payoff and has a known analytical price.
+# Arithmetic Asian options usually need simulation. A geometric Asian option is
+# a useful control variate because it is highly correlated with the arithmetic
+# payoff and has a known analytical price {cite}`kemnaVorst1990`. If $X_A$
+# and $X_G$ are discounted arithmetic and geometric payoffs, respectively,
+# the adjusted observation is
+#
+# $$
+# X_{\mathrm{cv}}
+# =X_A-\widehat{\beta}\left(X_G-\mathbb{E}[X_G]\right),
+# \qquad
+# \widehat{\beta}=\frac{\widehat{\operatorname{Cov}}(X_A,X_G)}
+#                            {\widehat{\operatorname{Var}}(X_G)}.
+# $$
+#
+# The estimator is the sample mean of $X_{\mathrm{cv}}$, with Monte Carlo
+# standard error $s_{\mathrm{cv}}/\sqrt{M}$ for $M$ simulated paths.
 
 # %%
 asian = arithmetic_asian_call_control_variate(
@@ -171,13 +209,29 @@ asian.naive_standard_error / asian.control_variate_standard_error
 #
 # ## Barrier continuity correction
 #
-# For discretely monitored barriers, the BGK adjustment shifts the barrier away from the spot to approximate the difference between continuous and discrete monitoring:
+# For discretely monitored barriers, the BGK adjustment shifts the barrier away
+# from the spot to approximate the difference between continuous and discrete
+# monitoring {cite}`broadieGlassermanKou1997`:
 #
 # $$
-# H_{adj} = H \exp(\pm \beta \sigma \sqrt{\Delta t}),
-# \qquad
+# H_{\mathrm{adj}}^{\mathrm{down}}
+# =H\exp(-\beta\sigma\sqrt{\Delta t}),\qquad
+# H_{\mathrm{adj}}^{\mathrm{up}}
+# =H\exp(+\beta\sigma\sqrt{\Delta t}),\qquad
 # \beta \approx 0.5826.
 # $$
+#
+# Under identical payoff, rebate, monitoring, and settlement conventions,
+# barrier claims also provide the decomposition check
+#
+# $$
+# V_{\mathrm{down\text{-}in}}+V_{\mathrm{down\text{-}out}}
+# =V_{\mathrm{vanilla}},
+# $$
+#
+# with an analogous up-barrier identity. The cell below adjusts barriers only;
+# it does **not** price the in/out claims and therefore does not, by itself,
+# verify that parity.
 
 # %%
 barrier = 80.0
@@ -185,15 +239,15 @@ daily_dt = 1 / 252
 
 pd.Series(
     {
-        "physical_down_barrier": barrier,
-        "bgk_adjusted_down_barrier": bgk_adjusted_barrier(
+        "physical_down_barrier_price_units": barrier,
+        "bgk_adjusted_down_barrier_price_units": bgk_adjusted_barrier(
             barrier,
             volatility=0.25,
             monitoring_interval=daily_dt,
             barrier_type="down",
         ),
-        "physical_up_barrier": 120.0,
-        "bgk_adjusted_up_barrier": bgk_adjusted_barrier(
+        "physical_up_barrier_price_units": 120.0,
+        "bgk_adjusted_up_barrier_price_units": bgk_adjusted_barrier(
             120.0,
             volatility=0.25,
             monitoring_interval=daily_dt,
@@ -205,6 +259,9 @@ pd.Series(
 # %% [markdown]
 # ## Model limitations
 #
+# - Every numerical value in this lesson is synthetic and uses continuously
+#   compounded annual decimal rates, annualized decimal volatility, years, and
+#   generic price units.
 # - American and exotic option prices are sensitive to numerical method, monitoring convention, and exercise policy.
 # - Control variates reduce simulation noise only when the control remains highly correlated with the target payoff.
 # - Barrier corrections are approximations and can fail when barriers are close to spot or volatility is unstable.

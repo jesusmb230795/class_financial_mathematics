@@ -4,7 +4,7 @@ This module integrates derivative payoff and pricing methods with hedging,
 portfolio tail risk, validation, limits, and governance. A price is not a risk
 decision: every model output must connect to an exposure, hedge objective,
 residual risk, stress, limit, owner, and escalation rule
-{cite}`hull2022options,mcneil2015quantitative`.
+{cite}`hull2022options,blackScholes1973,merton1973,mcneil2015quantitative`.
 
 Readers should first understand discount factors and rate sensitivity from
 Module 6, return and volatility models from Module 2, and macro/FX scenarios
@@ -57,7 +57,7 @@ Expected Shortfall as non-negative loss magnitudes.
 | `7.1.linear_derivatives_and_carry` | Forwards, carry, mark-to-market, and par swaps |
 | `7.2.european_option_pricing_and_greeks` | European option values, assumptions, and local sensitivities |
 | `7.3.binomial_and_monte_carlo` | Tree and simulation pricing with convergence diagnostics |
-| `7.4.implied_volatility_and_smiles` | Implied-volatility inversion and smile interpretation |
+| `7.4.implied_volatility_and_smiles` | No-arbitrage checks, implied-volatility inversion, and skew interpretation |
 | `7.5.interactive_option_pricing_dashboard` | Static and interactive price/Greek sensitivity |
 | `7.6.american_and_exotic_options` | Early exercise, Asian, and barrier methods |
 | `7.7.stochastic_volatility_heston_lab` | Heston simulation and stochastic-volatility model risk |
@@ -65,7 +65,7 @@ Expected Shortfall as non-negative loss magnitudes.
 | `7.9.value_at_risk_foundations` | Canonical non-negative VaR and Expected Shortfall estimates |
 | `7.10.downside_risk_var_methods` | Downside, distributional, and volatility-weighted risk methods |
 | `7.11.var_backtesting_and_stress_testing` | Chronological exceptions, backtests, traffic-light context, and stress |
-| `7.12.interactive_var_cvar_simulator` | Tail-risk assumption sensitivity with positive-loss labels |
+| `7.12.interactive_var_cvar_simulator` | VaR and Expected Shortfall assumption sensitivity with positive-loss labels |
 
 The superseded derivatives and market-risk overviews are retained under
 `chapters/legacy/` for provenance only. The `.py` files above are canonical
@@ -73,16 +73,33 @@ Jupytext sources; their `.ipynb` pairs are generated deterministically.
 
 ## Data and reproducibility contract
 
-Observed risk examples use return series constructed from committed official
-snapshots; they must state provider, series, actual date range, frequency,
-annualization, and construction method. Option chains, Heston paths, and some
-payoff examples are synthetic and must preserve parameters and seeds. Interactive
-pages require a meaningful static result when widgets are disabled.
+Observed portfolio-risk examples use a committed, versioned matrix of
+provider-adjusted U.S. equity closing prices. They must state provider lineage,
+instruments, field, currency, actual date range, trading calendar, return method,
+annualization, and portfolio construction. Reproducibility does not establish
+redistribution permission: the snapshot remains subject to an owner-authorized
+rights review. Option chains, Heston paths, stress shocks, and some payoff
+examples are synthetic and must preserve parameters and seeds. Interactive pages
+require a meaningful static result when widgets are disabled
+{cite}`yfinance2025,yahooFinanceCoverage2026,yahooTerms2026`.
 
 Backtests must preserve time order and use forecasts formed only from prior
 observations. A successful notebook execution does not validate a risk model:
 signs, units, exceptions, output size, economic interpretation, and governance
-remain separate gates {cite}`kupiec1995techniques,christoffersen1998evaluating`.
+remain separate gates. The 1996 Basel traffic-light procedure is presented as
+historical backtesting context, not as a substitute for the current market-risk
+framework {cite}`kupiec1995techniques,christoffersen1998evaluating,basel1996MarketRiskAmendment,basel2019marketRisk`.
+
+## Evidence and reference map
+
+The module uses primary sources wherever a model or diagnostic is introduced:
+Black--Scholes--Merton for European pricing, Cox--Ross--Rubinstein and
+Leisen--Reimer for trees, Boyle for Monte Carlo pricing, Breeden--Litzenberger
+for strike-convex call prices, Kemna--Vorst and Broadie--Glasserman--Kou for
+path-dependent options, Heston and full-truncation research for stochastic
+volatility, and the original backtesting and Expected Shortfall literature for
+portfolio tail risk
+{cite}`blackScholes1973,merton1973,coxRossRubinstein1979,leisenReimer1996,boyle1977,breedenLitzenberger1978,kemnaVorst1990,broadieGlassermanKou1997,heston1993,lordKoekkoekVanDijk2010fullTruncation,kupiec1995techniques,christoffersen1998evaluating,acerbiTasche2002,rockafellarUryasev2002`.
 
 ## Reading sequence
 

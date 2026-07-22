@@ -271,10 +271,14 @@ def test_financial_dashboards_return_figures_and_auditable_outputs() -> None:
     assert "base annual YTM 7.00%" in bond.layout.annotations[-1].text
     assert options.data[0].line.color == SEMANTIC_COLORS["reference"]
     assert options.data[1].line.color == SEMANTIC_COLORS["primary"]
-    assert options.layout.shapes[1].line.color == SEMANTIC_COLORS["highlight"]
+    assert len(options.layout.shapes) == 1
+    assert options.layout.shapes[0].line.color == SEMANTIC_COLORS["highlight"]
     assert risk.data[0].marker.color == SEMANTIC_COLORS["comparison"]
-    assert risk.layout.shapes[0].line.color == SEMANTIC_COLORS["negative"]
-    assert risk.layout.shapes[1].line.color == SEMANTIC_COLORS["highlight"]
+    assert risk.data[0].x[0] == pytest.approx(0.02)
+    assert risk.layout.xaxis.title.text == "One-period loss"
+    assert risk.layout.xaxis2.title.text == "Non-negative loss estimate"
+    assert risk.layout.shapes[0].line.color == SEMANTIC_COLORS["highlight"]
+    assert risk.layout.shapes[1].line.color == SEMANTIC_COLORS["negative"]
 
 
 def test_macro_raw_mode_separates_incompatible_native_units() -> None:

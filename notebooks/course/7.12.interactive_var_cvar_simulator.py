@@ -14,48 +14,57 @@
 # ---
 
 # %% [markdown]
-# # Interactive VaR and CVaR Dashboard
+# # Interactive VaR and Expected Shortfall Dashboard
 #
 # Module: Derivatives and Risk Management
 #
 # ## Lesson summary
 #
-# This dashboard uses observed portfolio returns derived from the committed Banxico official price-like snapshot. Students change tail probability, lookback window, and EWMA decay to see how VaR and Expected Shortfall react to the selected real sample {cite}`jorion2007var,mcneil2015quantitative`.
+# This dashboard applies several tail estimators to one documented simple-return
+# series. Students vary lower-tail probability, lookback length, and exponentially
+# weighted moving-average (EWMA) decay to see which reported differences come from
+# data selection and which come from model choice {cite}`jorion2007var,mcneil2015quantitative,riskMetrics1996`.
 #
 # ## Learning objectives
 #
 # By the end of this dashboard, students should be able to:
 #
-# - explain VaR as a quantile of the loss distribution;
-# - explain CVaR or Expected Shortfall as a tail conditional average;
+# - explain Value at Risk (VaR) as a loss threshold;
+# - explain Expected Shortfall (ES) as an average over a fixed tail probability mass;
 # - compare historical, Gaussian, Cornish-Fisher, and volatility-weighted VaR;
-# - explain why sample window choice changes tail metrics;
-# - recognize why model choice affects reported capital.
+# - separate tail probability from confidence level; and
+# - explain why window selection and model assumptions change reported risk.
 #
 # ## Prerequisites
 #
-# Complete the estimation and backtesting labs first. Students should
-# understand non-negative loss signs, sampling uncertainty, the Cornish-Fisher
-# guardrail, and why passing a coverage test is not proof of model correctness.
+# Complete the estimation and backtesting labs first. Students should understand
+# non-negative loss signs, finite-sample ES, the Cornish-Fisher guardrail, and why
+# non-rejection in a coverage test is not proof of model correctness.
 #
 # ## Tail metric definitions
 #
-# The dashboard displays risk metrics as positive loss numbers. For portfolio return $R$ and loss $L=-R$:
+# For simple portfolio return $R$ over one observed US trading interval, the
+# dashboard reports positive loss magnitudes:
 #
 # $$
-# v_\alpha=Q_{1-\alpha}(L),\qquad
-# \operatorname{VaR}_{\alpha}
-# =\max\left(0,-Q_\alpha(R)\right)
-# =\max(0,v_\alpha),
+# \operatorname{VaR}_{\alpha}(R)
+# =\max\{0,-Q_\alpha(R)\},
 # $$
 #
 # $$
-# \operatorname{CVaR}_{\alpha}=\operatorname{ES}_{\alpha}
-# =\max\left(0,-\mathbb{E}\left[R\mid R\leq Q_\alpha(R)\right]\right)
-# =\max\left(0,\mathbb{E}\left[L\mid L\geq v_\alpha\right]\right).
+# \operatorname{ES}_{\alpha}(R)
+# =\max\left\{0,-\frac{1}{\alpha}
+# \int_0^\alpha Q_u(R)\,du\right\}.
 # $$
 #
-# Changing the lookback window changes the empirical tail of $L$, which is why VaR and CVaR do not move identically.
+# ES is sometimes called Conditional VaR (CVaR), but that alias can obscure the
+# boundary-mass treatment in a discrete sample. This notebook therefore uses
+# “Expected Shortfall” for the quantile-integral estimator
+# {cite}`acerbiTasche2002,rockafellarUryasev2002`.
+#
+# The confidence convention is $1-\alpha$. Changing lookback length changes the
+# empirical distribution of $R$; changing $\lambda$ changes only the EWMA-scaled
+# historical estimate.
 #
 # ## Setup
 
@@ -69,13 +78,14 @@ from ipywidgets import FloatSlider, IntSlider, interact
 
 from src.dashboard_fallbacks import build_var_cvar_dashboard_fallback
 from src.dashboards import build_var_cvar_dashboard
-from src.market_data import official_price_panel, returns_from_prices
+from src.market_data import nasdaq_stock_price_panel, returns_from_prices
 from src.market_risk import (
     cornish_fisher_moment_report,
     cornish_fisher_var,
     expected_shortfall,
     gaussian_var,
     historical_var,
+    rebalanced_portfolio_returns,
     volatility_weighted_historical_var,
 )
 
@@ -83,46 +93,82 @@ RUN_INTERACTIVE_WIDGETS = os.getenv("RUN_INTERACTIVE_WIDGETS", "1") == "1"
 pd.options.display.float_format = "{:.6f}".format
 
 # %% [markdown]
-# ## Real return helper
+# ## Data and portfolio contract
+#
+# The committed snapshot contains provider-adjusted closes in USD for AAPL,
+# MSFT, NVDA, AMZN, and GOOGL from 2021-01-04 through 2026-06-05. Returns are
+# simple changes between consecutive provider trading dates. Each asset receives
+# a fixed 20% weight, restored after every observed interval; this is not a
+# buy-and-hold portfolio {cite}`yfinance2025,yahooFinanceCoverage2026,yahooTerms2026`.
 
 # %%
-price_panel = official_price_panel(start="2021-01-01", end="2026-06-05")
-asset_returns = returns_from_prices(price_panel, method="log").dropna()
-portfolio_weights = (
-    pd.Series(
-        {
-            "usd_mxn": 0.30,
-            "udi": 0.20,
-            "cetes_28d_carry": 0.20,
-            "tiie_28d_carry": 0.20,
-            "policy_rate_carry": 0.10,
-        },
-        name="weight",
-    )
-    .reindex(asset_returns.columns)
-    .fillna(0.0)
+price_panel = nasdaq_stock_price_panel(start="2021-01-04", end="2026-06-05")
+asset_returns = returns_from_prices(price_panel, method="simple").dropna(how="any")
+asset_returns.attrs = {
+    **price_panel.attrs,
+    "method": "simple returns; equal weights rebalanced each observed interval",
+}
+
+portfolio_weights = pd.Series(
+    {
+        "AAPL": 0.20,
+        "MSFT": 0.20,
+        "NVDA": 0.20,
+        "AMZN": 0.20,
+        "GOOGL": 0.20,
+    },
+    name="weight",
 )
-portfolio_weights = portfolio_weights / portfolio_weights.sum()
+portfolio_returns = rebalanced_portfolio_returns(asset_returns, portfolio_weights)
+portfolio_returns.name = "equal_weight_portfolio_simple_return"
 
 
-def official_portfolio_returns(lookback=1000):
-    lookback = max(250, min(int(lookback), len(asset_returns)))
-    return asset_returns.dot(portfolio_weights).dropna().tail(lookback).rename("portfolio_return")
+def portfolio_return_window(lookback=1000):
+    """Return the latest documented observations without changing their units."""
+    bounded_lookback = max(250, min(int(lookback), len(portfolio_returns)))
+    window = portfolio_returns.tail(bounded_lookback).copy()
+    window.attrs = dict(portfolio_returns.attrs)
+    window.attrs["lookback"] = bounded_lookback
+    return window
 
+
+# %%
+pd.Series(
+    {
+        "source": price_panel.attrs["sources"],
+        "field_and_currency": "provider-adjusted close, USD",
+        "price_sample": f"{price_panel.index.min():%Y-%m-%d} to {price_panel.index.max():%Y-%m-%d}",
+        "return_sample": (
+            f"{portfolio_returns.index.min():%Y-%m-%d} to {portfolio_returns.index.max():%Y-%m-%d}"
+        ),
+        "frequency": "observed US trading intervals; no calendar filling",
+        "snapshot_generated_at": "2026-06-07T04:55:41.700953+00:00",
+        "portfolio_rule": "20% each; rebalanced after every observed interval",
+        "omitted": "transaction costs, taxes, and FX conversion",
+        "rights_review": "provenance recorded; redistribution rights not independently verified",
+    },
+    name="data_and_portfolio_contract",
+)
 
 # %% [markdown]
+# The provider, field, currency, date window, transformation, and portfolio rule
+# make the calculation inspectable. Snapshot provenance does not independently
+# establish redistribution or downstream-use rights.
+#
 # ## Interactive dashboard
 #
-# Run this cell in JupyterLab with `uv run jupyter lab`. The publication build sets `RUN_INTERACTIVE_WIDGETS=0`, so the book renders a static default view instead of widget controls.
+# Run this cell in JupyterLab with `uv run jupyter lab`. The publication build
+# sets `RUN_INTERACTIVE_WIDGETS=0`, so the book renders a deterministic static
+# view instead of browser-dependent widget controls.
 
 
-# %% tags=["interactive"]
-def plot_var_cvar_dashboard(
+# %% tags=["interactive"] mystnb={"image": {"alt": "Interactive or static two-panel dashboard for an equal-weight US equity portfolio: a positive-loss histogram marks the historical Value at Risk threshold and Expected Shortfall tail mean, while a dot plot compares all available non-negative loss estimates."}}
+def plot_tail_risk_dashboard(
     alpha=0.01,
     lambda_=0.94,
     lookback=1000,
 ):
-    returns = official_portfolio_returns(lookback=lookback)
+    returns = portfolio_return_window(lookback=lookback)
     cornish_fisher_report = cornish_fisher_moment_report(returns)
     try:
         cornish_fisher_estimate = cornish_fisher_var(returns, alpha=alpha)
@@ -143,19 +189,28 @@ def plot_var_cvar_dashboard(
             ),
             "expected_shortfall": expected_shortfall(returns, alpha=alpha),
         },
-        name="positive_daily_loss",
+        name="positive_loss_per_observed_US_trading_interval",
     )
 
     builder = (
-        build_var_cvar_dashboard
-        if RUN_INTERACTIVE_WIDGETS
-        else build_var_cvar_dashboard_fallback
+        build_var_cvar_dashboard if RUN_INTERACTIVE_WIDGETS else build_var_cvar_dashboard_fallback
     )
     figure = builder(returns, risk_metrics)
     display(figure)
     if not RUN_INTERACTIVE_WIDGETS:
         plt.close(figure)
     display(risk_metrics.to_frame())
+    display(
+        pd.Series(
+            {
+                "lower_tail_probability_alpha": alpha,
+                "confidence_level_one_minus_alpha": 1 - alpha,
+                "lookback_observations": len(returns),
+                "ewma_lambda": lambda_,
+            },
+            name="dashboard_controls",
+        )
+    )
     display(
         pd.concat(
             [
@@ -168,27 +223,58 @@ def plot_var_cvar_dashboard(
 
 if RUN_INTERACTIVE_WIDGETS:
     interact(
-        plot_var_cvar_dashboard,
-        alpha=FloatSlider(value=0.01, min=0.005, max=0.10, step=0.005, readout_format=".3f"),
-        lambda_=FloatSlider(value=0.94, min=0.80, max=0.99, step=0.01, readout_format=".2f"),
-        lookback=IntSlider(value=1000, min=500, max=len(asset_returns), step=250),
+        plot_tail_risk_dashboard,
+        alpha=FloatSlider(
+            value=0.01,
+            min=0.005,
+            max=0.10,
+            step=0.005,
+            readout_format=".3f",
+            description="tail alpha",
+        ),
+        lambda_=FloatSlider(
+            value=0.94,
+            min=0.80,
+            max=0.99,
+            step=0.01,
+            readout_format=".2f",
+            description="EWMA lambda",
+        ),
+        lookback=IntSlider(
+            value=1000,
+            min=500,
+            max=len(portfolio_returns),
+            step=250,
+            description="observations",
+        ),
     )
 else:
-    plot_var_cvar_dashboard()
+    plot_tail_risk_dashboard()
 
 # %% [markdown]
+# ## Interpretation protocol
+#
+# 1. Read $\alpha$ and $1-\alpha$ before comparing thresholds.
+# 2. Confirm the selected observation count and per-interval units.
+# 3. Compare empirical ES with historical VaR to assess tail severity beyond the boundary.
+# 4. Compare closed-form Gaussian and historical VaR to expose distributional sensitivity.
+# 5. Treat a missing Cornish-Fisher estimate as a visible guardrail result.
+# 6. Return to the preceding backtest and stress evidence before choosing a model.
+#
 # ## Model limitations
 #
-# - The dashboard uses observed returns from the official snapshot; it does not create artificial shock regimes.
-# - Parametric VaR can understate losses when skewness, kurtosis, or dependence differs from the assumed form.
-# - Cornish-Fisher is unavailable when the displayed sample moments violate the
-#   course guardrail; the dashboard never disables that check silently.
-# - CVaR estimates can be noisy because they rely on relatively few observations in the tail.
-# - Changing the lookback window changes the historical sample and can materially change reported risk.
-
-# %% [markdown]
+# - The observed sample cannot contain future regimes or every plausible stress.
+# - Equal-weight interval rebalancing omits costs, taxes, FX conversion, capacity,
+#   and investor-specific constraints.
+# - Parametric VaR can understate losses when tails, dependence, or volatility
+#   dynamics differ from the assumed model.
+# - ES at small $\alpha$ depends on few effective tail observations.
+# - Slider sensitivity is exploratory evidence, not backtesting or regulatory validation.
+# - Provider-adjusted closes inherit the provider's corporate-action treatment;
+#   redistribution rights were not independently verified.
+#
 # ## Handoff
 #
-# Use the dashboard comparison as input to a risk memo that states the selected
-# model, rejected alternatives, backtest evidence, stress loss, liquidity
-# assumptions, limit owner, and escalation trigger.
+# Use this dashboard only as one input to a risk memo. The memo should state the
+# chosen model, rejected alternatives, backtest decisions, stress loss, liquidity
+# assumptions, portfolio implementation rule, limit owner, and escalation trigger.

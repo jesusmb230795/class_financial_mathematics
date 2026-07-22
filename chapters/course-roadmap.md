@@ -147,13 +147,19 @@ Advanced expansion targets:
 
 Goal: understand derivative pricing, strategic use, and risk at both the instrument and portfolio levels.
 
-Required coverage:
+Published core coverage:
 
-- forwards, futures, swaps, options, credit derivatives, payoff diagrams, long/short economics, replication, arbitrage, cost of carry, and risk-neutral pricing;
+- forwards, futures, swaps, options, payoff diagrams, long/short economics, replication, no-arbitrage bounds, cost of carry, daily futures margining, and risk-neutral pricing;
 - forward valuation, futures margining, swaps, binomial trees, Black-Scholes-Merton, Greeks, delta hedging, implied volatility, smiles, skew, and option strategies {cite}`hull2022options`;
 - American, Asian, barrier, and Monte Carlo pricing, Heston simulation, derivative overlays, rebalancing, hedging, and cash equitization;
 - semideviation, historical VaR, parametric VaR, simulated VaR, Expected Shortfall, Cornish-Fisher VaR, volatility-weighted historical simulation, stress testing, backtesting, and traffic-light interpretation {cite}`jorion2007var,mcneil2015quantitative`;
-- risk governance, limits, risk budgeting, capital allocation, pricing dashboards, Greeks dashboards, VaR dashboards, and scenario tools.
+- risk governance, limits, risk budgeting, pricing dashboards, Greeks dashboards, VaR dashboards, and scenario tools.
+
+Advanced expansion targets:
+
+- credit derivatives, counterparty credit, collateral, margin, xVA, and production-grade lifecycle and legal controls;
+- arbitrage-checked multi-maturity volatility surfaces with quote cleaning, calendar-spread controls, and calibration governance; and
+- executable institutional overlay, cash-equitization, risk-budgeting, and capital-allocation cases with transaction costs and reviewed observed-data rights.
 
 ## Module 8: Alternative Investments
 
