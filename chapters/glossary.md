@@ -18,7 +18,6 @@ This glossary defines core terms used throughout the Jupyter Book.
 | Beta | Sensitivity of an asset's excess return to the market excess return. | Portfolio Management, Asset Allocation, and Performance |
 | Bid-ask spread | Difference between the best quoted ask and bid prices; a direct but incomplete measure of trading cost and liquidity. | Markets, Instruments, and Data |
 | Black-Scholes model | Option-pricing model for European options under lognormal price dynamics and constant volatility. | Derivatives and Risk Management |
-| Bond convexity | Curvature of the bond price-yield relationship; improves duration-based price approximations. | Fixed Income, Credit, and Term Structure |
 | Bono M | Mexican fixed-rate nominal government bond with semiannual coupons. | Fixed Income, Credit, and Term Structure |
 | Bootstrapping | Procedure for deriving discount factors or spot rates from market instrument prices. | Fixed Income, Credit, and Term Structure |
 | Broadie-Glasserman-Kou correction | Barrier adjustment used to approximate discrete monitoring with a continuous-barrier formula. | Derivatives and Risk Management |
@@ -27,6 +26,7 @@ This glossary defines core terms used throughout the Jupyter Book.
 | Carried interest | Performance allocation paid to a private-fund manager after the contractual waterfall, including any preferred return, catch-up, and clawback provisions. | Alternative Investments |
 | CETES | Mexican Treasury certificates; zero-coupon government securities quoted on money-market conventions. | Fixed Income, Credit, and Term Structure |
 | CKD | Mexican listed development-capital certificate used to finance private or real-asset projects through a trust structure. | Markets, Instruments, and Data |
+| CIR model | Short-rate model with square-root diffusion, which supports non-negative rates when its parameter and discretization conditions are respected. | Fixed Income, Credit, and Term Structure |
 | Clean price | Bond quoted price excluding accrued interest. | Fixed Income, Credit, and Term Structure |
 | Conditional volatility | Time-varying volatility forecast conditional on past information. | Quantitative Methods and Financial Time Series |
 | Convexity | Second-order sensitivity of a price to a change in yield or another risk factor. | Fixed Income, Credit, and Term Structure |
@@ -36,6 +36,7 @@ This glossary defines core terms used throughout the Jupyter Book.
 | CVaR | Conditional Value at Risk; average loss conditional on exceeding the VaR threshold. Also called Expected Shortfall. | Derivatives and Risk Management |
 | Data mode | Explicit notebook setting, such as `DATA_MODE=offline` or `DATA_MODE=live`, that determines whether a dashboard uses a versioned publication snapshot or provider-backed live data. | Markets, Instruments, and Data |
 | Data source inventory | Structured record of provider, instrument or variable, frequency, date range, field, currency, calendar, and limitations before modeling. | Markets, Instruments, and Data |
+| Discount factor | Present value at the valuation date of one currency unit paid at a stated future date under the declared curve and conventions. | Fixed Income, Credit, and Term Structure |
 | DIO | Days inventory outstanding; average inventory divided by cost of goods sold and multiplied by the declared day count. | Financial Statement Analysis and Financial Modeling |
 | Dirty price | Bond settlement price including accrued interest. | Fixed Income, Credit, and Term Structure |
 | DPO | Days payables outstanding; average operating trade payables divided by credit purchases and multiplied by the declared day count. When purchases are unavailable, a cost-of-goods-sold proxy must be labeled as such. | Financial Statement Analysis and Financial Modeling |
@@ -43,16 +44,19 @@ This glossary defines core terms used throughout the Jupyter Book.
 | Drawdown | Percentage decline from the running wealth or price peak to the current level. | Markets, Instruments, and Data |
 | DuPont analysis | Decomposition of return on equity into profitability, asset efficiency, and financial leverage components. | Financial Statement Analysis and Financial Modeling |
 | Duration | First-order sensitivity of a bond price to changes in yield. | Fixed Income, Credit, and Term Structure |
-| DV01 | Dollar value of one basis point; approximate currency price change for a one-basis-point yield move. | Fixed Income, Credit, and Term Structure |
+| DV01 | Non-negative price-change magnitude for a one-basis-point parallel yield move; for a long conventional bond, a +1 bp shock gives approximately \(\Delta P=-\mathrm{DV01}\). | Fixed Income, Credit, and Term Structure |
 | EBITDA | Earnings before interest, taxes, depreciation, and amortization; an intermediate performance measure whose calculation and any further adjustments must be stated because it is not a standardized IFRS line item. | Financial Statement Analysis and Financial Modeling |
 | Efficient frontier | Set of portfolios with minimum variance for each expected-return target. | Portfolio Management, Asset Allocation, and Performance |
 | Exchange rate | Price of one currency expressed in terms of another currency. | Economics, Macro, and Currency |
 | Expected Shortfall | Average tail loss beyond a selected quantile threshold. | Derivatives and Risk Management |
+| Exposure at default (EAD) | Amount exposed when default occurs under the stated credit-loss convention. | Fixed Income, Credit, and Term Structure |
 | FCFE | Free cash flow to equity; cash flow available to common equity after operating needs, investment, and net debt financing under the stated forecast. | Corporate Issuers and Equity Valuation |
 | FCFF | Free cash flow to the firm; after-tax operating cash flow available to debt and equity capital providers after required reinvestment. | Corporate Issuers and Equity Valuation |
 | FIBRA | Mexican real-estate investment trust certificate, broadly analogous to a REIT, with exchange-traded ownership of income-producing real assets. | Markets, Instruments, and Data |
 | FFO | Funds from operations; a real-estate performance measure that begins with net income and applies the declared Nareit-style adjustments. | Alternative Investments |
 | Fiscal policy | Government tax, spending, deficit, and debt policy that affects demand, rates, sovereign risk, and growth expectations. | Economics, Macro, and Currency |
+| Feller condition | CIR parameter condition \(2\kappa\theta\geq\sigma^2\), used to assess whether the continuous-time short rate stays strictly positive rather than merely non-negative. | Fixed Income, Credit, and Term Structure |
+| Forward rate | Rate implied today for borrowing or discounting between two future dates under the declared compounding convention. | Fixed Income, Credit, and Term Structure |
 | Forward premium | Situation in which a forward exchange rate implies that the base currency trades at a premium relative to the spot rate under the chosen quote convention. | Economics, Macro, and Currency |
 | DB.NOMICS | Public macroeconomic data platform and API that aggregates series from official providers. | Markets, Instruments, and Data |
 | Forward contract | OTC agreement to buy or sell an asset at a fixed future delivery price. | Derivatives and Risk Management |
@@ -66,6 +70,7 @@ This glossary defines core terms used throughout the Jupyter Book.
 | Hit ratio | Share of forecasts, signals, or directional calls that meet the page's explicitly defined success condition. | Markets, Instruments, and Data |
 | Implied volatility | Volatility value that makes an option-pricing model match the observed market option price. | Derivatives and Risk Management |
 | Implied volatility smile | Pattern of implied volatility across strikes for a fixed maturity. | Derivatives and Risk Management |
+| Immunization | Asset-liability construction that matches present-value and sensitivity conditions so small rate changes have controlled first- and second-order effects. | Fixed Income, Credit, and Term Structure |
 | Inflation | Sustained increase in the general price level, reducing purchasing power and affecting nominal rates, real returns, and policy expectations. | Economics, Macro, and Currency |
 | Investment Policy Statement | Governed document that records an investor's objectives, risk tolerance, horizon, liquidity needs, constraints, benchmark, responsibilities, and review rules. | Portfolio Management, Asset Allocation, and Performance |
 | Interest rate parity | Relationship linking interest-rate differentials with expected or forward exchange-rate changes. | Economics, Macro, and Currency |
@@ -73,36 +78,46 @@ This glossary defines core terms used throughout the Jupyter Book.
 | Log return | Continuously compounded return computed as the log difference of prices. | Markets, Instruments, and Data |
 | Macaulay duration | Weighted average time to receive a bond's cash flows. | Fixed Income, Credit, and Term Structure |
 | Leisen-Reimer tree | Binomial tree designed to improve convergence for option pricing, especially around payoff kinks. | Derivatives and Risk Management |
+| Loss given default (LGD) | Share of exposure lost after recoveries when default occurs. | Fixed Income, Credit, and Term Structure |
 | Liquidity | Ability to trade a desired quantity promptly with limited price impact and transaction cost. | Markets, Instruments, and Data |
 | Local volatility | Deterministic volatility function of strike and maturity calibrated to vanilla option prices. | Derivatives and Risk Management |
 | Live data mode | Dashboard mode that fetches provider-backed data through shared `src` helpers, local cache, and approved credentials or public endpoints. | Markets, Instruments, and Data |
-| Modified duration | Approximate percentage price change for a one-unit change in yield. | Fixed Income, Credit, and Term Structure |
+| Modified duration | Negative first-order percentage price sensitivity to a change in yield expressed as a decimal; for a small shock, \(\Delta P/P\approx-D_{\mathrm{mod}}\Delta y\). | Fixed Income, Credit, and Term Structure |
 | Monetary policy | Central bank policy affecting short rates, liquidity, inflation expectations, exchange rates, and financial conditions. | Economics, Macro, and Currency |
 | Monte Carlo simulation | Numerical method that estimates values or risks by generating many random scenarios. | Derivatives and Risk Management |
 | NCI | Non-controlling interest; the equity in a subsidiary not attributable, directly or indirectly, to the parent. Consolidated analysis must distinguish the group's totals from the amounts attributable to owners of the parent. | Financial Statement Analysis and Financial Modeling |
 | Nelson-Siegel model | Parametric yield-curve model with level, slope, curvature, and decay parameters. | Fixed Income, Credit, and Term Structure |
 | Nelson-Siegel-Svensson model | Extension of Nelson-Siegel with an additional curvature term and decay parameter. | Fixed Income, Credit, and Term Structure |
 | Net present value | Present value of expected project cash inflows less the present value of cash outflows under an explicit discount-rate and scenario contract. | Corporate Issuers and Equity Valuation |
+| Nominal spread | Difference between a bond's yield and one selected benchmark yield; it is not a zero-volatility spread or an option-adjusted spread. | Fixed Income, Credit, and Term Structure |
 | NOPAT | Net operating profit after tax; after-tax operating profit derived from consistently defined operating earnings and taxes attributable to those earnings. It is an analytical measure rather than a standardized financial-statement line item. | Financial Statement Analysis and Financial Modeling |
 | OAS covariance | Oracle Approximating Shrinkage covariance estimator. | Portfolio Management, Asset Allocation, and Performance |
+| Option-adjusted spread (OAS) | Spread over a benchmark curve after removing the modeled value of embedded options under explicit rate and volatility assumptions. | Fixed Income, Credit, and Term Structure |
 | Offline snapshot | Versioned real-data extract used so notebooks and book builds run without credentials, network access, or provider-rate-limit risk. | Markets, Instruments, and Data |
 | Output gap | Difference between actual output and estimated potential output, often used to interpret inflation pressure and slack. | Economics, Macro, and Currency |
 | OWC | Operating working capital; operating current assets less non-interest-bearing operating current liabilities under a declared scope. Cash, debt, and other financing balances are normally excluded unless the analysis states otherwise. | Financial Statement Analysis and Financial Modeling |
 | Owner earnings | Analyst-defined estimate of distributable economics based on normalized earnings, eligible non-cash charges, required capital expenditure, and additional operating working capital. It is not a standardized accounting measure, so each component and maintenance-investment assumption must be disclosed. | Financial Statement Analysis and Financial Modeling |
 | Parametric VaR | VaR estimated from an assumed distribution, often Gaussian. | Derivatives and Risk Management |
+| Par rate | Coupon rate that makes a bond price equal to par under a given discount curve and payment schedule. | Fixed Income, Credit, and Term Structure |
 | Par swap rate | Fixed rate that makes a swap have zero value at inception under a given discount curve. | Derivatives and Risk Management |
+| Probability of default (PD) | Probability that an obligor defaults over the stated horizon and default definition. | Fixed Income, Credit, and Term Structure |
 | Principal Component Analysis | Dimension-reduction method used to summarize correlated curve or return movements with orthogonal factors. | Fixed Income, Credit, and Term Structure |
 | Put-call parity | No-arbitrage relationship between European call prices, put prices, spot price, strike, and discounting. | Derivatives and Risk Management |
 | Purchasing power parity | Long-horizon benchmark linking exchange-rate changes with relative inflation between two currencies. | Economics, Macro, and Currency |
 | Rate panel | Collection of rates from potentially different instruments or markets; unlike a yield curve, its columns need not be homogeneous tenors of one curve. | Fixed Income, Credit, and Term Structure |
+| Redington immunization | Local asset-liability conditions requiring matched present value and duration plus greater asset convexity under a common yield-shift assumption. | Fixed Income, Credit, and Term Structure |
 | Residual income | Earnings in excess of the equity charge, commonly defined as net income minus beginning book equity times the required return on equity. | Corporate Issuers and Equity Valuation |
 | ROIC | Return on invested capital; normalized after-tax operating profit divided by the consistently defined capital invested in operations. | Financial Statement Analysis and Financial Modeling |
 | Risk parity | Allocation method that targets equal or specified risk contributions across assets. | Portfolio Management, Asset Allocation, and Performance |
 | Rolling window | Moving historical sample used to estimate statistics through time. | Quantitative Methods and Financial Time Series |
 | Sharpe ratio | Excess return per unit of volatility. | Portfolio Management, Asset Allocation, and Performance |
+| Securitization waterfall | Contractual rule that allocates collateral cash flows or losses across tranches according to seniority, attachment points, triggers, and other deal terms. | Fixed Income, Credit, and Term Structure |
+| Short rate | Instantaneous or one-period risk-free rate used as the state variable in a term-structure model. | Fixed Income, Credit, and Term Structure |
 | Simple return | Periodic percentage change in value, computed as \(P_t/P_{t-1}-1\). | Markets, Instruments, and Data |
 | Skewness | Measure of distributional asymmetry. | Markets, Instruments, and Data |
 | Sortino ratio | Excess return per unit of downside deviation. | Derivatives and Risk Management |
+| Spot rate | Zero-coupon rate from the valuation date to one maturity under the declared compounding convention. | Fixed Income, Credit, and Term Structure |
+| Spread duration | Approximate percentage price sensitivity to a change in credit spread while the selected benchmark curve and other assumptions are held fixed. | Fixed Income, Credit, and Term Structure |
 | Stationarity | Property that a time series has stable statistical behavior over time. | Quantitative Methods and Financial Time Series |
 | Stochastic volatility | Modeling framework in which volatility is random rather than fixed. | Derivatives and Risk Management |
 | Swap | Derivative contract exchanging two streams of cash flows, commonly fixed versus floating interest payments. | Derivatives and Risk Management |
@@ -115,7 +130,9 @@ This glossary defines core terms used throughout the Jupyter Book.
 | Uncovered interest parity | Benchmark relationship linking expected exchange-rate change with an interest-rate differential when currency risk is not hedged. | Economics, Macro, and Currency |
 | Value at Risk | Quantile-based loss threshold over a chosen horizon and confidence level. | Derivatives and Risk Management |
 | VaR exception | Realized loss exceeding the forecast VaR threshold. | Derivatives and Risk Management |
+| Vasicek model | Gaussian mean-reverting short-rate model with constant volatility; it can generate negative rates. | Fixed Income, Credit, and Term Structure |
 | Vega | Option Greek measuring sensitivity to volatility. | Derivatives and Risk Management |
 | Volatility | Standard deviation of returns, commonly annualized in finance. | Markets, Instruments, and Data |
 | WACC | Weighted average cost of capital; market-value-weighted required return on debt and equity after the stated tax and capital-structure assumptions. | Corporate Issuers and Equity Valuation |
 | Yield curve | Relationship between yields and maturities for a set of fixed-income instruments. | Fixed Income, Credit, and Term Structure |
+| Yield to maturity (YTM) | Single internal rate that equates a bond's promised cash flows with its dirty price under the stated compounding, frequency, and settlement assumptions. | Fixed Income, Credit, and Term Structure |

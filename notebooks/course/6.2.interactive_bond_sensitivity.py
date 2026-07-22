@@ -23,9 +23,12 @@
 # This notebook turns bond pricing, duration, and convexity into an interactive
 # classroom tool. Students can change coupon rate, maturity, nominal annual yield,
 # payment frequency, and interest-rate shocks to compare exact repricing against
-# duration and duration-convexity approximations {cite}`fabozzi2019foundations`.
+# duration and duration-convexity approximations
+# {cite}`fabozzi2019foundations,fisherWeil1971immunization`.
 #
-# The goal is not only to compute a bond price, but to build intuition about why fixed-income instruments react differently to changes in rates.
+# The goal is not only to compute a bond price, but also to build intuition
+# about why coupon, maturity, payment frequency, and yield change local
+# interest-rate sensitivity.
 #
 # ## Learning objectives
 #
@@ -42,8 +45,9 @@
 # Complete the bond-pricing, duration, and convexity lesson first. Readers should
 # be able to build a fixed-rate cash-flow schedule, distinguish nominal annual
 # yield from its periodic rate, and interpret duration and convexity as local
-# sensitivity measures. Dashboard inputs remain decimals even when labels show
-# percentages or basis points.
+# sensitivity measures. The interface labels coupon and yield inputs explicitly
+# as decimals. Yield shocks are displayed in basis points, where 100 basis
+# points equals a decimal change of 0.01.
 #
 # ## Duration-convexity approximation
 #
@@ -73,6 +77,11 @@ from ipywidgets import FloatSlider, IntSlider, interact
 
 from src.dashboard_fallbacks import build_bond_sensitivity_dashboard_fallback
 from src.dashboards import build_bond_sensitivity_dashboard
+from src.fixed_income import (
+    coupon_bond_cash_flows,
+    present_value,
+    risk_measures_from_cash_flows,
+)
 
 RUN_INTERACTIVE_WIDGETS = os.getenv("RUN_INTERACTIVE_WIDGETS", "1") == "1"
 
@@ -83,37 +92,34 @@ RUN_INTERACTIVE_WIDGETS = os.getenv("RUN_INTERACTIVE_WIDGETS", "1") == "1"
 
 # %%
 def bond_cash_flows(face_value, coupon_rate, maturity, frequency):
-    periods = int(round(maturity * frequency))
-    coupon = face_value * coupon_rate / frequency
-    times = np.arange(1, periods + 1) / frequency
-    cash_flows = np.full(periods, coupon)
-    cash_flows[-1] += face_value
-    return pd.DataFrame(
-        {"period": np.arange(1, periods + 1), "time": times, "cash_flow": cash_flows}
-    )
+    return coupon_bond_cash_flows(face_value, coupon_rate, maturity, frequency)
 
 
 def bond_price(face_value, coupon_rate, maturity, ytm, frequency):
     cash_flows = bond_cash_flows(face_value, coupon_rate, maturity, frequency)
-    period_yield = ytm / frequency
-    cash_flows["discount_factor"] = 1 / (1 + period_yield) ** cash_flows["period"]
-    cash_flows["present_value"] = cash_flows["cash_flow"] * cash_flows["discount_factor"]
-    return cash_flows["present_value"].sum(), cash_flows
+    price = present_value(
+        cash_flows["cash_flow"].to_numpy(),
+        cash_flows["time"].to_numpy(),
+        ytm,
+        compounding=frequency,
+    )
+    return price, cash_flows
 
 
 def duration_convexity(face_value, coupon_rate, maturity, ytm, frequency):
-    price, cash_flows = bond_price(face_value, coupon_rate, maturity, ytm, frequency)
-    period_yield = ytm / frequency
-    weights = cash_flows["present_value"] / price
-    macaulay_duration = (cash_flows["time"] * weights).sum()
-    modified_duration = macaulay_duration / (1 + period_yield)
-    convexity = (
-        cash_flows["present_value"]
-        * cash_flows["period"]
-        * (cash_flows["period"] + 1)
-        / (price * (1 + period_yield) ** 2 * frequency**2)
-    ).sum()
-    return price, macaulay_duration, modified_duration, convexity
+    cash_flows = bond_cash_flows(face_value, coupon_rate, maturity, frequency)
+    risk = risk_measures_from_cash_flows(
+        cash_flows["cash_flow"].to_numpy(),
+        cash_flows["time"].to_numpy(),
+        ytm,
+        frequency=frequency,
+    )
+    return (
+        risk["price"],
+        risk["macaulay_duration"],
+        risk["modified_duration"],
+        risk["convexity"],
+    )
 
 
 # %% [markdown]
@@ -143,7 +149,14 @@ def bond_scenario_table(face_value, coupon_rate, maturity, ytm, frequency, shock
             }
         )
 
-    return pd.DataFrame(rows)
+    scenario = pd.DataFrame(rows)
+    scenario.attrs["figure_note"] = (
+        "Deterministic classroom repricing; price is in currency units per "
+        f"{face_value:g} face value; coupon={coupon_rate:.2%}; "
+        f"maturity={maturity:g} years; nominal annual YTM={ytm:.2%}; "
+        f"payments/year={frequency}; parallel shocks only."
+    )
+    return scenario
 
 
 # %% [markdown]
@@ -152,8 +165,14 @@ def bond_scenario_table(face_value, coupon_rate, maturity, ytm, frequency, shock
 # Run this cell in JupyterLab with `uv run jupyter lab`.
 
 
-# %% tags=["interactive"]
-def plot_bond_sensitivity(coupon_rate=0.08, maturity=5, ytm=0.07, frequency=2, shock_range_bps=300):
+# %% tags=["interactive"] mystnb={"image": {"alt": "Interactive or static line chart comparing exact bond repricing, the duration approximation, and the duration-convexity approximation across parallel yield shocks in basis points for explicitly stated coupon, maturity, yield, and payment-frequency assumptions."}}
+def plot_bond_sensitivity(
+    coupon_rate=0.08,
+    maturity=5,
+    ytm=0.07,
+    frequency=2,
+    shock_range_bps=300,
+):
     face_value = 100
     scenario = bond_scenario_table(
         face_value, coupon_rate, maturity, ytm, frequency, shock_range_bps
@@ -173,6 +192,11 @@ def plot_bond_sensitivity(coupon_rate=0.08, maturity=5, ytm=0.07, frequency=2, s
         macaulay_duration=macaulay_duration,
         modified_duration=modified_duration,
         convexity=convexity,
+        face_value=face_value,
+        coupon_rate=coupon_rate,
+        maturity=maturity,
+        ytm=ytm,
+        frequency=frequency,
     )
     display(figure)
     if not RUN_INTERACTIVE_WIDGETS:
@@ -180,16 +204,62 @@ def plot_bond_sensitivity(coupon_rate=0.08, maturity=5, ytm=0.07, frequency=2, s
 
 
 if RUN_INTERACTIVE_WIDGETS:
+    slider_style = {"description_width": "initial"}
     interact(
         plot_bond_sensitivity,
-        coupon_rate=FloatSlider(value=0.08, min=0.00, max=0.16, step=0.005, readout_format=".3f"),
-        maturity=IntSlider(value=5, min=1, max=30, step=1),
-        ytm=FloatSlider(value=0.07, min=0.01, max=0.18, step=0.005, readout_format=".3f"),
-        frequency=IntSlider(value=2, min=1, max=4, step=1),
-        shock_range_bps=IntSlider(value=300, min=50, max=800, step=50),
+        coupon_rate=FloatSlider(
+            value=0.08,
+            min=0.0,
+            max=0.16,
+            step=0.005,
+            description="Coupon rate (decimal)",
+            readout_format=".3f",
+            style=slider_style,
+        ),
+        maturity=IntSlider(
+            value=5,
+            min=1,
+            max=30,
+            step=1,
+            description="Maturity (years)",
+            style=slider_style,
+        ),
+        ytm=FloatSlider(
+            value=0.07,
+            min=0.01,
+            max=0.18,
+            step=0.005,
+            description="YTM (decimal)",
+            readout_format=".3f",
+            style=slider_style,
+        ),
+        frequency=IntSlider(
+            value=2,
+            min=1,
+            max=4,
+            step=1,
+            description="Payments per year",
+            style=slider_style,
+        ),
+        shock_range_bps=IntSlider(
+            value=300,
+            min=50,
+            max=800,
+            step=50,
+            description="Shock range (bp)",
+            style=slider_style,
+        ),
     )
 else:
     plot_bond_sensitivity()
+
+# %% [markdown]
+# Every curve slopes downward around the base yield because a higher discount
+# rate lowers present value. The duration-convexity curve generally remains
+# closer to exact repricing than the duration-only line as the absolute shock
+# grows. This is a local comparison under a single parallel YTM shock; it does
+# not establish accuracy for nonparallel curve changes, credit-spread moves, or
+# bonds with embedded options.
 
 # %% [markdown]
 # ## Model limitations

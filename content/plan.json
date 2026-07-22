@@ -139,9 +139,11 @@
         "chapters/legacy/06-term-structure.md"
       ],
       "gaps": [
-        "Dealer-grade settlement calendars, credit curves, CDS, OAS, and loan-level securitization remain advanced extensions."
+        "Effective and key-rate duration, homogeneous-tenor curve PCA, interest-rate trees, and dealer-grade interpolation and settlement calendars remain advanced extensions.",
+        "Credit curves, CDS, option-adjusted spread valuation, convertibles, loan-level securitization, legal waterfalls, and default dependence remain advanced extensions.",
+        "Redistribution rights for the committed observed-data snapshot require an owner-authorized review; reproducibility does not establish permission."
       ],
-      "next_text_target": "A reviewed credit-curve or securitized-product case with contractual cash-flow validation."
+      "next_text_target": "A rights-reviewed credit-curve or securitized-product case with contractual cash-flow validation."
     },
     {
       "id": "07",

@@ -23,10 +23,14 @@
 # Mexican sovereign instruments use market conventions that are easy to miss in
 # generic bond examples. This lesson connects the time value of money to CETES,
 # Bonos M, and UDIBONOS, emphasizing ACT/360 conventions, semiannual coupon
-# mechanics, clean price, dirty price, accrued interest, and inflation indexation
-# {cite}`banxicoGovSecurities,fabozzi2019foundations`.
+# mechanics, clean price, dirty price, accrued interest, and inflation indexation.
+# The formulas follow Banco de México's government-security descriptions and
+# technical appendices {cite}`banxicoGovSecurities,banxicoGovSecuritiesTechnical`.
 #
-# The examples are deterministic and classroom-safe. Live Banxico data can be connected later through `src.banxico` and `src.market_data`, but this notebook does not require a token or network access.
+# The examples are deterministic and classroom-safe. They are not observations
+# or executable settlement instructions. Live Banco de México data can be
+# connected later through `src.banxico` and `src.market_data`, but this notebook
+# does not require a token or network access.
 #
 # ## Learning objectives
 #
@@ -71,33 +75,43 @@ from src.fixed_income import (
 #
 # ## CETES pricing
 #
-# For a CETES with face value $VN$, annualized return yield $r$, days to maturity $t$, and ACT/360 basis:
+# For a CETES with face value $VN$ in MXN, annualized simple return yield $r$ as
+# a decimal, and $t$ actual days to maturity on an ACT/360 basis:
 #
 # $$
 # P = \frac{VN}{1 + r\frac{t}{360}}.
 # $$
+#
+# This is the return-yield convention in the Banco de México technical
+# appendix; it is not periodic-compounding bond YTM
+# {cite}`banxicoGovSecuritiesTechnical`.
 
 # %%
 cete_28 = Cetes(days_to_maturity=28, annual_yield=0.0950)
 
 pd.Series(
     {
-        "face_value": cete_28.face_value,
+        "face_value_mxn": cete_28.face_value,
         "days_to_maturity": cete_28.days_to_maturity,
-        "annual_yield": cete_28.annual_yield,
-        "price": cete_28.price,
-        "discount_rate_quote": cete_28.discount_rate,
+        "annual_return_yield_decimal": cete_28.annual_yield,
+        "price_mxn": cete_28.price,
+        "discount_rate_quote_decimal": cete_28.discount_rate,
     }
 ).to_frame("CETES 28-day")
 
 # %% [markdown]
-# The discount-rate quote $b$ and return-yield quote $r$ are related by:
+# The annualized simple discount-rate quote $b$ and return-yield quote $r$ are
+# related by:
 #
 # $$
 # b = \frac{r}{1 + r\frac{t}{360}},
 # \qquad
 # r = \frac{b}{1 - b\frac{t}{360}}.
 # $$
+#
+# Both $b$ and $r$ are decimals on the same ACT/360 basis. The conversion must
+# retain the same face value and days to maturity
+# {cite}`banxicoGovSecuritiesTechnical`.
 
 # %%
 recovered_yield = cetes_yield_from_discount_rate(
@@ -107,9 +121,9 @@ recovered_yield = cetes_yield_from_discount_rate(
 
 pd.Series(
     {
-        "original_yield": cete_28.annual_yield,
-        "discount_rate": cete_28.discount_rate,
-        "recovered_yield": recovered_yield,
+        "original_yield_decimal": cete_28.annual_yield,
+        "discount_rate_decimal": cete_28.discount_rate,
+        "recovered_yield_decimal": recovered_yield,
         "roundtrip_error": recovered_yield - cete_28.annual_yield,
     }
 )
@@ -117,7 +131,9 @@ pd.Series(
 # %% [markdown]
 # ## Bono M clean and dirty pricing
 #
-# For a simplified Bono M, each coupon period is treated as 182 days on ACT/360:
+# For the simplified Bono M implementation used here, $VN$ is face value in MXN,
+# $RC$ is the annual coupon rate as a decimal, and each coupon period is treated
+# as 182 days on ACT/360:
 #
 # $$
 # C = VN \times RC \times \frac{182}{360}.
@@ -128,6 +144,10 @@ pd.Series(
 # $$
 # j - 1 + \frac{182-d}{182}.
 # $$
+#
+# The exponent discounts the first coupon over the remaining fraction of its
+# 182-day period. Banco de México's appendix documents the instrument-specific
+# coupon and yield convention {cite}`banxicoGovSecuritiesTechnical`.
 
 # %%
 bono = BonoM(
@@ -143,15 +163,16 @@ price_table.head()
 # %%
 pd.Series(
     {
-        "coupon_payment": bono.coupon_payment,
-        "dirty_price": bono.dirty_price,
-        "accrued_interest": bono.accrued_interest,
-        "clean_price": bono.clean_price,
+        "coupon_payment_mxn": bono.coupon_payment,
+        "dirty_price_mxn": bono.dirty_price,
+        "accrued_interest_mxn": bono.accrued_interest,
+        "clean_price_mxn": bono.clean_price,
     }
 ).to_frame("Bono M")
 
 # %% [markdown]
-# The clean price is the quoted economic price. The dirty price is the cash settlement before transaction costs:
+# The clean price excludes accrued interest. The dirty price is the cash
+# settlement amount before transaction costs:
 #
 # $$
 # P_{clean} = P_{dirty} - AI.
@@ -161,11 +182,18 @@ pd.Series(
 #
 # ## UDIBONO settlement
 #
-# UDIBONOS are valued in UDIS first. The MXN settlement amount uses the daily UDI value:
+# UDIBONOS are valued in UDIS first. The MXN settlement amount uses the UDI value
+# for the applicable settlement date:
 #
 # $$
 # \text{Settlement MXN} = (P_{clean,UDIS} + AI_{UDIS}) \times UDI_t.
 # $$
+#
+# The worked input below sets $UDI_t=8.45$ MXN per UDI as an explicitly
+# hypothetical classroom assumption. It is not a Banco de México observation,
+# a current quote, or a value suitable for settlement. A live application must
+# retrieve and validate the date-specific official value
+# {cite}`banxicoGovSecurities`.
 
 # %%
 udibono_real = BonoM(
@@ -176,11 +204,11 @@ udibono_real = BonoM(
     face_value=100.0,
 )
 
-udi_value = 8.45
+hypothetical_udi_mxn_per_udi = 8.45
 settlement = udibono_settlement_mxn(
     clean_price_udis=udibono_real.clean_price,
     accrued_interest_udis=udibono_real.accrued_interest,
-    udi_value=udi_value,
+    udi_value=hypothetical_udi_mxn_per_udi,
 )
 
 pd.Series(
@@ -188,8 +216,8 @@ pd.Series(
         "clean_price_udis": udibono_real.clean_price,
         "accrued_interest_udis": udibono_real.accrued_interest,
         "dirty_price_udis": udibono_real.dirty_price,
-        "udi_value_mxn": udi_value,
-        "settlement_mxn": settlement,
+        "hypothetical_udi_mxn_per_udi": hypothetical_udi_mxn_per_udi,
+        "hypothetical_settlement_mxn": settlement,
     }
 )
 
@@ -228,9 +256,14 @@ pd.DataFrame(comparison)
 # %% [markdown]
 # ## Model limitations
 #
-# - The examples simplify Mexican market conventions and should not be treated as production settlement logic.
-# - Live valuation would require validated curves, calendars, UDI values, tax treatment, and instrument-specific details.
-# - Small convention differences can create material price and accrued-interest differences.
+# - The examples simplify Mexican market conventions and should not be treated
+#   as production settlement logic.
+# - The rates, price inputs, and UDI value are hypothetical classroom inputs,
+#   not observed market data.
+# - Live valuation would require validated curves, calendars, date-specific UDI
+#   values, tax treatment, and instrument identifiers.
+# - Small convention differences can create material price and accrued-interest
+#   differences; rounding and settlement rules must also be validated.
 
 # %% [markdown]
 # ## Handoff

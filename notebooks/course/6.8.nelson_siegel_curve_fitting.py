@@ -20,33 +20,38 @@
 #
 # ## Lesson summary
 #
-# A bootstrapped curve can match observed instruments closely, but it may also inherit microstructure noise. Nelson-Siegel gives a smooth four-parameter representation of the zero-coupon curve and separates level, slope, and curvature in a way that is useful for macro-financial interpretation {cite}`fabozzi2019foundations`.
+# A bootstrapped curve can match input instruments closely, but it may also
+# inherit microstructure noise. Nelson-Siegel gives a smooth four-parameter
+# representation of a zero-coupon curve and separates level, slope, and
+# curvature loadings {cite}`nelsonSiegel1987yieldCurves`. This lesson fits only
+# deterministic synthetic rates; it makes no claim about a current Mexican
+# market curve.
 #
 # ## Learning objectives
 #
 # By the end of this lesson, students should be able to:
 #
 # - explain the Nelson-Siegel basis functions;
-# - fit a smooth curve to observed zero-coupon yields;
+# - fit a smooth curve to homogeneous zero-coupon inputs;
 # - interpret level, slope, curvature, and decay parameters;
-# - compare market yields with fitted yields and residuals;
+# - compare input zero rates with fitted zero rates and residuals;
 # - derive discount factors from the fitted curve.
 #
 # ## Prerequisites
 #
 # Complete the yield-curve bootstrap before fitting this parametric curve.
 # Readers should understand spot rates, discount factors, maturity grids, and
-# residual diagnostics. The observed inputs must be comparable zero-coupon rates
-# under one currency and convention; a mixed rate panel is not a substitute for
-# a zero curve.
+# residual diagnostics. In empirical work, the inputs must be comparable
+# zero-coupon rates under one currency and convention; a mixed rate panel is not
+# a substitute for a zero curve.
 #
 # ## Python setup
 
 # %% tags=["setup", "hide-input"]
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 
+from src.module6_visuals import build_nelson_siegel_diagnostic_figure
 from src.term_structure import (
     discount_factor_from_spot_rate,
     fit_nelson_siegel,
@@ -55,17 +60,26 @@ from src.term_structure import (
 )
 
 # %% [markdown]
-# ## Synthetic Mexican-style zero curve
+# ## Synthetic nominal zero curve
 #
 # The data below are deterministic classroom inputs. They form a downward-sloping,
-# or inverted, nominal zero curve: the 3-month yield is 10.1% and the 30-year
-# yield is 8.3%. They are not live market quotes.
+# or inverted, nominal zero curve: the 3-month annual rate is 10.1% and the
+# 30-year annual rate is 8.3%. They are not observed market quotes,
+# have no currency assignment, and have no provider date, retrieval date, or
+# market vintage.
 
 # %%
 maturities = np.array([0.25, 0.5, 1, 2, 3, 5, 7, 10, 20, 30])
-observed_yields = np.array([0.101, 0.099, 0.096, 0.092, 0.089, 0.086, 0.085, 0.084, 0.083, 0.083])
+synthetic_zero_rates = np.array(
+    [0.101, 0.099, 0.096, 0.092, 0.089, 0.086, 0.085, 0.084, 0.083, 0.083]
+)
 
-curve = pd.DataFrame({"maturity_years": maturities, "observed_yield": observed_yields})
+curve = pd.DataFrame(
+    {
+        "maturity_years": maturities,
+        "synthetic_zero_rate_annual": synthetic_zero_rates,
+    }
+)
 curve
 
 # %% [markdown]
@@ -88,10 +102,24 @@ curve
 # - $\beta_2$: medium-term curvature component;
 # - $\tau$: decay parameter that controls where the curvature loading is strongest.
 #
+# With equal weights, this lesson estimates the parameter vector
+# $\vartheta=(\beta_0,\beta_1,\beta_2,\tau)$ by least squares:
+#
+# $$
+# \widehat\vartheta
+# = \arg\min_{\vartheta:\,\tau>0}
+# \sum_{i=1}^{N}
+# \left[y_i-y_{\mathrm{NS}}(t_i;\vartheta)\right]^2.
+# $$
+#
+# The objective treats every maturity quote equally. Alternative weights based
+# on duration, bid-ask width, or instrument reliability answer different fitting
+# questions and must be declared.
+#
 # ## Fit the curve
 
 # %%
-params = fit_nelson_siegel(maturities, observed_yields)
+params = fit_nelson_siegel(maturities, synthetic_zero_rates)
 pd.Series(params)
 
 # %%
@@ -104,39 +132,71 @@ fitted_yields = nelson_siegel_yield(
     params["tau"],
 )
 
-curve["fitted_yield"] = nelson_siegel_yield(
+curve["fitted_zero_rate_annual"] = nelson_siegel_yield(
     maturities,
     params["beta0"],
     params["beta1"],
     params["beta2"],
     params["tau"],
 )
-curve["residual_bp"] = (curve["observed_yield"] - curve["fitted_yield"]) * 10_000
+curve["residual_bp"] = (
+    curve["synthetic_zero_rate_annual"] - curve["fitted_zero_rate_annual"]
+) * 10_000
 curve
+
+# %%
+fit_diagnostics = pd.Series(
+    {
+        "observations": len(curve),
+        "sse_decimal_rate_squared": params["sse"],
+        "rmse_basis_points": float(np.sqrt(np.mean(curve["residual_bp"] ** 2))),
+        "maximum_absolute_residual_basis_points": float(curve["residual_bp"].abs().max()),
+    }
+)
+fit_diagnostics
 
 # %% [markdown]
 # ## Visual diagnostic
 
-# %%
-fig, axes = plt.subplots(1, 2, figsize=(12, 4))
+# %% mystnb={"image": {"alt": "Two panels compare ten deterministic synthetic annual zero rates with a Nelson-Siegel fitted curve from 0.25 to 30 years and show signed fitting residuals in basis points by maturity."}}
+nelson_siegel_source_note = (
+    "Source: author-created deterministic nominal zero rates; annual compounding; "
+    "0.25- to 30-year maturities; equal-weight least squares. No currency, "
+    "provider, observation date, retrieval date, or market vintage."
+)
+build_nelson_siegel_diagnostic_figure(
+    curve,
+    dense_maturities,
+    fitted_yields,
+    source_note=nelson_siegel_source_note,
+)
 
-axes[0].plot(dense_maturities, fitted_yields, label="Nelson-Siegel fit")
-axes[0].scatter(maturities, observed_yields, color="black", label="Observed")
-axes[0].set_title("Fitted Zero-Coupon Curve")
-axes[0].set_xlabel("Maturity in years")
-axes[0].set_ylabel("Yield")
-axes[0].grid(True, alpha=0.3)
-axes[0].legend()
+# %% [markdown]
+# The main pattern is a smooth decline from the short end toward the long-run
+# level. The residual panel is the important exception: even a visually smooth
+# four-parameter fit does not pass through every synthetic input. The diagnostic
+# is limited to in-sample, equal-weight fit; it provides no evidence of
+# no-arbitrage dynamics, parameter stability, or forecast accuracy.
 
-axes[1].bar(curve["maturity_years"].astype(str), curve["residual_bp"])
-axes[1].axhline(0, color="black", linewidth=0.8)
-axes[1].set_title("Fit Residuals")
-axes[1].set_xlabel("Maturity")
-axes[1].set_ylabel("Basis points")
-axes[1].grid(True, axis="y", alpha=0.3)
-
-plt.tight_layout()
-plt.show()
+# %% [markdown]
+# ## Nelson-Siegel-Svensson extension
+#
+# Svensson adds a second curvature loading with its own decay parameter
+# {cite}`svensson1994forwardRates`:
+#
+# $$
+# y_{\mathrm{NSS}}(t)
+# = \beta_0
+# + \beta_1\left(\frac{1-e^{-t/\tau_1}}{t/\tau_1}\right)
+# + \beta_2\left(\frac{1-e^{-t/\tau_1}}{t/\tau_1}-e^{-t/\tau_1}\right)
+# + \beta_3\left(\frac{1-e^{-t/\tau_2}}{t/\tau_2}-e^{-t/\tau_2}\right),
+# $$
+#
+# with $\tau_1>0$ and $\tau_2>0$. The additional hump can capture a second
+# bend in a richer curve, but it also weakens parameter identification and can
+# overfit sparse maturities. The four-parameter Nelson-Siegel specification is
+# retained here because ten smooth synthetic points do not justify that added
+# flexibility.
 
 # %% [markdown]
 # ## Discount factors from the fitted curve
@@ -158,7 +218,7 @@ selected_yields = nelson_siegel_yield(
 discount_table = pd.DataFrame(
     {
         "maturity_years": selected_maturities,
-        "fitted_yield_annual": selected_yields,
+        "fitted_zero_rate_annual": selected_yields,
         "discount_factor_annual": [
             discount_factor_from_spot_rate(
                 rate,
@@ -181,7 +241,8 @@ discount_table["recovered_yield_annual"] = [
     )
 ]
 discount_table["roundtrip_error"] = (
-    discount_table["recovered_yield_annual"] - discount_table["fitted_yield_annual"]
+    discount_table["recovered_yield_annual"]
+    - discount_table["fitted_zero_rate_annual"]
 )
 discount_table
 
@@ -191,6 +252,8 @@ discount_table
 # - Nelson-Siegel is smooth and parsimonious, so it can miss local pricing kinks or illiquidity effects.
 # - Parameter estimates can be unstable when maturities are sparse or concentrated.
 # - A visually good fit does not guarantee arbitrage-free dynamics or stable out-of-sample forecasts.
+# - Calling synthetic inputs "observed" would overstate provenance; empirical
+#   use requires a documented homogeneous zero-rate source, currency, date, and convention.
 
 # %% [markdown]
 # ## Handoff

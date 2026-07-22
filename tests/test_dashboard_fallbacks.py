@@ -263,13 +263,18 @@ def test_bond_fallback_preserves_repricing_contract() -> None:
         macaulay_duration=4.2,
         modified_duration=4.0,
         convexity=20.0,
+        face_value=100.0,
+        coupon_rate=0.08,
+        maturity=5.0,
+        ytm=0.07,
+        frequency=2,
     )
 
     try:
         assert isinstance(figure, Figure)
         assert len(figure.axes) == 1
         assert figure.axes[0].get_xlabel() == "Parallel yield shock (basis points)"
-        assert figure.axes[0].get_ylabel() == "Bond price"
+        assert figure.axes[0].get_ylabel() == "Bond price (currency units)"
         assert len(figure.axes[0].lines) == 4
         assert [line.get_color() for line in figure.axes[0].lines[:3]] == [
             SEMANTIC_COLORS["reference"],
@@ -281,6 +286,17 @@ def test_bond_fallback_preserves_repricing_contract() -> None:
             "--",
             "-.",
         ]
+        assert [line.get_marker() for line in figure.axes[0].lines[:3]] == [
+            "o",
+            "s",
+            "D",
+        ]
+        note = _figure_text(figure)
+        assert "annual coupon 8.00%" in note
+        assert "maturity 5 years" in note
+        assert "base annual YTM 7.00%" in note
+        assert "2 payments per year" in note
+        _assert_publication_geometry(figure)
         assert render_png(figure).startswith(b"\x89PNG\r\n\x1a\n")
         pd.testing.assert_frame_equal(scenario, original)
     finally:

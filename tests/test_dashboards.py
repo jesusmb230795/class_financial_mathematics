@@ -230,6 +230,11 @@ def test_financial_dashboards_return_figures_and_auditable_outputs() -> None:
         macaulay_duration=4.5,
         modified_duration=4.2,
         convexity=22,
+        face_value=100,
+        coupon_rate=0.08,
+        maturity=5,
+        ytm=0.07,
+        frequency=2,
     )
     options = build_black_scholes_dashboard(
         [80, 100, 120],
@@ -258,6 +263,12 @@ def test_financial_dashboards_return_figures_and_auditable_outputs() -> None:
         SEMANTIC_COLORS["comparison"],
         SEMANTIC_COLORS["primary"],
     ]
+    assert [trace.marker.symbol for trace in bond.data] == ["circle", "square", "diamond"]
+    assert bond.layout.xaxis.title.text == "Parallel yield shock (basis points)"
+    assert bond.layout.yaxis.title.text == "Bond price (currency units)"
+    assert "Macaulay duration 4.50 years" in bond.layout.title.text
+    assert "annual coupon 8.00%" in bond.layout.annotations[-1].text
+    assert "base annual YTM 7.00%" in bond.layout.annotations[-1].text
     assert options.data[0].line.color == SEMANTIC_COLORS["reference"]
     assert options.data[1].line.color == SEMANTIC_COLORS["primary"]
     assert options.layout.shapes[1].line.color == SEMANTIC_COLORS["highlight"]

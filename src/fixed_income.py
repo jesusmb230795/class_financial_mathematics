@@ -151,6 +151,49 @@ def amortization_schedule(
     return pd.DataFrame(rows)
 
 
+def coupon_bond_cash_flows(
+    face_value: float,
+    coupon_rate: float,
+    maturity: float,
+    frequency: int,
+) -> pd.DataFrame:
+    """Build a regular coupon-bond schedule with no implicit stub period.
+
+    ``maturity`` is measured in years and must lie exactly on the contractual
+    grid ``n / frequency``. Irregular first or final coupons require an
+    explicit schedule and are intentionally outside this classroom helper.
+    """
+    values = np.asarray([face_value, coupon_rate, maturity], dtype=float)
+    if not np.all(np.isfinite(values)):
+        raise ValueError("face_value, coupon_rate, and maturity must be finite")
+    if face_value <= 0 or maturity <= 0:
+        raise ValueError("face_value and maturity must be positive")
+    if coupon_rate < 0:
+        raise ValueError("coupon_rate must be non-negative")
+    if isinstance(frequency, (bool, np.bool_)) or not isinstance(frequency, (int, np.integer)):
+        raise ValueError("frequency must be a positive integer")
+    if frequency <= 0:
+        raise ValueError("frequency must be a positive integer")
+
+    periods_float = maturity * frequency
+    periods = int(round(periods_float))
+    if not np.isclose(periods_float, periods, rtol=0.0, atol=1e-12):
+        raise ValueError("maturity must align with the coupon frequency; stubs are not implicit")
+
+    coupon = face_value * coupon_rate / frequency
+    times = np.arange(1, periods + 1, dtype=float) / frequency
+    times[-1] = maturity
+    cash_flows = np.full(periods, coupon, dtype=float)
+    cash_flows[-1] += face_value
+    return pd.DataFrame(
+        {
+            "period": np.arange(1, periods + 1),
+            "time": times,
+            "cash_flow": cash_flows,
+        }
+    )
+
+
 @dataclass(frozen=True)
 class Cetes:
     """Mexican Treasury certificate priced with ACT/360 money-market yield."""
@@ -305,14 +348,32 @@ def yield_to_maturity_from_cash_flows(
     lower: float = -0.95,
     upper: float = 1.50,
 ) -> float:
-    """Solve a flat annual YTM under the declared compounding convention."""
+    """Solve the unique flat annual YTM of conventional promised cash flows.
+
+    Cash flows must be non-negative and include at least one strictly positive
+    payment after settlement. This domain makes present value strictly
+    decreasing in the rate and excludes investment streams that can have
+    multiple internal rates of return.
+    """
     cash_flows = np.asarray(cash_flows, dtype=float)
     times = np.asarray(times, dtype=float)
-    if price <= 0:
-        raise ValueError("price must be positive")
+    if not np.isfinite(price) or price <= 0:
+        raise ValueError("price must be finite and positive")
+    if cash_flows.ndim != 1 or times.ndim != 1 or cash_flows.shape != times.shape:
+        raise ValueError("cash_flows and times must be one-dimensional arrays of equal length")
+    if cash_flows.size == 0:
+        raise ValueError("cash_flows and times must not be empty")
+    if not np.all(np.isfinite(cash_flows)) or not np.all(np.isfinite(times)):
+        raise ValueError("cash_flows and times must contain finite values")
+    if np.any(cash_flows < 0):
+        raise ValueError("cash_flows must be non-negative for a unique conventional-bond YTM")
+    if np.any(times < 0):
+        raise ValueError("cash-flow times must be non-negative")
+    if not np.any((cash_flows > 0) & (times > 0)):
+        raise ValueError("at least one positive cash flow must occur after settlement")
+    if not np.all(np.isfinite([lower, upper])) or lower >= upper:
+        raise ValueError("lower and upper must be finite with lower less than upper")
     present_value(cash_flows, times, 0.0, compounding)
-    if lower >= upper:
-        raise ValueError("lower must be less than upper")
 
     def error(rate: float) -> float:
         return present_value(cash_flows, times, rate, compounding=compounding) - price
@@ -326,20 +387,51 @@ def risk_measures_from_cash_flows(
     annual_yield: float,
     frequency: int = 2,
 ) -> dict[str, float]:
-    """Compute price, Macaulay duration, modified duration, convexity, and DV01."""
+    """Compute price and interest-rate risk under periodic compounding.
+
+    This helper covers conventional bonds with non-negative promised cash
+    flows. Rates are decimal nominal annual rates convertible ``frequency``
+    times per year, and ``times`` are measured in years. ``dv01`` is returned
+    as a non-negative price-point magnitude: the first-order price change for
+    a parallel ``+1`` basis-point yield shock is approximately ``-dv01``.
+    """
     cash_flows = np.asarray(cash_flows, dtype=float)
     times = np.asarray(times, dtype=float)
+    if cash_flows.ndim != 1 or times.ndim != 1 or cash_flows.shape != times.shape:
+        raise ValueError("cash_flows and times must be one-dimensional arrays of equal length")
+    if cash_flows.size == 0:
+        raise ValueError("cash_flows and times must not be empty")
+    if not np.all(np.isfinite(cash_flows)) or not np.all(np.isfinite(times)):
+        raise ValueError("cash_flows and times must contain finite values")
+    if np.any(cash_flows < 0) or not np.any(cash_flows > 0):
+        raise ValueError("cash_flows must be non-negative with at least one positive payment")
+    if np.any(times < 0):
+        raise ValueError("cash-flow times must be non-negative")
+    if isinstance(frequency, (bool, np.bool_)) or not isinstance(frequency, (int, np.integer)):
+        raise ValueError("frequency must be a positive integer")
+    if frequency <= 0:
+        raise ValueError("frequency must be a positive integer")
+    if not np.isfinite(annual_yield):
+        raise ValueError("annual_yield must be finite")
+    period_accumulation = 1 + annual_yield / frequency
+    if period_accumulation <= 0:
+        raise ValueError("annual_yield is outside the periodic-compounding domain")
+
     periods = times * frequency
-    discount = (1 + annual_yield / frequency) ** (-periods)
+    discount = period_accumulation ** (-periods)
     present_values = cash_flows * discount
     price = float(present_values.sum())
+    if not np.isfinite(price) or price <= 0:
+        raise ValueError("discounted cash flows must imply a positive finite price")
     weights = present_values / price
     macaulay = float(np.sum(times * weights))
-    modified = macaulay / (1 + annual_yield / frequency)
+    modified = macaulay / period_accumulation
     convexity = float(
         np.sum(present_values * periods * (periods + 1))
-        / (price * (1 + annual_yield / frequency) ** 2 * frequency**2)
+        / (price * period_accumulation**2 * frequency**2)
     )
+    if not np.all(np.isfinite([macaulay, modified, convexity])):
+        raise ValueError("cash flows imply non-finite risk measures")
     return {
         "price": price,
         "macaulay_duration": macaulay,
@@ -350,8 +442,64 @@ def risk_measures_from_cash_flows(
 
 
 def dv01(price: float, modified_duration: float) -> float:
-    """Dollar value of a one-basis-point parallel yield move."""
+    """Return the positive price-point magnitude of a one-basis-point move.
+
+    ``price`` and the result use the same currency or quotation unit. For a
+    standard positive-duration position, the signed first-order price change
+    caused by a parallel ``+1`` basis-point yield shock is ``-dv01``.
+    """
+    if not np.all(np.isfinite([price, modified_duration])):
+        raise ValueError("price and modified_duration must be finite")
+    if price <= 0:
+        raise ValueError("price must be positive")
+    if modified_duration < 0:
+        raise ValueError("modified_duration must be non-negative")
     return float(price * modified_duration * 0.0001)
+
+
+def tranche_loss(
+    collateral_loss: float | np.ndarray,
+    attachment: float | np.ndarray,
+    detachment: float | np.ndarray,
+) -> float | np.ndarray:
+    """Allocate collateral loss to a tranche with validated boundaries.
+
+    All three arguments must use the same unit, either currency amounts or
+    fractions of a common collateral notional. For attachment ``A`` and
+    detachment ``D``, the allocated loss is
+    ``min(max(collateral_loss - A, 0), D - A)``. NumPy broadcasting is
+    supported, so one loss grid can be evaluated across several tranches.
+    """
+    try:
+        losses, attachments, detachments = np.broadcast_arrays(
+            np.asarray(collateral_loss, dtype=float),
+            np.asarray(attachment, dtype=float),
+            np.asarray(detachment, dtype=float),
+        )
+    except ValueError as exc:
+        raise ValueError(
+            "collateral_loss, attachment, and detachment must be broadcast-compatible"
+        ) from exc
+    if not (
+        np.all(np.isfinite(losses))
+        and np.all(np.isfinite(attachments))
+        and np.all(np.isfinite(detachments))
+    ):
+        raise ValueError("tranche-loss inputs must contain finite values")
+    if np.any(losses < 0):
+        raise ValueError("collateral_loss must be non-negative")
+    if np.any(attachments < 0):
+        raise ValueError("attachment must be non-negative")
+    if np.any(detachments <= attachments):
+        raise ValueError("detachment must be strictly greater than attachment")
+
+    allocated = np.minimum(
+        np.maximum(losses - attachments, 0.0),
+        detachments - attachments,
+    )
+    if allocated.ndim == 0:
+        return float(allocated)
+    return allocated
 
 
 def duration_convexity_price(
@@ -373,10 +521,50 @@ def redington_immunization_check(
     asset_convexity: float,
     liability_convexity: float,
     tolerance: float = 1e-4,
+    *,
+    pv_rtol: float = 1e-6,
+    pv_atol: float = 0.0,
+    duration_atol: float | None = None,
+    convexity_margin: float = 0.0,
 ) -> dict[str, bool]:
-    """Evaluate the three classical Redington immunization conditions."""
+    """Evaluate Redington conditions with dimension-aware tolerances.
+
+    ``tolerance`` is retained as the legacy duration tolerance, in years.
+    Present-value matching is relative by default, which preserves the result
+    under a change of currency unit. A caller may set ``pv_atol`` explicitly in
+    the chosen currency unit, accepting that the absolute materiality floor is
+    then unit-dependent. Convexity must exceed the liability value by more than
+    the non-negative ``convexity_margin``; equality does not pass.
+    """
+    values = np.asarray(
+        [
+            asset_pv,
+            liability_pv,
+            asset_duration,
+            liability_duration,
+            asset_convexity,
+            liability_convexity,
+        ],
+        dtype=float,
+    )
+    if not np.all(np.isfinite(values)):
+        raise ValueError("present values, durations, and convexities must be finite")
+    if not np.isfinite(tolerance) or tolerance < 0:
+        raise ValueError("tolerance must be finite and non-negative")
+    duration_absolute_tolerance = tolerance if duration_atol is None else duration_atol
+    tolerances = np.asarray(
+        [pv_rtol, pv_atol, duration_absolute_tolerance, convexity_margin],
+        dtype=float,
+    )
+    if not np.all(np.isfinite(tolerances)) or np.any(tolerances < 0):
+        raise ValueError("all Redington tolerances and margins must be finite and non-negative")
+
+    pv_scale = max(abs(asset_pv), abs(liability_pv))
+    pv_gap = abs(asset_pv - liability_pv)
     return {
-        "present_value_matched": abs(asset_pv - liability_pv) <= tolerance,
-        "duration_matched": abs(asset_duration - liability_duration) <= tolerance,
-        "convexity_excess": asset_convexity > liability_convexity,
+        "present_value_matched": bool(pv_gap <= pv_atol + pv_rtol * pv_scale),
+        "duration_matched": bool(
+            abs(asset_duration - liability_duration) <= duration_absolute_tolerance
+        ),
+        "convexity_excess": bool(asset_convexity > liability_convexity + convexity_margin),
     }

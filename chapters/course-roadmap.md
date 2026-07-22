@@ -127,15 +127,21 @@ Required coverage:
 
 ## Module 6: Fixed Income, Credit, and Term Structure
 
-Goal: move from bond mathematics to complete fixed-income analysis and its use in portfolios.
+Goal: move from bond mathematics to a coherent fixed-income core and its use in portfolios.
 
-Required coverage:
+Published core coverage:
 
-- bond pricing, annuities, zero-coupon and coupon bonds, clean price, dirty price, accrued interest, day counts, settlement, and yield measures;
-- duration, convexity, DV01, effective duration, key-rate duration, and second-order price approximation;
-- credit risk, default probability, loss given default, exposure at default, ratings, credit spreads, spread duration, downgrade risk, and liquidity premia;
-- spot rates, forward rates, par rates, discount factors, bootstrapping, interpolation, Nelson-Siegel, Nelson-Siegel-Svensson, and curve PCA;
-- interest-rate trees, embedded options, option-adjusted spread, convertibles, CDS, securitized products, immunization, liability-driven cases, CETES, Bonos M, and UDIBONOS.
+- bond pricing, zero-coupon and coupon bonds, clean price, dirty price, accrued interest, day counts, settlement, and yield measures;
+- duration, convexity, DV01, second-order price approximation, and a simplified Redington-style immunization;
+- expected credit loss, default probability, loss given default, exposure at default, spread taxonomy, downgrade risk, liquidity premia, and a simplified securitization waterfall;
+- spot rates, forward rates, par rates, discount factors, complete-cash-flow bootstrapping, Nelson-Siegel fitting, the Nelson-Siegel-Svensson extension, and PCA of a disclosed heterogeneous rate panel;
+- Vasicek and CIR foundations, calibration risk, CETES, Bonos M, and UDIBONOS.
+
+Advanced expansion targets:
+
+- effective duration, key-rate duration, homogeneous-tenor curve PCA, and dealer-grade interpolation and settlement calendars;
+- interest-rate trees, embedded-option valuation, option-adjusted spread, convertibles, CDS, and production-grade credit curves; and
+- loan-level securitization, legal waterfalls, default dependence, and reviewed redistribution rights for observed-data case packs.
 
 ## Module 7: Derivatives and Risk Management
 

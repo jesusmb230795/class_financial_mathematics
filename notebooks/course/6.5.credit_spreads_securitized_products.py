@@ -25,8 +25,10 @@
 # contractual optionality. Securitized products add a pool, a payment waterfall,
 # prepayment behavior, and tranche-specific loss allocation. This lesson supplies
 # the vocabulary and decision checks required before those risks are added to the
-# bond and term-structure calculations elsewhere in Module 6
-# {cite}`fabozzi2019foundations,mcneil2015quantitative`.
+# bond and term-structure calculations elsewhere in Module 6. The treatment
+# follows standard fixed-income and quantitative-risk distinctions; the
+# securitization section also anchors its terminology in the Basel framework
+# {cite}`fabozzi2019foundations,mcneil2015quantitative,baselFrameworkCreditSecuritisation2026`.
 #
 # ## Learning objectives
 #
@@ -49,6 +51,15 @@
 # one-period loss calculations.
 
 # %% [markdown]
+# ## Python setup
+
+# %% tags=["setup", "hide-input"]
+import pandas as pd
+
+from src.fixed_income import tranche_loss
+from src.module6_visuals import build_securitization_waterfall_figure
+
+# %% [markdown]
 # ## From a government curve to a credit spread
 #
 # A nominal spread subtracts a selected benchmark yield from a credit
@@ -66,7 +77,8 @@
 # point on a benchmark spot curve so that discounted promised cash flows match
 # the observed price. An **option-adjusted spread** (OAS) removes the modeled
 # value of an embedded option from the spread calculation. OAS therefore depends
-# on the interest-rate and prepayment model; it is not directly observed.
+# on the interest-rate and prepayment model; it is not directly observed
+# {cite}`fabozzi2019foundations`.
 
 # %% [markdown]
 # ## Expected loss is a component, not the whole spread
@@ -79,7 +91,8 @@
 #
 # where \(PD\) is probability of default, \(LGD=1-\text{recovery rate}\), and
 # \(EAD\) is exposure at default. Expected loss is a mean loss under the selected
-# horizon and assumptions. Investors can also require compensation for
+# horizon and assumptions {cite}`mcneil2015quantitative`. Investors can also
+# require compensation for
 # unexpected loss, migration, liquidity, model uncertainty, taxes, funding,
 # optionality, and risk aversion.
 #
@@ -87,13 +100,22 @@
 #
 # Assume:
 #
-# - matched government benchmark yield: 8.00% per year;
-# - corporate yield to maturity: 10.20% per year;
+# - matched government benchmark YTM: 8.00% nominal annual, convertible
+#   semiannually;
+# - corporate YTM: 10.20% nominal annual, convertible semiannually;
+# - the two hypothetical quotes use the same valuation and settlement date,
+#   five-year final maturity, and 30/360 day-count basis;
 # - one-year probability of default: 2.00%;
 # - recovery rate: 40.00%; and
 # - exposure at default: MXN 10,000,000.
 #
-# The nominal spread is 220 basis points. The one-year expected loss is:
+# Under that shared quotation convention, the illustrative nominal spread is:
+#
+# ```{math}
+# s_{\mathrm{nominal}}=(0.1020-0.0800)10^4=220\ \text{bp}.
+# ```
+#
+# The one-year expected loss is:
 #
 # ```{math}
 # EL=0.02(1-0.40)(10{,}000{,}000)=\text{MXN }120{,}000,
@@ -137,7 +159,10 @@
 #
 # Tranching reallocates pool losses; it does not eliminate them. Dependence among
 # borrowers is especially important because correlated defaults can move losses
-# through several attachment points at once.
+# through several attachment points at once. Regulatory securitization
+# treatments likewise distinguish tranche attachment and detachment points and
+# recognize that contractual waterfalls and structural features change the
+# allocation of risk {cite}`baselFrameworkCreditSecuritisation2026`.
 
 # %% [markdown]
 # ### Applied case: allocate pool loss through a waterfall
@@ -145,6 +170,26 @@
 # Consider a MXN 100 million pool. The equity tranche absorbs losses from 0 to
 # MXN 4 million, the mezzanine tranche from MXN 4 million to MXN 10 million, and
 # the senior tranche absorbs losses above MXN 10 million.
+#
+# Let $L\geq0$ be collateral loss in MXN millions. For tranche $j$ with
+# attachment point $A_j$, detachment point $D_j$, and notional $D_j-A_j$, its
+# allocated loss is
+#
+# ```{math}
+# L_j(L)=\min\!\left(\max(L-A_j,0),D_j-A_j\right),
+# \qquad
+# \ell_j(L)=\frac{L_j(L)}{D_j-A_j}.
+# ```
+#
+# Thus $L_j$ is a currency amount and $\ell_j$ is the tranche loss fraction. In
+# each hypothetical stress, total collateral loss is
+#
+# ```{math}
+# L=\text{pool notional}\times PD_{\mathrm{pool}}\times(1-R),
+# ```
+#
+# where the scenario default share $PD_{\mathrm{pool}}$ and recovery rate $R$
+# are deterministic assumptions, not estimated probabilities.
 #
 # **Base stress.** If 6% of the pool defaults and recovery is 50%, collateral
 # loss is:
@@ -167,6 +212,70 @@
 # MXN 10 million to MXN 1 million. A zero current senior loss is not evidence of
 # zero senior risk.
 
+# %%
+pool_notional = 100.0  # MXN millions
+tranche_specification = pd.DataFrame(
+    {
+        "tranche": ["Equity", "Mezzanine", "Senior"],
+        "attachment": [0.0, 4.0, 10.0],
+        "detachment": [4.0, 10.0, pool_notional],
+    }
+)
+stress_scenarios = pd.DataFrame(
+    {
+        "scenario": ["Base stress", "Severe stress", "Tail stress"],
+        "default_rate": [0.06, 0.15, 0.25],
+        "recovery_rate": [0.50, 0.40, 0.30],
+    }
+)
+stress_scenarios["collateral_loss"] = pool_notional * stress_scenarios[
+    "default_rate"
+] * (1 - stress_scenarios["recovery_rate"])
+
+allocation_rows = []
+for scenario_row in stress_scenarios.itertuples(index=False):
+    for tranche_row in tranche_specification.itertuples(index=False):
+        allocated_loss = tranche_loss(
+            scenario_row.collateral_loss,
+            tranche_row.attachment,
+            tranche_row.detachment,
+        )
+        allocation_rows.append(
+            {
+                "scenario": scenario_row.scenario,
+                "default_rate": scenario_row.default_rate,
+                "recovery_rate": scenario_row.recovery_rate,
+                "collateral_loss": scenario_row.collateral_loss,
+                "tranche": tranche_row.tranche,
+                "attachment": tranche_row.attachment,
+                "detachment": tranche_row.detachment,
+                "tranche_loss": allocated_loss,
+            }
+        )
+
+waterfall_allocation = pd.DataFrame(allocation_rows)
+waterfall_allocation
+
+# %% mystnb={"image": {"alt": "Stacked bars allocate three hypothetical collateral-loss scenarios across equity, mezzanine, and senior tranches of a MXN 100 million pool. The base stress reaches only equity, the severe stress reaches mezzanine, and the tail stress reaches senior."}}
+waterfall_figure = build_securitization_waterfall_figure(
+    waterfall_allocation,
+    pool_notional=pool_notional,
+    source_note=(
+        "Hypothetical deterministic classroom stresses; MXN millions; "
+        "attachments 0, 4, and 10; no observed collateral data."
+    ),
+)
+waterfall_figure
+
+# %% [markdown]
+# The base stress allocates MXN 3 million entirely to equity. The severe stress
+# exhausts equity at MXN 4 million and allocates MXN 5 million to mezzanine. The
+# tail stress produces MXN 17.5 million of collateral loss: equity absorbs MXN 4
+# million, mezzanine absorbs MXN 6 million, and senior absorbs MXN 7.5 million.
+# Position, labels, and the table communicate the ordering without relying on
+# color alone. The stepwise result is contractual arithmetic, not a forecast of
+# loss likelihood or timing.
+
 # %% [markdown]
 # ## Prepayment and embedded options
 #
@@ -180,7 +289,7 @@
 # this option. OAS requires simulated rate paths, a prepayment rule, and a
 # valuation model. The result is conditional on all three. Comparing OAS across
 # products is defensible only when models, curves, volatility assumptions, and
-# collateral conventions are comparable.
+# collateral conventions are comparable {cite}`fabozzi2019foundations`.
 
 # %% [markdown]
 # ## Applied review checklist
@@ -206,10 +315,13 @@
 # - Yield spreads combine several risks and may use imperfect benchmarks.
 # - Recovery can depend on seniority, collateral values, legal process, and the
 #   economic cycle.
-# - The waterfall examples omit fees, excess spread, triggers, reserves,
-#   principal timing, servicing advances, and reinvestment.
+# - The deterministic waterfall examples omit fees, excess spread, triggers,
+#   reserves, principal timing, servicing advances, and reinvestment.
 # - Real securitized-product valuation requires loan-level data, dependence,
 #   prepayment, delinquency, default, recovery, and interest-rate models.
+# - Attachment and detachment arithmetic does not establish regulatory capital
+#   treatment; contractual documents and the applicable framework must be
+#   reviewed {cite}`baselFrameworkCreditSecuritisation2026`.
 # - Ratings and modeled OAS are inputs to due diligence, not substitutes for it.
 
 # %% [markdown]

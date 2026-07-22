@@ -645,8 +645,18 @@ def build_bond_sensitivity_dashboard(
     macaulay_duration: float,
     modified_duration: float,
     convexity: float,
+    face_value: float | None = None,
+    coupon_rate: float | None = None,
+    maturity: float | None = None,
+    ytm: float | None = None,
+    frequency: int | None = None,
 ) -> go.Figure:
-    """Build exact and approximated bond repricing curves."""
+    """Build exact and approximated bond repricing curves.
+
+    Optional contract terms enrich the source/method note without changing the
+    established API for callers that only provide price and risk measures.
+    Rates remain decimals at the boundary and are displayed as percentages.
+    """
     _require_columns(
         scenario,
         (
@@ -657,47 +667,112 @@ def build_bond_sensitivity_dashboard(
         ),
         "scenario",
     )
+    scenario_values = scenario[
+        [
+            "shock_bps",
+            "exact_price",
+            "duration_price",
+            "duration_convexity_price",
+        ]
+    ].to_numpy(dtype=float)
+    if not np.isfinite(scenario_values).all():
+        raise ValueError("bond scenario values must be finite")
+    metrics = np.asarray(
+        [price, macaulay_duration, modified_duration, convexity],
+        dtype=float,
+    )
+    if not np.isfinite(metrics).all():
+        raise ValueError("bond price and sensitivity metrics must be finite")
+    if price <= 0 or min(macaulay_duration, modified_duration, convexity) < 0:
+        raise ValueError("bond price must be positive and risk measures non-negative")
+
+    assumption_parts = [
+        "Parallel yield shifts",
+        "periodic-compounding YTM",
+        "contractual cash flows held fixed",
+    ]
+    optional_values = {
+        "face_value": face_value,
+        "coupon_rate": coupon_rate,
+        "maturity": maturity,
+        "ytm": ytm,
+    }
+    for name, value in optional_values.items():
+        if value is not None and not np.isfinite(value):
+            raise ValueError(f"{name} must be finite when provided")
+    if face_value is not None:
+        if face_value <= 0:
+            raise ValueError("face_value must be positive")
+        assumption_parts.append(f"face value {face_value:.2f} currency units")
+    if coupon_rate is not None:
+        if coupon_rate < 0:
+            raise ValueError("coupon_rate must be non-negative")
+        assumption_parts.append(f"annual coupon {coupon_rate:.2%}")
+    if maturity is not None:
+        if maturity <= 0:
+            raise ValueError("maturity must be positive")
+        assumption_parts.append(f"maturity {maturity:g} years")
+    if ytm is not None:
+        assumption_parts.append(f"base annual YTM {ytm:.2%}")
+    if frequency is not None:
+        if isinstance(frequency, bool) or int(frequency) != frequency or frequency <= 0:
+            raise ValueError("frequency must be a positive integer")
+        if ytm is not None and 1 + ytm / frequency <= 0:
+            raise ValueError("ytm and frequency imply a non-positive discount base")
+        assumption_parts.append(f"{frequency:g} payments per year")
+
     figure = go.Figure()
-    for column, label, color, dash in (
+    for column, label, color, dash, marker in (
         (
             "exact_price",
             "Exact repricing",
             SEMANTIC_COLORS["reference"],
             "solid",
+            "circle",
         ),
         (
             "duration_price",
             "Duration approximation",
             SEMANTIC_COLORS["comparison"],
             "dash",
+            "square",
         ),
         (
             "duration_convexity_price",
             "Duration-convexity approximation",
             SEMANTIC_COLORS["primary"],
             "dashdot",
+            "diamond",
         ),
     ):
         figure.add_trace(
             go.Scatter(
                 x=scenario["shock_bps"],
                 y=scenario[column],
-                mode="lines",
+                mode="lines+markers",
                 name=label,
                 line={"color": color, "dash": dash},
+                marker={"color": color, "symbol": marker, "size": 6},
+                hovertemplate=(
+                    "Shock: %{x:.0f} bp<br>Price: %{y:.2f} currency units<extra>"
+                    f"{label}</extra>"
+                ),
             )
         )
     apply_plotly_style(
         figure,
         title=(
-            f"Price: {price:.2f} | Macaulay duration: {macaulay_duration:.2f} | "
-            f"Modified duration: {modified_duration:.2f} | Convexity: {convexity:.2f}"
+            "Exact repricing versus local rate-risk approximations"
+            f"<br><sup>Current price {price:.2f} currency units | "
+            f"Macaulay duration {macaulay_duration:.2f} years | "
+            f"Modified duration {modified_duration:.2f} years | "
+            f"Convexity {convexity:.2f} years²</sup>"
         ),
         height=480,
     )
     figure.update_layout(
-        xaxis_title="Parallel yield shock, basis points",
-        yaxis_title="Bond price",
+        xaxis_title="Parallel yield shock (basis points)",
+        yaxis_title="Bond price (currency units)",
         showlegend=True,
     )
     figure.add_vline(
@@ -705,7 +780,14 @@ def build_bond_sensitivity_dashboard(
         line_color=SEMANTIC_COLORS["reference"],
         line_width=1,
     )
-    _add_plotly_context_note(figure, scenario)
+    context_data = scenario.copy(deep=False)
+    context_data.attrs = dict(scenario.attrs)
+    existing_method = context_data.attrs.get("method")
+    assumption_note = "; ".join(assumption_parts) + "."
+    context_data.attrs["method"] = (
+        f"{existing_method}; {assumption_note}" if existing_method else assumption_note
+    )
+    _add_plotly_context_note(figure, context_data)
     return figure
 
 
