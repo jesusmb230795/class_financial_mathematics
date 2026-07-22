@@ -6,13 +6,18 @@ flows and risks imply for the value of the operating business and the residual
 claim held by common shareholders. These are one connected problem: investment
 decisions affect growth and ROIC, financing affects risk and the allocation of
 cash flows, and competitive conditions affect how long excess returns can
-persist.
+persist. Governance defines the decision rights, disclosure, oversight, and
+accountability around those choices
+{cite}`oecd2023CorporateGovernance,jensenMeckling1976TheoryFirm`.
 
 This module begins with projects and governance, then develops capital
 structure, operating forecasts, valuation frameworks, and a decision-ready
 equity memo. It uses the normalized statements and integrated model from Module
 4. Market price remains an observation; intrinsic value is an estimate
-conditional on assumptions {cite}`damodaran2012investment,imfFinancialMarkets`.
+conditional on assumptions {cite}`damodaran2012investment,fama1970EfficientMarkets`.
+The lessons use separate, clearly labeled simulations to isolate each method;
+the final Northstar case recombines the controls but is not the filing-backed
+issuer case still identified in the editorial plan.
 
 ## Learning objectives
 
@@ -52,8 +57,8 @@ from equity value, and keep rates as decimals in calculations.
 
 ### Value creation
 
-For a project with initial outlay \(I_0\), incremental after-tax cash flow
-\(CF_t\), required return \(r\), and horizon \(N\):
+For a project with initial outlay $I_0$, incremental after-tax cash flow
+$CF_t$, required return $r$, and horizon $N$:
 
 ```{math}
 \text{NPV}
@@ -64,39 +69,48 @@ A positive NPV means the project is expected to earn more than the required
 return under the stated cash-flow, timing, and risk assumptions. At the
 company level, growth creates value when incremental return on invested capital
 exceeds the risk-consistent cost of capital for long enough to offset required
-reinvestment.
+reinvestment {cite}`damodaran2012investment,myers1974FinancingInvestment`.
 
 ### Required return
 
-For a company financed with market values \(E\) of equity and \(D\) of
+For a company financed with market values $E$ of equity and $D$ of
 interest-bearing debt:
 
 ```{math}
-\text{WACC}
+\mathrm{WACC}
 =\frac{E}{D+E}k_e
-+\frac{D}{D+E}k_d(1-T),
++\frac{D}{D+E}k_d(1-\tau_{\mathrm{shield}}),
 ```
 
-where \(k_e\) is cost of equity, \(k_d\) is marginal pretax cost of debt, and
-\(T\) is the marginal tax rate applicable to interest. WACC is not a universal
-company hurdle rate; project risk, currency, duration, and financing context
-must match the cash flow.
+where $k_e$ is cost of equity, $k_d$ is marginal pretax cost of debt, and
+$\tau_{\mathrm{shield}}$ is the marginal tax rate expected to produce a usable
+interest deduction. WACC is not a universal company hurdle rate; project risk,
+currency, duration, and financing context must match the cash flow
+{cite}`modiglianiMiller1958CostCapital,hamada1972CapitalStructure`.
 
 ### Enterprise and equity claims
 
-FCFF belongs to all capital providers and is discounted at WACC to estimate
-enterprise value. FCFE belongs to common equity after debt cash flows and is
-discounted at cost of equity:
+Free cash flow to the firm (FCFF) is available to all capital providers and is
+discounted at WACC to estimate enterprise value. Free cash flow to equity
+(FCFE) is available to common equity after debt cash flows and is discounted at
+cost of equity {cite}`damodaran2012investment`. With constant discount rates,
+an explicit horizon $N$, and terminal values at $N$:
 
 ```{math}
 \text{Enterprise value}
-=\sum_t\frac{\text{FCFF}_t}{(1+\text{WACC})^t},
+=\sum_{t=1}^{N}\frac{\mathrm{FCFF}_t}{(1+\mathrm{WACC})^t}
++\frac{TV_N^{\mathrm{FCFF}}}{(1+\mathrm{WACC})^N},
 ```
 
 ```{math}
 \text{Equity value}
-=\sum_t\frac{\text{FCFE}_t}{(1+k_e)^t}.
+=\sum_{t=1}^{N}\frac{\mathrm{FCFE}_t}{(1+k_e)^t}
++\frac{TV_N^{\mathrm{FCFE}}}{(1+k_e)^N}.
 ```
+
+Unless a lesson states otherwise, annual cash flows occur at year-end and rates
+are effective annual rates. A nominal rate is inflation-inclusive; it is not an
+unconverted quoted annual percentage rate.
 
 A simplified bridge is:
 
@@ -108,10 +122,14 @@ A simplified bridge is:
 +\text{Excess cash and non-operating assets}.
 ```
 
-Every bridge item needs the same valuation date, currency, and perimeter.
+Here NCI means non-controlling interests. Every bridge item needs the same
+valuation date, currency, and perimeter.
+Residual-income and dividend methods provide equity-claim cross-checks under
+their own accounting and payout assumptions
+{cite}`gordonShapiro1956CapitalEquipment,ohlson1995EarningsBookValues`.
 
 ```{figure} ../img/generated/m5-corporate-value-creation-valuation-map.png
-:alt: Corporate valuation map from capital allocation and operating forecasts through matched cash flow and discount rate paths to enterprise value, equity value, thesis, and monitoring.
+:alt: Corporate valuation map from capital allocation and operating forecasts through FCFF or FCFE and matched discount rates to enterprise value, equity value, thesis, and monitoring.
 :width: 900px
 :align: center
 
@@ -146,6 +164,14 @@ Every valuation should state:
 - peer-selection rule, metric definition, market-data timestamp, and outlier
   policy;
 - formula, source, owner, and review status for every material assumption.
+
+The revised IFRS management-commentary framework is a useful source for
+connecting strategy, resources, risks, performance, and cash-flow prospects
+{cite}`ifrs2025ManagementCommentary`. For model governance, the inventory,
+independent challenge, validation, and monitoring principles in the 2026 U.S.
+interagency guidance are a high-discipline benchmark; that guidance formally
+applies to banking organizations and is not a regulatory requirement for this
+educational valuation workflow {cite}`fed2026ModelRiskGuidance`.
 
 Observed market values can change continuously while filings update
 periodically. Preserve each valuation as an as-of snapshot; do not combine a

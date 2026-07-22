@@ -186,6 +186,7 @@ def add_box(
     detail_size: float | None = None,
     detail_weight: str = "normal",
     text_alignment: str = "left",
+    step_size: float = 10,
 ) -> None:
     """Draw a labeled concept box with an optional sequence marker."""
 
@@ -224,7 +225,7 @@ def add_box(
             y + height - 0.065,
             f"{step:02d}",
             color=INK,
-            fontsize=10,
+            fontsize=step_size,
             fontweight="bold",
             ha="center",
             va="center",
@@ -1235,12 +1236,15 @@ def render_m5_corporate_valuation() -> Figure:
 
     figure, axis = new_canvas(
         "Corporate valuation: paired cash-flow routes",
-        "Keep firm cash flow and equity cash flow internally consistent, then bridge value to a monitored thesis.",
+        "Match each cash-flow claim to its required return, then bridge value to a monitored thesis.",
+        eyebrow_size=18,
+        title_size=32,
+        subtitle_size=22,
     )
     band_labels = (
-        ("Governance & capital allocation", TEAL, BoxPlacement(0.20, 0.735, 0.24, 0.045)),
-        ("Operating forecast", MUTED_BLUE, BoxPlacement(0.47, 0.735, 0.18, 0.045)),
-        ("ROIC vs WACC", AMBER, BoxPlacement(0.68, 0.735, 0.15, 0.045)),
+        ("Governance &\ncapital allocation", TEAL, BoxPlacement(0.16, 0.715, 0.27, 0.07)),
+        ("Operating forecast", MUTED_BLUE, BoxPlacement(0.46, 0.715, 0.20, 0.07)),
+        ("ROIC vs WACC", AMBER, BoxPlacement(0.69, 0.715, 0.17, 0.07)),
     )
     for label, accent, placement in band_labels:
         patch = FancyBboxPatch(
@@ -1260,7 +1264,7 @@ def render_m5_corporate_valuation() -> Figure:
             placement.y + placement.height / 2,
             label,
             color=INK,
-            fontsize=9.5,
+            fontsize=18,
             fontweight="bold",
             ha="center",
             va="center",
@@ -1271,22 +1275,22 @@ def render_m5_corporate_valuation() -> Figure:
         connect_boxes(axis, first, second)
 
     for y, label, color in (
-        (0.665, "FIRM VALUE ROUTE", TEAL),
+        (0.665, "ENTERPRISE VALUE ROUTE", TEAL),
         (0.365, "EQUITY VALUE ROUTE", AMBER),
     ):
         axis.text(
-            0.12,
+            0.08,
             y,
             label,
             color=INK,
-            fontsize=10.5,
+            fontsize=18,
             fontweight="bold",
             ha="left",
             va="center",
             transform=axis.transAxes,
         )
         axis.plot(
-            [0.32, 0.93],
+            [0.38, 0.93],
             [y, y],
             color=blend_with_background(color, 0.35),
             linewidth=1.4,
@@ -1294,24 +1298,26 @@ def render_m5_corporate_valuation() -> Figure:
         )
 
     firm_nodes = (
-        ConceptNode("FCFF", "cash flow to all capital", TEAL),
-        ConceptNode("WACC", "blended required return", CORAL),
-        ConceptNode("Enterprise\nvalue", "operating asset value", MUTED_BLUE),
+        ConceptNode("FCFF", "cash flow to\nall capital", TEAL),
+        ConceptNode("WACC", "blended required\nreturn", AMBER),
+        ConceptNode("Enterprise\nvalue", "operating asset\nvalue", MUTED_BLUE),
         ConceptNode("EV → equity\nbridge", "debt · NCI · cash", AMBER),
     )
     equity_nodes = (
-        ConceptNode("FCFE", "cash flow to equity", TEAL),
-        ConceptNode("Cost of equity", "shareholder required\nreturn", CORAL),
+        ConceptNode("FCFE", "cash flow to\nequity", TEAL),
+        ConceptNode("Cost of equity", "shareholder\nrequired return", AMBER),
         ConceptNode("Equity value", "value attributable\nto owners", MUTED_BLUE),
-        ConceptNode("Thesis ·\nmonitoring", "risks · catalysts · triggers", AMBER),
+        ConceptNode("Thesis ·\nmonitoring", "risks · catalysts\n· triggers", AMBER),
     )
-    firm_positions = [BoxPlacement(x, 0.45, 0.14, 0.17) for x in (0.12, 0.33, 0.54, 0.75)]
-    equity_positions = [BoxPlacement(x, 0.15, 0.14, 0.17) for x in (0.12, 0.33, 0.54, 0.75)]
+    firm_positions = [BoxPlacement(x, 0.43, 0.18, 0.18) for x in (0.06, 0.29, 0.52, 0.75)]
+    equity_positions = [BoxPlacement(x, 0.12, 0.18, 0.18) for x in (0.06, 0.29, 0.52, 0.75)]
 
     split_x = band_labels[1][2].x + band_labels[1][2].width / 2
+    split_y = band_labels[1][2].y
+    branch_y = split_y - 0.03
     axis.plot(
-        [split_x, split_x, 0.07, 0.07],
-        [0.735, 0.705, 0.705, equity_positions[0].y + equity_positions[0].height / 2],
+        [split_x, split_x, 0.04, 0.04],
+        [split_y, branch_y, branch_y, equity_positions[0].y + equity_positions[0].height / 2],
         color=MUTED_BLUE,
         linewidth=1.6,
         zorder=1,
@@ -1319,13 +1325,13 @@ def render_m5_corporate_valuation() -> Figure:
     )
     add_arrow(
         axis,
-        (0.07, firm_positions[0].y + firm_positions[0].height / 2),
+        (0.04, firm_positions[0].y + firm_positions[0].height / 2),
         firm_positions[0].anchor("left"),
         color=TEAL,
     )
     add_arrow(
         axis,
-        (0.07, equity_positions[0].y + equity_positions[0].height / 2),
+        (0.04, equity_positions[0].y + equity_positions[0].height / 2),
         equity_positions[0].anchor("left"),
         color=AMBER,
     )
@@ -1346,19 +1352,35 @@ def render_m5_corporate_valuation() -> Figure:
         zip(firm_nodes, firm_positions, strict=True),
         start=1,
     ):
-        add_box(axis, node, placement, step=step, title_size=12.5)
+        add_box(
+            axis,
+            node,
+            placement,
+            step=step,
+            title_size=18,
+            detail_size=18,
+            step_size=18,
+        )
     for step, (node, placement) in enumerate(
         zip(equity_nodes, equity_positions, strict=True),
         start=1,
     ):
-        add_box(axis, node, placement, step=step, title_size=12.5)
+        add_box(
+            axis,
+            node,
+            placement,
+            step=step,
+            title_size=18,
+            detail_size=18,
+            step_size=18,
+        )
 
     axis.text(
         0.5,
         0.08,
-        "FCFF + WACC → Enterprise value | FCFE + cost of equity → Equity value.",
+        "Discount FCFF at WACC → Enterprise value | Discount FCFE at cost of equity → Equity value.",
         color=MUTED_BLUE,
-        fontsize=11.5,
+        fontsize=18,
         ha="center",
         va="center",
         transform=axis.transAxes,
