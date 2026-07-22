@@ -6,6 +6,10 @@ and liquidity constraints that differ materially from a daily traded stock or
 bond. A private-credit loan, a buyout fund, a listed real-estate trust, a
 commodity future, and a market-neutral hedge fund therefore require different
 valuation evidence even when they appear in the same portfolio allocation.
+This layered view is consistent with valuation practice that begins by defining
+the claim and its cash flows, and with institutional private-markets guidance
+that separates fund terms, fees, governance, and reporting
+{cite}`damodaran2012investment,ilpaPrinciples2019`.
 
 This module follows the instrument, valuation, fixed-income, derivatives, and
 risk foundations in earlier modules. It prepares Module 9 by translating
@@ -85,6 +89,18 @@ CF_t = D_t-C_t,\qquad
 CF_T = D_T-C_T+NAV_T.
 ```
 
+With actual dates $d_i$, the annualized money-weighted return $x$ solves:
+
+```{math}
+0=\sum_{i=0}^{n}\frac{CF_i}{(1+x)^{\tau_i}},
+\qquad
+\tau_i=\frac{d_i-d_0}{365}.
+```
+
+This XIRR-style convention requires $x>-1$ and may have no unique solution
+when cash-flow signs change more than once. The dates, day-count convention,
+and root-selection rule are therefore part of the reported method.
+
 Useful private-fund multiples are:
 
 ```{math}
@@ -101,18 +117,24 @@ These multiples do not incorporate timing. An internal rate of return (IRR)
 does incorporate timing, but it can be sensitive to subscription facilities,
 intermediate cash flows, valuation policy, and the chosen measurement date.
 Both money-weighted and multiple-based evidence should therefore be reported.
+ILPA Principles guidance likewise distinguishes cash-flow
+inputs, gross and net results, and subscription-facility effects rather than
+treating one headline IRR as complete evidence {cite}`ilpaPrinciples2019`.
 
 For a cash-flow-producing asset, value remains an expectation about future cash
 flows discounted for time and risk:
 
 ```{math}
-V_0=\sum_{t=1}^{T}\frac{\mathbb{E}[CF_t]}{(1+r_t+\lambda_t)^t},
+V_0=\sum_{t=1}^{T}\mathbb{E}[CF_t]P(0,t),
+\qquad
+P(0,t)=\prod_{j=1}^{t}\frac{1}{1+k_j},
 ```
 
-where \(r_t\) is the relevant rate convention and \(\lambda_t\) represents
-risks not already captured in the expected cash flows. Comparable-company,
-transaction, NAV, and cap-rate methods are cross-checks, not substitutes for
-defining the cash-flow claim {cite}`damodaran2012investment`.
+where $k_j$ is the effective per-period required return and $P(0,t)$ is the
+matching discount factor. Cash-flow scenarios and discount rates must not count
+the same risk twice. Comparable-company, transaction, NAV, and cap-rate methods
+are cross-checks, not substitutes for defining the cash-flow claim
+{cite}`damodaran2012investment`.
 
 ### Liquidity is a state, not a label
 
@@ -180,6 +202,30 @@ labeled simulation rather than infer them from a public index.
    leverage, custody, and redemption terms.
 5. End with a portfolio case constrained by liquidity, concentration, and
    governance.
+
+## Sources and further reading
+
+The module uses sources by analytical purpose rather than as interchangeable
+endorsements:
+
+- Damodaran supplies the cash-flow, claim, and valuation-method foundation
+  {cite}`damodaran2012investment`.
+- ILPA Principles 3.0 supplies an institutional review framework for LP/GP
+  alignment, waterfall terms, fees, subscription facilities, governance, and
+  reporting {cite}`ilpaPrinciples2019`.
+- The SEC risk alert documents observed due-diligence practices and failures;
+  it is supervisory evidence, not a safe-harbor checklist
+  {cite}`secAlternativeDueDiligence2014`.
+- Nareit supplies the industry definition and implementation guidance for FFO;
+  AFFO remains issuer- or analyst-defined {cite}`nareitFfo2002`.
+- Grupo BMV supplies public instrument descriptions for Mexican FIBRAs and
+  CKDs; each prospectus, trust agreement, and disclosure controls the specific
+  investment {cite}`bmvFibras,bmvCkds`.
+- Hull, McNeil, Frey, Embrechts, Jorion, Sharpe, and Lo support the derivatives,
+  positive-loss risk, performance, and serial-correlation cautions used in the
+  lessons {cite}`hull2022options,mcneil2015quantitative,jorion2007var,sharpe1994ratio,lo2002sharpe`.
+- The BIS chapter supplies the tokenization framework and its governance,
+  settlement, and legal-claim limitations {cite}`bisTokenisation2023`.
 
 ## Module practice
 

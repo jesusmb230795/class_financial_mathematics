@@ -28,6 +28,56 @@
         "Generated from code so the asset-vehicle-strategy separation and investor cash-flow direction remain exact.",
         "No manager-level data or confidential information appears in the figure."
       ]
+    },
+    {
+      "order": 40,
+      "id": "m8-lp-waterfall-economics",
+      "status": "approved",
+      "role": "lesson_quantitative_figure",
+      "target_path": "img/generated/m8-lp-waterfall-economics.png",
+      "aspect_ratio": "16:9",
+      "recommended_size": "1600x900",
+      "alt_text": "Stacked horizontal reconciliation of MXN 20 million in simulated terminal proceeds into MXN 12 million return of capital, MXN 2.88 million preferred return, MXN 4.096 million LP residual profit, and MXN 1.024 million GP carry.",
+      "generator_script": "scripts/generate_module8_lesson_figures.py --asset m8-lp-waterfall-economics",
+      "production_method": "deterministic_matplotlib",
+      "used_by": [
+        {
+          "file": "notebooks/course/8.1.private_capital_structures_and_economics.md",
+          "locator": "Worked example: investor-level waterfall",
+          "mode": "markdown_insert",
+          "target_markdown": "../../img/generated/m8-lp-waterfall-economics.png"
+        }
+      ],
+      "prompt": "Create a 1600x900 PNG, 16:9. Reconcile the simulated Module 8.1 whole-fund waterfall from MXN 20m of terminal proceeds into MXN 12m return of capital, MXN 2.88m simple preferred return, MXN 4.096m LP residual profit, and MXN 1.024m GP carry. Use the shared book palette, direct value labels, hatching in addition to color, and a source note stating that all values are simulated teaching assumptions.",
+      "production_notes": [
+        "Generated from verified Module 8.1 arithmetic; the four layers sum exactly to MXN 20.000m.",
+        "Uses only simulated teaching assumptions and no external image, manager data, or third-party dataset."
+      ]
+    },
+    {
+      "order": 41,
+      "id": "m8-liquidity-budget-coverage",
+      "status": "approved",
+      "role": "lesson_quantitative_figure",
+      "target_path": "img/generated/m8-liquidity-budget-coverage.png",
+      "aspect_ratio": "16:9",
+      "recommended_size": "1600x900",
+      "alt_text": "Horizontal bar reconciliation from MXN 850 million of opening stressed liquid assets to MXN 720 million after proposed allocations and MXN 670 million after unfunded commitments, compared with MXN 420 million required at a 3.0 times liquidity coverage floor.",
+      "generator_script": "scripts/generate_module8_lesson_figures.py --asset m8-liquidity-budget-coverage",
+      "production_method": "deterministic_matplotlib",
+      "used_by": [
+        {
+          "file": "notebooks/course/8.5.alternatives_portfolio_role_and_mexico_case.md",
+          "locator": "Worked case: liquidity-constrained allocation",
+          "mode": "markdown_insert",
+          "target_markdown": "../../img/generated/m8-liquidity-budget-coverage.png"
+        }
+      ],
+      "prompt": "Create a 1600x900 PNG, 16:9. Show the simulated Module 8.5 one-year liquidity bridge from MXN 850m opening stressed liquid assets to MXN 720m after allocations and MXN 670m after reserving unfunded commitments, then compare it with MXN 420m required at a 3.0x LCR floor and label MXN 250m headroom. Use the shared book palette, direct values, hatching, and a source note stating that all values are simulated teaching assumptions.",
+      "production_notes": [
+        "Generated from verified Module 8.5 arithmetic; unfunded commitments are deducted once and the MXN 60m buffer remains in the denominator.",
+        "Uses only simulated teaching assumptions and no external image, portfolio data, or third-party dataset."
+      ]
     }
   ]
 }
