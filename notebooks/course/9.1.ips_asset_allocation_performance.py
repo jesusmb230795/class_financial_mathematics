@@ -235,37 +235,6 @@
 # - Historical performance and optimized allocations do not establish future
 #   suitability.
 
-# %% [markdown] tags=["exercise"]
-# ## Assessment
-#
-# A MXN 200 million portfolio requires a 3.50% annual real return after fees.
-# Expected inflation is 4.00%, and annual fees are modeled as 0.50 percentage
-# points subtracted from gross nominal return. The approved target is 55%
-# equities, 35% bonds, and 10% cash. Current weights are 50%, 42%, and 8%.
-#
-# 1. Calculate the exact nominal return required after fees and the approximate
-#    gross nominal hurdle under the stated fee convention.
-# 2. Calculate target amounts and required trades in MXN.
-# 3. At an all-in cost of 15 basis points on each traded amount, calculate
-#    implementation cost using gross one-way traded notional.
-# 4. Name one IPS change that could be considered if the return hurdle is not
-#    supportable at the approved risk level.
-
-# %% [markdown] tags=["solution"]
-# ```{dropdown} Suggested answer
-# The after-fee nominal requirement is
-# \((1.035)(1.04)-1=7.64\%\). Adding the stated 0.50 percentage-point fee
-# assumption gives an approximate gross nominal hurdle of 8.14%. Target amounts
-# are MXN 110 million equities, MXN 70 million bonds, and MXN 20 million cash.
-# Current amounts are MXN 100 million, MXN 84 million, and MXN 16 million, so
-# trades are +MXN 10 million equities, -MXN 14 million bonds, and +MXN 4 million
-# cash. Gross one-way traded notional is MXN 28 million and cost is
-# \(28{,}000{,}000(0.0015)=\) MXN 42,000. Valid governance responses include
-# changing spending or contributions, extending the horizon, revising the
-# objective, or explicitly approving a different risk budget; an optimizer alone
-# cannot resolve the conflict.
-# ```
-
 # %% [markdown]
 # ## Handoff
 #

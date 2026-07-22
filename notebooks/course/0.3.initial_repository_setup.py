@@ -125,26 +125,3 @@ pd.Series(setup_report, name="status").to_frame()
 # Keep the setup report as evidence of the fresh-clone state. When every
 # repository artifact is present, continue to `0.2.environment_validation_lab`
 # for package, helper, snapshot, and optional-credential checks.
-
-# %% [markdown] tags=["exercise"]
-# ## Checkpoint exercise
-#
-# Treat `setup_report` as a fresh-clone acceptance record.
-#
-# 1. Record the resolved `project_root` and active Python version.
-# 2. Confirm that `pyproject.toml`, `uv.lock`, `notebooks/course/`, and the
-#    snapshot manifest are all visible.
-# 3. If one item is missing, name the repository path that must be restored;
-#    if the Python version is too old, give the `pyenv` and `uv sync` commands
-#    needed to correct the environment.
-# 4. Explain why this narrow report must pass before the broader environment
-#    validation lab.
-#
-
-# %% [markdown] tags=["solution"]
-# ```{dropdown} Suggested answer rubric
-# A complete answer reports the actual root and version, verifies all four
-# repository artifacts, gives a path-specific remediation for any failure, and
-# explains that the next lab tests packages, helpers, snapshots, and optional
-# credentials beyond this first-clone gate.
-# ```

@@ -248,24 +248,3 @@ else:
 # American and exotic payoffs and then to stochastic volatility. Those models
 # add exercise, path, monitoring, calibration, and discretization risks that a
 # successful Black-Scholes dashboard run cannot validate.
-
-# %% [markdown] tags=["exercise"]
-# ## Checkpoint exercise
-#
-# Set spot equal to strike and compare maturities of 0.10, 0.50, 1.00, and 3.00
-# years at 25% volatility.
-#
-# 1. Record call price, delta, gamma, vega per one volatility point, theta per
-#    day, and the underlying units needed to hedge one long call.
-# 2. Verify put-call parity for every maturity.
-# 3. Explain why gamma and theta change sharply near short maturity.
-# 4. Describe how a trading desk would convert these per-option Greeks into
-#    portfolio exposures before applying limits.
-#
-
-# %% [markdown] tags=["solution"]
-# ```{dropdown} Suggested answer rubric
-# A complete answer reports Greek units and hedge signs correctly, verifies
-# parity, and distinguishes local per-contract sensitivity from aggregated,
-# scenario-tested portfolio risk.
-# ```

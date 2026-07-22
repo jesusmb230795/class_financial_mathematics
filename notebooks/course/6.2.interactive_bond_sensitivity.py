@@ -198,27 +198,6 @@ else:
 # - Duration-convexity approximations are local and can misstate prices under large or nonparallel moves.
 # - Coupon, frequency, and yield assumptions are classroom inputs rather than complete market conventions.
 
-# %% [markdown] tags=["exercise"]
-# ## Checkpoint exercise
-#
-# Compare two 10-year bonds at a 7% nominal annual yield convertible semiannually:
-# one with a 2% coupon and one with a 10% coupon.
-#
-# 1. Report each price, modified duration, and convexity.
-# 2. Apply shocks of -300, -100, +100, and +300 basis points and tabulate exact,
-#    duration-only, and duration-convexity prices.
-# 3. Identify which bond has greater rate sensitivity and where the second-order
-#    approximation adds the most value.
-# 4. Explain why payment frequency must remain part of the yield label.
-#
-
-# %% [markdown] tags=["solution"]
-# ```{dropdown} Suggested answer rubric
-# A complete answer reports prices per 100 face value, durations in years, shocks
-# in basis points, and approximation errors in price points, with the nominal
-# semiannual convention stated explicitly.
-# ```
-
 # %% [markdown]
 # ## Handoff
 #

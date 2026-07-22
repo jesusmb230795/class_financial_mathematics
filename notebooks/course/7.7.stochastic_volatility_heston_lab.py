@@ -212,25 +212,3 @@ pricing
 #
 # VaR is not an option price, and a calibrated Heston price is not evidence that a
 # hedge or risk limit is adequate.
-
-# %% [markdown] tags=["exercise"]
-# ## Checkpoint exercise
-#
-# Simulate $\rho=-0.70$, $0$, and $+0.70$ with identical seeds and all other
-# parameters fixed.
-#
-# 1. Report terminal spot skewness and the 1st/5th percentiles for each case.
-# 2. Price calls at strikes 80–120, report Monte Carlo standard errors, and compare
-#    each price with the constant-volatility benchmark.
-# 3. Explain how correlation changes downside skew without treating a pricing
-#    difference smaller than two standard errors as strong evidence.
-# 4. Map price, Greeks, hedge residual P&L, positive-loss VaR/ES, stress tests, and
-#    limits into the five-step handoff above.
-#
-
-# %% [markdown] tags=["solution"]
-# ```{dropdown} Suggested answer rubric
-# A complete answer reports distribution and pricing diagnostics with Monte Carlo
-# uncertainty, explains the correlation channel, and keeps valuation, hedging,
-# portfolio loss measurement, and governance as distinct layers.
-# ```

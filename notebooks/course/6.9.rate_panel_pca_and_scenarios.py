@@ -168,27 +168,6 @@ plt.show()
 # - A true yield-curve PCA requires comparable zero rates ordered by maturity.
 # - Scenario shocks should be checked against portfolio exposures and historical plausibility.
 
-# %% [markdown] tags=["exercise"]
-# ## Checkpoint exercise
-#
-# Re-estimate the PCA over 2018–2021 and 2022–2026.
-#
-# 1. Compare each window's explained-variance ratios and PC1 loadings.
-# 2. Name the three input series and explain why they are a rate panel rather than
-#    three tenors of one zero-coupon curve.
-# 3. Apply the `interbank_spread_widening` scenario and report each shock in basis
-#    points.
-# 4. State whether the loading evidence supports a common-move interpretation in
-#    each window without using slope or curvature labels.
-#
-
-# %% [markdown] tags=["solution"]
-# ```{dropdown} Suggested answer rubric
-# A complete answer compares both samples quantitatively, preserves the economic
-# identity of each Banxico series, reports scenario shocks in basis points, and
-# avoids treating column order as yield-curve geometry.
-# ```
-
 # %% [markdown]
 # ## Handoff
 #

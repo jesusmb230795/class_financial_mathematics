@@ -46,12 +46,10 @@ def example_notebook() -> nbformat.NotebookNode:
             metadata={"tags": ["setup", "hide-input"]},
         ),
         nbformat.v4.new_markdown_cell(
-            "## Checkpoint exercise\n\nChange `value`.",
-            metadata={"tags": ["exercise"]},
+            "## Method note\n\nKeep the result reproducible.",
         ),
         nbformat.v4.new_markdown_cell(
-            "```{dropdown} Suggested answer\nUse `value = 2`.\n```",
-            metadata={"tags": ["solution"]},
+            "## Handoff\n\nContinue to the next lesson.",
         ),
     ]
     return notebook
@@ -78,7 +76,7 @@ def test_pair_validation_reports_source_tags_type_and_metadata_drift(
     ipynb_path, notebook = write_pair(tmp_path)
     notebook.cells[0] = nbformat.v4.new_raw_cell(notebook.cells[0].source)
     notebook.cells[1].source = "value = 2\n"
-    notebook.cells[2].metadata.tags = ["exercise", "hide-input"]
+    notebook.cells[2].metadata.tags = ["hide-input"]
     notebook.cells[3].metadata.slideshow = {"slide_type": "slide"}
 
     errors = validate_jupytext_pair(ipynb_path, notebook)

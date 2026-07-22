@@ -210,24 +210,3 @@ pd.Series(
 # scenarios that must be carried into hedging and limit reports. The interactive
 # dashboard next consolidates price, parity, and Greek diagnostics before the
 # sequence moves to early exercise, path dependence, and stochastic volatility.
-
-# %% [markdown] tags=["exercise"]
-# ## Checkpoint exercise
-#
-# Add 0.25 currency units to every synthetic call quote, then invert the chain.
-#
-# 1. Check each quote against its discounted intrinsic lower bound before
-#    inversion.
-# 2. Report baseline and shocked implied volatility, repricing error, and vega per
-#    one volatility point by strike.
-# 3. Use vega to approximate the price change and compare it with exact repricing.
-# 4. Explain why pointwise successful inversions do not prove an arbitrage-free
-#    surface or a forecast of realized volatility.
-#
-
-# %% [markdown] tags=["solution"]
-# ```{dropdown} Suggested answer rubric
-# A complete answer validates quote bounds, reports volatility in percentage
-# points and prices in currency units, quantifies vega approximation error, and
-# separates calibration fit from surface and hedge-model risk.
-# ```

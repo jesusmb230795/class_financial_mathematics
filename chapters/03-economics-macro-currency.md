@@ -1,20 +1,27 @@
 # Economics, Macro, and Currency
 
-Module 3 turns macroeconomic context into an investment input. Module 1 introduced market data and exploratory dashboards; this module makes the economic mechanism explicit: macro variables affect expected cash flows, discount rates, risk premia, currency returns, and investor positioning {cite}`mishkin2019financial,damodaran2012investment`.
+Module 3 turns macroeconomic context into an investment input. Module 1
+introduced market data and exploratory dashboards; this module makes the
+economic mechanism explicit. Macro variables affect expected cash flows,
+discount rates, risk premia, currency returns, and investor positioning
+{cite}`mishkin2019financial,damodaran2012investment`.
 
 The module combines four concise conceptual lessons with one reproducible
-macro-to-FX case. The conceptual pages provide hand-checkable calculations and
-concrete assessments; the executable case then reuses those contracts with a
-versioned real-data panel, an availability lag for inflation, a chronological
-holdout, explicit benchmarks, and a model-rejection decision gate.
+macro-to-FX case. The conceptual pages provide hand-checkable calculations,
+mechanism checks, and explicit limitations; the executable case then reuses
+those contracts with a versioned real-data panel, an availability lag for
+inflation, a chronological holdout, explicit benchmarks, and a model-rejection
+decision gate.
 
 ```{figure} ../img/generated/m3-macro-transmission-currency-map.png
-:alt: Flow from observed macro releases and vintages through scenario assumptions and four valuation channels to an investment decision and monitoring rule.
+:alt: Flow from observed macro releases and vintages through scenario assumptions and four valuation channels to an investment decision and monitoring rule; the rule rejects evidence that fails timing, benchmark, or uncertainty checks.
 :width: 960px
 :name: module-3-macro-transmission-map
 
 Macro evidence becomes decision-relevant only after its timing and mechanism
-have been mapped to cash flows, rates, risk premia, or currency conversion.
+have been mapped to cash flows, rates, risk premia, or currency conversion. The
+decision rule rejects a claim when its timing, benchmark, or uncertainty
+evidence fails.
 ```
 
 ## Expected outcome
@@ -50,16 +57,18 @@ P_0 \approx \sum_{t=1}^{T}
 k_t(M)=r_t(M)+\lambda_t(M),
 ```
 
-where \(M\) is the macro state, \(CF_t\) is the cash flow expected at the end of
-period \(t\), and \(k_t\) is the effective spot required return per period for
-maturity \(t\). The period unit and rate convention must match—for example,
-annual effective rates with \(t\) measured in years. The return is decomposed here
-into a maturity-matched reference rate \(r_t\) and an incremental risk premium
-\(\lambda_t\) for uncertainty, liquidity, credit, duration, currency, or policy
+where $M$ is the macro state, $CF_t$ is the cash flow expected at the end of
+period $t$, and $k_t$ is the effective spot required return per period for
+maturity $t$. The period unit and rate convention must match—for example,
+annual effective rates with $t$ measured in years. The return is decomposed here
+into a maturity-matched reference rate $r_t$ and an incremental risk premium
+$\lambda_t$ for uncertainty, liquidity, credit, duration, currency, or policy
 risk. A path of one-period rates would instead require a product of period-by-
 period discount factors.
 
-This framing keeps the module concise. The analyst should not list macro facts for their own sake. Each fact should connect to expected cash flows, rates, risk premia, currency conversion, or portfolio positioning.
+This framing keeps the module concise. The analyst should not list macro facts
+for their own sake. Each fact should connect to expected cash flows, rates,
+risk premia, currency conversion, or portfolio positioning.
 
 ## Data contract
 
@@ -75,12 +84,13 @@ providers, while live notebooks should use the shared provider/cache layer in
 | Currency and rates | spot FX, forwards, local and foreign interest rates | official central bank data, exchange feeds, or reviewed public market sources |
 | Market response | equity indices, yields, credit spreads, commodities, real estate vehicles | versioned market snapshots or approved provider-backed panels |
 
-The applied case uses a frozen latest-vintage panel generated on 2026-06-07
-with observations through 2025-06-30. Its monthly labels are period ends, not
-historical release timestamps. A one-month inflation lag is therefore imposed
-as a conservative availability proxy. That prevents the known same-month CPI
-look-ahead in the teaching design, but it does not turn the snapshot into a
-real-time-vintage database.
+The applied case uses frozen source snapshots retrieved on 2026-06-07 and a
+derived monthly panel rebuilt from those versioned sources on 2026-07-21. The
+panel contains observations through 2025-06-30. Its monthly labels are period
+ends, not historical release timestamps. A one-month inflation lag is therefore
+imposed as a conservative availability proxy. That prevents the known
+same-month CPI look-ahead in the teaching design, but it does not turn the
+snapshot into a real-time-vintage database.
 
 ## Lesson map
 
@@ -104,9 +114,10 @@ real-time-vintage database.
 6. Extend the case into a dashboard only after source, unit, frequency,
    revision policy, and limitations remain explicit.
 
-Each lesson ends with an assessment that requires a numerical output, a
-mechanism statement, and one limitation. Completion means producing those
-three forms of evidence, not only repeating definitions.
+Across the four conceptual lessons, each worked example combines a numerical
+output, a mechanism statement, and a limitation. The executable case adds a
+benchmark decision and a stability diagnostic. Completion means being able to
+reproduce those forms of evidence, not only repeat definitions.
 
 ## Scope boundaries
 

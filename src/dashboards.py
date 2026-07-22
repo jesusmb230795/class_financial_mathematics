@@ -64,6 +64,7 @@ def _display_label(value: str) -> str:
         "cetes_28d": "CETES 28-day rate",
         "cetes_28d_carry": "CETES 28-day carry",
         "mexico_inflation": "Mexico inflation",
+        "mxn_per_usd_fix": "Banxico FIX (MXN per USD)",
         "policy_rate_carry": "Policy-rate carry",
         "tiie_28d": "TIIE 28-day rate",
         "tiie_28d_carry": "TIIE 28-day carry",

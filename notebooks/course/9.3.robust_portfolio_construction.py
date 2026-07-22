@@ -217,28 +217,6 @@ pd.DataFrame(
 #   proxy and consistent excess-return convention.
 # - Risk parity and HRP reduce some concentration problems, but they can still be unstable when correlations shift.
 
-# %% [markdown] tags=["exercise"]
-# ## Checkpoint exercise
-#
-# Re-estimate the covariance inputs with 40, 60, and 252 observations.
-#
-# 1. Report the sample and Ledoit-Wolf condition numbers and shrinkage intensity
-#    for each window.
-# 2. Compare the resulting GMVP weights and identify the asset with the largest
-#    absolute weight change.
-# 3. Estimate USD/MXN sensitivity to the documented composite factor, then
-#    explain precisely why the coefficient is not a CAPM beta.
-# 4. Verify that the risk-parity contributions sum to 100% within numerical
-#    tolerance.
-#
-
-# %% [markdown] tags=["solution"]
-# ```{dropdown} Suggested answer rubric
-# A complete answer quantifies conditioning and weight instability across all
-# three windows, distinguishes statistical sensitivity from CAPM beta, and
-# verifies both full investment and the risk-budget total.
-# ```
-
 # %% [markdown]
 # ## Handoff
 #

@@ -256,23 +256,3 @@ pd.DataFrame(
 # Carry the selected tail models into the next lab. Estimation alone is not
 # validation: VaR Backtesting and Stress Testing checks exception frequency,
 # exception clustering, and deterministic scenario loss.
-
-# %% [markdown] tags=["exercise"]
-# ## Checkpoint exercise
-#
-# 1. Report daily volatility, target semideviation, 1% historical VaR, and 1%
-#    ES for the portfolio in decimal-return units.
-# 2. Report sample skewness, excess kurtosis, and whether Cornish-Fisher is
-#    available under the displayed guardrail; do not override the guardrail.
-# 3. Change only EWMA \(\lambda\) from 0.94 to 0.97, compare
-#    volatility-weighted VaR, and explain the responsiveness-versus-memory
-#    trade-off.
-#
-
-# %% [markdown] tags=["solution"]
-# ```{dropdown} Suggested answer rubric
-# A complete answer distinguishes symmetric volatility from downside metrics,
-# reports all requested values and moments, preserves non-negative loss signs,
-# respects the Cornish-Fisher availability result, and isolates lambda as the
-# only changed assumption.
-# ```

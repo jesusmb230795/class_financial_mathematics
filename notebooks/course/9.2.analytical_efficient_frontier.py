@@ -222,27 +222,6 @@ target_weights
 # - The analytical frontier assumes a single-period problem with stable inputs and frictionless rebalancing.
 # - Unconstrained solutions can produce allocations that are mathematically efficient but operationally unrealistic.
 
-# %% [markdown] tags=["exercise"]
-# ## Checkpoint exercise
-#
-# Increase the Mexican-equity expected return by 200 basis points while leaving
-# covariance and the 6.5% annually compounded risk-free rate unchanged.
-#
-# 1. Recompute the GMVP, tangency portfolio, and 10% target-return portfolio.
-# 2. Verify that every weight vector sums to one and that the target portfolio
-#    reaches 10% to numerical tolerance.
-# 3. Report the baseline and shocked tangency weights, annual volatility, and
-#    Sharpe ratio.
-# 4. Explain why the GMVP is unchanged while the tangency portfolio moves.
-#
-
-# %% [markdown] tags=["solution"]
-# ```{dropdown} Suggested answer rubric
-# A complete answer verifies all constraints, reports return and volatility as
-# annual rates, quantifies the weight changes, and connects the contrast to the
-# fact that GMVP uses covariance but not expected returns.
-# ```
-
 # %% [markdown]
 # ## Handoff
 #

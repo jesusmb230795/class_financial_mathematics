@@ -214,24 +214,3 @@ plt.show()
 # portfolio losses, rather than option prices alone, become inputs to VaR,
 # Expected Shortfall, limits, and model-governance review. The next lesson tests
 # the same pricing logic with binomial and Monte Carlo numerical evidence.
-
-# %% [markdown] tags=["exercise"]
-# ## Checkpoint exercise
-#
-# For the displayed call, compare spot moves of -MXN 5, -MXN 1, +MXN 1, and
-# +MXN 5 with no passage of time.
-#
-# 1. Verify put-call parity to numerical tolerance.
-# 2. Report unhedged short-call P&L, stock-hedge P&L, and delta-hedged P&L for
-#    each spot scenario.
-# 3. Explain why the delta hedge is more accurate for the one-unit moves and
-#    connect the residual to gamma.
-# 4. Name two risks that this static, frictionless hedge omits.
-#
-
-# %% [markdown] tags=["solution"]
-# ```{dropdown} Suggested answer rubric
-# A complete answer reports prices and P&L in currency units, verifies parity,
-# uses the short-option hedge sign correctly, and distinguishes local Greek
-# hedging from a portfolio risk limit.
-# ```

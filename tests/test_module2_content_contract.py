@@ -20,15 +20,13 @@ def _read(path: Path) -> str:
     return path.read_text(encoding="utf-8")
 
 
-def test_module2_has_seven_canonical_lessons_with_assessment_and_handoff() -> None:
+def test_module2_has_seven_canonical_lessons_with_objectives_and_handoff() -> None:
     assert len(MODULE2_SOURCES) == 7
 
     for source in MODULE2_SOURCES:
         text = _read(source)
         assert "## Learning objectives" in text
         assert "## Prerequisites" in text
-        assert 'tags=["exercise"]' in text
-        assert 'tags=["solution"]' in text
         assert "## Handoff" in text
 
 
@@ -62,11 +60,20 @@ def test_module2_retired_math_and_visual_patterns_do_not_return() -> None:
         assert retired_asset not in text
 
 
-def test_module2_var_equation_uses_the_positive_loss_floor() -> None:
+def test_module2_var_distinguishes_log_threshold_from_exact_simple_loss() -> None:
     risk_lesson = _read(COURSE_DIR / "2.5.garch_volatility_risk_workflow.py")
 
-    assert r"\max\left\{0,-\left(" in risk_lesson
+    assert r"\operatorname{VaR}^{(g)}" in risk_lesson
+    assert r"\operatorname{VaR}^{(R)}" in risk_lesson
+    assert r"\max\left\{0,1-" in risk_lesson
+    assert "simple_loss_from_log_return(" in risk_lesson
+    assert "normal_log_return_quantile_pct / 100" in risk_lesson
+    assert "student_t_log_return_quantile_pct / 100" in risk_lesson
+    assert "one_step_var_log_return_loss_threshold_pct" in risk_lesson
+    assert "one_step_var_simple_return_loss_pct" in risk_lesson
     assert "long USD / short MXN" in risk_lesson
+    assert '"overall_diagnostic_status"' in risk_lesson
+    assert '"failed_diagnostic_count"' in risk_lesson
     assert '"diagnostic_status"' in risk_lesson
 
 
@@ -75,5 +82,42 @@ def test_module2_dashboard_labels_the_provider_interval_horizon() -> None:
         COURSE_DIR / "2.6.interactive_volatility_garch_dashboard.py"
     )
 
-    assert "Return per FIX publication interval" in dashboard_lesson
+    assert "Log return per FIX publication interval (%)" in dashboard_lesson
     assert "Volatility per FIX publication interval" in dashboard_lesson
+    assert r"\alpha g_{t-1}^2" in dashboard_lesson
+
+
+def test_module2_arima_keeps_selection_training_only_and_uses_materiality() -> None:
+    arima_lesson = _read(COURSE_DIR / "2.4.arima_diagnostic_workflow.py")
+
+    split_position = arima_lesson.index("training_returns = returns.iloc[:split_index]")
+    adf_position = arima_lesson.index(
+        'return_adf = adf_report(training_returns, regression="c")'
+    )
+    search_position = arima_lesson.index(
+        "candidate_results = arima_order_search(\n    training_returns,"
+    )
+    evaluation_position = arima_lesson.index(
+        "training_forecast_result = training_model.get_forecast"
+    )
+    assert split_position < adf_position < search_position < evaluation_position
+    assert "training_returns.index.max() < testing_returns.index.min()" in arima_lesson
+    assert "MATERIAL_RELATIVE_MAE_IMPROVEMENT" in arima_lesson
+    assert "same_constant_forecast_class" in arima_lesson
+    assert "zero-return benchmark" in arima_lesson
+    assert "arima_beats_benchmark" not in arima_lesson
+
+
+def test_module2_programmatic_figures_have_semantic_alt_text() -> None:
+    figure_sources = {
+        "2.0.quantitative_foundations.py": 1,
+        "2.1.time_series_1.py": 2,
+        "2.2.time_series_2.py": 1,
+        "2.3.time_series_diagnostics_and_volatility_extensions.py": 2,
+        "2.4.arima_diagnostic_workflow.py": 2,
+        "2.5.garch_volatility_risk_workflow.py": 2,
+        "2.6.interactive_volatility_garch_dashboard.py": 1,
+    }
+    for filename, minimum_count in figure_sources.items():
+        source = _read(COURSE_DIR / filename)
+        assert source.count('mystnb={"image": {"alt":') >= minimum_count

@@ -13,6 +13,7 @@ from src.market_risk import (
     expected_shortfall,
     gaussian_var,
     historical_var,
+    simple_loss_from_log_return,
     parametric_var,
     standardized_student_t_quantile,
 )
@@ -51,6 +52,18 @@ def test_parametric_var_rejects_invalid_scale_and_never_reports_a_gain_as_var() 
         parametric_var(mean=0.0, volatility=-0.1, quantile=-2.0)
 
     assert parametric_var(mean=2.0, volatility=0.1, quantile=-1.0) == 0.0
+
+
+def test_log_return_threshold_converts_to_exact_simple_loss() -> None:
+    log_return_threshold = -0.025
+    expected_simple_loss = 1 - np.exp(log_return_threshold)
+
+    assert simple_loss_from_log_return(log_return_threshold) == pytest.approx(
+        expected_simple_loss
+    )
+    assert simple_loss_from_log_return(0.01) == 0.0
+    with pytest.raises(ValueError, match="finite"):
+        simple_loss_from_log_return(np.inf)
 
 
 def test_standardized_student_t_quantile_matches_unit_variance_parameterization() -> None:

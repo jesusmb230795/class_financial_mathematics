@@ -349,30 +349,3 @@ else:
 # rolling window, source, data mode, sample, and peer-reference definition. The
 # final Mexican case uses a different panel and must not inherit NASDAQ results
 # or call its peer basket a Mexican market benchmark.
-
-# %% [markdown] tags=["exercise"]
-# ## Checkpoint exercise
-#
-# Build a dashboard decision note for one stock.
-#
-# 1. State the question and report cumulative adjusted-close return, annualized
-#    mean log return, annualized volatility, positive-loss historical VaR,
-#    maximum drawdown, arithmetic Sharpe ratio under the explicit zero-rate
-#    assumption, and equal-weight peer-basket correlation over the common window.
-# 2. Compare 63-day and 252-day rolling volatility and identify one period in
-#    which the dashboard changes the full-sample interpretation.
-# 3. Switch between simple and log returns; explain which displayed quantities
-#    change and which return convention belongs in the written conclusion.
-# 4. State why the peer basket is useful for exploratory co-movement but is not
-#    an investable or policy benchmark.
-#
-
-# %% [markdown] tags=["solution"]
-# ```{dropdown} Suggested answer rubric
-# A complete note answers one declared question, labels every metric and return
-# convention, compares both rolling windows, keeps VaR as a positive loss, and
-# describes the peer basket without overstating it as a market benchmark or
-# recommendation. Reconcile the reported values with the executed risk-summary
-# and dashboard tables; treat the adjusted-close result according to the
-# provider methodology rather than assuming a fully specified total-return index.
-# ```

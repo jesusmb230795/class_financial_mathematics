@@ -212,30 +212,6 @@
 #   prepayment, delinquency, default, recovery, and interest-rate models.
 # - Ratings and modeled OAS are inputs to due diligence, not substitutes for it.
 
-# %% [markdown] tags=["exercise"]
-# ## Assessment
-#
-# A MXN 120 million collateral pool experiences an 8% default rate and a 35%
-# recovery rate. The equity tranche covers the first MXN 5 million of losses,
-# the mezzanine tranche covers the next MXN 10 million, and the senior tranche
-# covers the remainder.
-#
-# 1. Calculate total collateral loss.
-# 2. Allocate loss to equity, mezzanine, and senior.
-# 3. Report the remaining protection below the senior attachment point.
-# 4. Name two omitted mechanisms that could change realized cash-flow timing.
-
-# %% [markdown] tags=["solution"]
-# ```{dropdown} Suggested answer
-# Collateral loss is
-# \(120(0.08)(1-0.35)=\text{MXN }6.24\) million. Equity absorbs MXN 5.00
-# million and is exhausted. Mezzanine absorbs MXN 1.24 million; senior absorbs
-# zero. Protection remaining below senior is
-# \(5+10-6.24=\text{MXN }8.76\) million. Prepayments and servicing/delinquency
-# timing are two valid omitted mechanisms; fees, triggers, reserves, and
-# recoveries delayed by legal process are also valid.
-# ```
-
 # %% [markdown]
 # ## Handoff
 #

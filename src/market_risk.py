@@ -51,6 +51,18 @@ def parametric_var(mean: float, volatility: float, quantile: float) -> float:
     return _positive_loss(-(mean + volatility * quantile))
 
 
+def simple_loss_from_log_return(log_return: float) -> float:
+    """Convert a decimal log-return threshold to non-negative simple loss.
+
+    If ``g`` is a log return, the corresponding simple return is
+    ``expm1(g)``.  A long-position loss is therefore ``-expm1(g)`` before the
+    book's non-negative reporting floor is applied.
+    """
+    if not np.isfinite(log_return):
+        raise ValueError("log_return must be finite")
+    return _positive_loss(-np.expm1(log_return))
+
+
 def standardized_student_t_quantile(alpha: float, degrees_of_freedom: float) -> float:
     """Return a unit-variance Student's t left-tail quantile.
 

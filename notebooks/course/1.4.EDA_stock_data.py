@@ -562,28 +562,3 @@ outlier_counts
 # The common-window return matrix is the direct handoff to the Return Explorer
 # dashboard. Module 2 may reuse it only after retaining the log-return label,
 # date window, missingness record, and outlier-review decisions.
-
-# %% [markdown] tags=["exercise"]
-# ## Checkpoint exercise
-#
-# Audit one ticker from the common sample window.
-#
-# 1. Report its first and last price date, valid and missing price counts, valid
-#    and missing log-return counts, and every Hampel-flagged return date.
-# 2. Compare its full-sample `annualized_mean_log_return` and annualized
-#    volatility with the latest 63-trading-day values.
-# 3. Verify the largest absolute return against the neighboring adjusted-close
-#    observations; classify it as a review flag, not automatically as an error.
-# 4. Write a three-sentence handoff stating the return convention, sample,
-#    strongest empirical feature, and one provider limitation.
-#
-
-# %% [markdown] tags=["solution"]
-# ```{dropdown} Suggested answer rubric
-# A complete audit reports exact dates and counts, labels annualized mean log
-# return separately from volatility, compares like-for-like windows, inspects
-# rather than deletes the extreme observation, and carries source and sample
-# limitations into the dashboard handoff. Reconcile every reported value with
-# the executed metadata, quality, summary, rolling-snapshot, and outlier tables;
-# those outputs are the numerical self-check for the committed snapshot.
-# ```

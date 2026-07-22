@@ -56,6 +56,8 @@
 # | $PV$, $FV$ | present and future value | currency units |
 # | $r$ | quoted annual rate | decimal, with compounding stated |
 # | $m$ | periodic compounding frequency | periods per year |
+# | $T$ | cash-flow or simulation horizon | years |
+# | $P_t$ | positive price or index level at observation $t$ | stated level unit |
 # | $R_t$ | simple return | $P_t/P_{t-1}-1$ |
 # | $g_t$ | log return | $\log(P_t/P_{t-1})=\log(1+R_t)$ |
 # | $A$ | annualization factor | 252 business days per year |
@@ -73,6 +75,7 @@ import numpy as np
 import pandas as pd
 import statsmodels.api as sm
 from IPython.display import display
+from scipy.stats import norm
 from sklearn.linear_model import Ridge
 from sklearn.metrics import mean_absolute_error
 from sklearn.model_selection import TimeSeriesSplit, cross_val_score
@@ -84,6 +87,7 @@ from src.fixed_income import (
     effective_annual_rate,
     effective_rate_from_continuous,
     future_value,
+    present_value,
     simple_future_value,
 )
 from src.visual_style import (
@@ -95,6 +99,8 @@ from src.visual_style import (
 
 SEED = 20260720
 PERIODS_PER_YEAR = 252
+HAC_MEAN_MAX_LAGS = 20
+HAC_SIGNAL_MAX_LAGS = 5
 np.set_printoptions(precision=6, suppress=True)
 pd.set_option("display.float_format", lambda value: f"{value:,.6f}")
 
@@ -119,9 +125,17 @@ pd.set_option("display.float_format", lambda value: f"{value:,.6f}")
 # The formulas do not make quotations interchangeable. A nominal 8% rate
 # compounded monthly is not the same economic input as an 8% effective annual
 # rate or an 8% continuously compounded rate.
+# Their one-year equivalent rates satisfy
+#
+# $$
+# r_{\mathrm{eff}}=\left(1+\frac{r_{\mathrm{nom}}}{m}\right)^m-1,
+# \qquad
+# r_{\mathrm{cont}}=\log(1+r_{\mathrm{eff}}).
+# $$
 
 # %%
 principal = 10_000.0
+future_cash_flow = 10_000.0
 quoted_rate = 0.08
 horizon_years = 2.0
 convention_rows = [
@@ -167,6 +181,9 @@ convention_rows = [
 ]
 for row in convention_rows:
     row["accumulation_factor"] = row["future_value_mxn"] / principal
+    row["present_value_of_mxn_10000_in_2y"] = (
+        future_cash_flow / row["accumulation_factor"]
+    )
 
 rate_convention_table = pd.DataFrame(convention_rows)[
     [
@@ -174,16 +191,28 @@ rate_convention_table = pd.DataFrame(convention_rows)[
         "compounding_periods_per_year",
         "accumulation_factor",
         "future_value_mxn",
+        "present_value_of_mxn_10000_in_2y",
     ]
 ]
+monthly_round_trip = present_value(
+    np.array(
+        [future_value(principal, quoted_rate, horizon_years, compounding=12)]
+    ),
+    np.array([horizon_years]),
+    quoted_rate,
+    compounding=12,
+)
+assert np.isclose(monthly_round_trip, principal)
 rate_convention_table
 
 # %% [markdown]
 # **Output interpretation.**
 #
 # Every row uses the same numerical quote but a different accumulation rule.
-# The resulting future values differ because the quote alone does not determine
-# the cash-flow conversion.
+# The future-value column accumulates MXN 10,000 from today; the present-value
+# column discounts an MXN 10,000 payment due in two years. The values differ
+# because the quote alone does not determine the cash-flow conversion. The
+# monthly-compounding round-trip is checked programmatically.
 
 # %%
 monthly_factor_one_year = future_value(
@@ -281,12 +310,12 @@ synthetic[["price", "log_return", "signal"]].head()
 # full-sample statistics. The dates are a generic Monday-to-Friday index; they
 # do not encode exchange holidays, releases, or investable prices.
 
-# %%
+# %% mystnb={"image": {"alt": "Two aligned panels show a seeded synthetic price path and its decimal log returns. A vertical marker identifies the start of the deliberately higher-volatility final third."}}
 with matplotlib_style():
     fig, axes = plt.subplots(
         2,
         1,
-        figsize=(10, 6),
+        figsize=(7.5, 6.8),
         sharex=True,
         constrained_layout=True,
     )
@@ -304,6 +333,16 @@ with matplotlib_style():
     axes[0].set_ylabel("Index level (base = 100)")
     axes[1].set_ylabel("Daily log return (decimal)")
     axes[1].set_xlabel("Date")
+    regime_change_date = synthetic.index[600]
+    for axis in axes:
+        axis.axvline(
+            regime_change_date,
+            color=SEMANTIC_COLORS["highlight"],
+            linestyle="--",
+            linewidth=1.4,
+            label="Higher-volatility regime begins",
+        )
+    axes[0].legend(loc="upper left", fontsize=9)
     style_axes(axes[0], grid_axis="y")
     style_axes(axes[1], grid_axis="y", show_zero_line=True)
     fig.suptitle("Seeded synthetic sample with a final-third volatility shift")
@@ -335,6 +374,25 @@ plt.close(fig)
 # returns aggregate through time. For one asset and one period,
 # $g_t=\log(1+R_t)$, but the quantities must retain distinct names
 # {cite}`cont2001empirical,tsay2010analysis`.
+# For a sample of periodic log returns with mean $\bar g$ and sample standard
+# deviation $s_g$, the declared annualization convention is
+#
+# $$
+# \widehat g_{\mathrm{ann}}=A\bar g,
+# \qquad
+# \widehat R_{\mathrm{ann}}^{\mathrm{equiv}}
+# =\exp\!\left(A\bar g\right)-1,
+# \qquad
+# \widehat\sigma_{\mathrm{ann}}=\sqrt{A}\,s_g.
+# $$
+#
+# The middle quantity is the simple-return equivalent of the annualized log
+# return; it is not obtained by multiplying a mean simple return by $A$.
+# The square-root rule equals an $A$-period volatility only under compatible
+# assumptions such as stable variance and negligible serial covariance. Because
+# this synthetic path contains a predictable signal and a volatility shift, the
+# notebook uses $\sqrt A$ strictly as a declared reporting scale—not as its true
+# one-year conditional standard deviation.
 
 # %%
 synthetic["simple_return"] = synthetic["price"].pct_change()
@@ -400,11 +458,38 @@ terminal_prices = spot * np.exp(
     (annual_drift - 0.5 * annual_volatility_parameter**2) * years
     + annual_volatility_parameter * np.sqrt(years) * normal_draws
 )
+terminal_loss_indicator = terminal_prices < spot
+monte_carlo_loss_probability = float(terminal_loss_indicator.mean())
+monte_carlo_standard_error = float(
+    np.sqrt(
+        monte_carlo_loss_probability
+        * (1 - monte_carlo_loss_probability)
+        / n_paths
+    )
+)
+analytic_loss_probability = float(
+    norm.cdf(
+        -(
+            annual_drift - 0.5 * annual_volatility_parameter**2
+        )
+        * np.sqrt(years)
+        / annual_volatility_parameter
+    )
+)
+assert abs(monte_carlo_loss_probability - analytic_loss_probability) < (
+    2 * monte_carlo_standard_error
+)
 monte_carlo_summary = pd.Series(
     {
         "seed": SEED + 1,
         "paths": n_paths,
-        "probability_terminal_loss": np.mean(terminal_prices < spot),
+        "monte_carlo_probability_terminal_loss": monte_carlo_loss_probability,
+        "monte_carlo_standard_error": monte_carlo_standard_error,
+        "monte_carlo_95pct_half_width": 1.96 * monte_carlo_standard_error,
+        "analytic_probability_terminal_loss": analytic_loss_probability,
+        "absolute_monte_carlo_error": abs(
+            monte_carlo_loss_probability - analytic_loss_probability
+        ),
         "terminal_price_q05": np.quantile(terminal_prices, 0.05),
         "terminal_price_median": np.median(terminal_prices),
         "terminal_price_q95": np.quantile(terminal_prices, 0.95),
@@ -415,38 +500,52 @@ monte_carlo_summary
 # %% [markdown]
 # **Output interpretation.**
 #
-# The loss probability is a Monte Carlo frequency under the stated lognormal
-# model. It is not a historical loss rate and does not incorporate jumps,
-# transaction costs, parameter uncertainty, or changing volatility.
+# The simulated loss frequency is reported with its Monte Carlo standard error
+# and the closed-form probability implied by the same GBM assumptions. Their
+# difference falls inside two simulated standard errors, providing a local
+# implementation check without claiming six-decimal economic precision. This is
+# not a historical loss rate and does not incorporate jumps, transaction costs,
+# parameter uncertainty, or changing volatility.
 
 # %% [markdown]
 # ## Inference and regression
 #
-# An estimate without uncertainty invites false precision. First, an
-# independent-and-identically-distributed bootstrap illustrates a confidence
-# interval for the synthetic mean daily log return. Then a training-sample
-# regression estimates the known lagged-signal relationship with
-# heteroskedasticity-and-autocorrelation-consistent standard errors. The
-# bootstrap is pedagogical; dependent market returns may require a block
-# bootstrap or a model-based procedure {cite}`hamilton1994time,statsmodels2010`.
+# An estimate without uncertainty invites false precision. First, a
+# constant-only regression reports a confidence interval for the synthetic mean
+# daily log return with heteroskedasticity-and-autocorrelation-consistent (HAC)
+# standard errors. Then a training-sample regression estimates the known
+# lagged-signal relationship with the same covariance convention
+# {cite}`hamilton1994time,statsmodels2010`.
+# The declared lag truncations are sensitivity choices rather than estimated
+# features: 20 lags protect the full-sample mean summary against longer local
+# dependence, while 5 lags keep the shorter training regression focused on its
+# one-step signal. Changing either choice can change the reported interval.
+# The fitted conditional-mean equation is
+#
+# $$
+# g_t=\beta_0+\beta_1 x_{t-1}+u_t,
+# $$
+#
+# where $x_{t-1}$ is the lagged synthetic signal. The lag identifies the
+# information set; the regression coefficient remains an association inside
+# this declared simulation, not a causal market estimate.
 
 # %%
-bootstrap_rng = np.random.default_rng(SEED + 2)
 observed_log_returns = return_sample["log_return_from_price"].to_numpy()
-n_bootstrap = 4_000
-bootstrap_indices = bootstrap_rng.integers(
-    0,
-    len(observed_log_returns),
-    size=(n_bootstrap, len(observed_log_returns)),
+mean_design = np.ones((len(observed_log_returns), 1))
+mean_model = sm.OLS(observed_log_returns, mean_design).fit(
+    cov_type="HAC",
+    cov_kwds={"maxlags": HAC_MEAN_MAX_LAGS},
 )
-bootstrap_means = observed_log_returns[bootstrap_indices].mean(axis=1)
-bootstrap_interval = np.quantile(bootstrap_means, [0.025, 0.975])
+mean_interval = mean_model.conf_int(alpha=0.05)[0]
 pd.Series(
     {
         "sample_mean_daily_log_return": observed_log_returns.mean(),
-        "iid_bootstrap_ci_lower": bootstrap_interval[0],
-        "iid_bootstrap_ci_upper": bootstrap_interval[1],
-        "bootstrap_resamples": n_bootstrap,
+        "hac_95pct_ci_lower": mean_interval[0],
+        "hac_95pct_ci_upper": mean_interval[1],
+        "confidence_level": 0.95,
+        "hac_max_lag": HAC_MEAN_MAX_LAGS,
+        "observations": len(observed_log_returns),
     }
 )
 
@@ -467,16 +566,18 @@ assert training.index.max() < testing.index.min()
 inference_design = sm.add_constant(training[["signal_lag_1"]])
 inference_model = sm.OLS(training["log_return"], inference_design).fit(
     cov_type="HAC",
-    cov_kwds={"maxlags": 5},
+    cov_kwds={"maxlags": HAC_SIGNAL_MAX_LAGS},
 )
-coefficient_interval = inference_model.conf_int().loc["signal_lag_1"]
+coefficient_interval = inference_model.conf_int(alpha=0.05).loc["signal_lag_1"]
 inference_table = pd.Series(
     {
         "training_start": training.index.min().date().isoformat(),
         "training_end": training.index.max().date().isoformat(),
         "signal_coefficient": inference_model.params["signal_lag_1"],
-        "hac_ci_lower": coefficient_interval.iloc[0],
-        "hac_ci_upper": coefficient_interval.iloc[1],
+        "hac_95pct_ci_lower": coefficient_interval.iloc[0],
+        "hac_95pct_ci_upper": coefficient_interval.iloc[1],
+        "confidence_level": 0.95,
+        "hac_max_lag": HAC_SIGNAL_MAX_LAGS,
         "training_observations": len(training),
     }
 )
@@ -503,6 +604,16 @@ inference_table
 # `TimeSeriesSplit` fold fits the scaler and model only on dates earlier than its
 # validation block. The final test block remains untouched until the model
 # choices are fixed.
+# In every fold $j$, the chronological boundary is
+#
+# $$
+# \max\{t:t\in\mathcal T_j\}
+# <\min\{t:t\in\mathcal V_j\},
+# $$
+#
+# where $\mathcal T_j$ and $\mathcal V_j$ are the training and validation date
+# sets. Mean absolute error is
+# $\operatorname{MAE}=n^{-1}\sum_{i=1}^{n}|g_i-\widehat g_i|$.
 
 # %%
 feature_columns = [
@@ -548,6 +659,14 @@ validation_table = pd.Series(
         "test_observations": len(testing),
     }
 )
+validation_table["test_model_mae_minus_baseline_mae"] = (
+    validation_table["test_model_mae"]
+    - validation_table["test_training_mean_baseline_mae"]
+)
+validation_table["test_model_beats_baseline"] = bool(
+    validation_table["test_model_mae"]
+    < validation_table["test_training_mean_baseline_mae"]
+)
 validation_table
 
 # %% [markdown]
@@ -556,8 +675,9 @@ validation_table
 # Cross-validation error measures several expanding time-ordered experiments.
 # Final test MAE measures one later, higher-volatility regime. The model should
 # be judged against the training-mean benchmark rather than against in-sample
-# fit. Even if it wins in this seeded simulation, that does not establish a
-# profitable strategy.
+# fit. A negative model-minus-baseline difference means lower model MAE on this
+# holdout. Even if the model wins in this seeded simulation, that does not
+# establish a profitable strategy.
 
 # %%
 split_audit = []
@@ -594,54 +714,18 @@ split_audit_table
 #   noisier, crowded, revised, and exposed to data-mining bias.
 # - The lognormal Monte Carlo model omits jumps, stochastic volatility,
 #   liquidity, costs, and parameter uncertainty.
-# - The i.i.d. bootstrap ignores serial dependence and volatility clustering.
 # - HAC standard errors reduce sensitivity to some dependence patterns but do
-#   not repair omitted variables, endogeneity, or structural breaks.
+#   not repair omitted variables, endogeneity, or structural breaks; their
+#   finite-sample coverage remains approximate.
 # - A single chronological holdout is necessary but not sufficient. Production
 #   validation also needs repeated vintages, transaction-cost assumptions,
 #   stability monitoring, and a documented retraining rule.
 
-# %% [markdown] tags=["exercise"]
-# ## Checkpoint exercise
-#
-# 1. Calculate the two-year future value of MXN 10,000 at a 9% nominal annual
-#    rate compounded monthly, and state the compounding convention.
-# 2. Convert a 12% annualized log return to an annualized simple return.
-# 3. Inspect the temporal split audit and state why `ordered=True` is necessary.
-# 4. Replace `SEED` with `SEED + 10`, rerun the simulation, and identify which
-#    outputs change and which rate-conversion outputs remain invariant.
-
-# %% tags=["solution"]
-checkpoint_future_value = future_value(
-    10_000.0,
-    0.09,
-    2.0,
-    compounding=12,
-)
-checkpoint_simple_return = np.expm1(0.12)
-assert split_audit_table["ordered"].all()
-pd.Series(
-    {
-        "future_value_mxn": checkpoint_future_value,
-        "annualized_simple_return": checkpoint_simple_return,
-        "all_temporal_folds_ordered": split_audit_table["ordered"].all(),
-    }
-)
-
-# %% [markdown]
-# **Checkpoint interpretation.**
-#
-# The future value is approximately MXN 11,964.14 under nominal monthly
-# compounding. A 12% annualized log return is approximately a 12.7497%
-# annualized simple return. Ordered folds prevent observations dated after a
-# validation target from influencing estimation or preprocessing. Changing the
-# seed changes simulated paths, regression estimates, and probability summaries,
-# but it does not change deterministic rate conversions.
-
 # %% [markdown]
 # ## Handoff
 #
-# The next lesson, Financial Time Series: Levels, Returns, and White Noise,
+# The next lesson, [Financial Time Series: Levels, Returns, and White
+# Noise](2.1.time_series_1.ipynb),
 # replaces synthetic levels with provider-dated Banxico FIX observations. It
 # applies the return conventions from this notebook before introducing
 # stationarity, white-noise diagnostics, and time-series model selection.

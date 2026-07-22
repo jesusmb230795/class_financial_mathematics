@@ -392,30 +392,3 @@ live_macro.tail()
 # the NASDAQ adjusted-close panel to `1.4` and the macro panel to `1.5`.
 # Neither branch may change the common sample, source meaning, or provider-rights
 # note silently.
-
-# %% [markdown] tags=["exercise"]
-# ## Checkpoint exercise
-#
-# Build a source decision memo for one Mexican series and one NASDAQ equity in
-# the common teaching window.
-#
-# 1. For each variable, name the provider family, field, unit, calendar,
-#    authority level, and known limitation.
-# 2. Use the panel metadata and quality report to state the actual first date,
-#    last date, row count, and missing count.
-# 3. Decide whether the source is suitable for an offline classroom chart, a
-#    live demonstration, and a trading or institutional claim; justify each
-#    decision without assuming that repository inclusion grants data rights.
-# 4. State which raw response, cache record, metadata field, and processed
-#    output another analyst would need to reproduce the extraction.
-#
-
-# %% [markdown] tags=["solution"]
-# ```{dropdown} Suggested answer rubric
-# A complete memo separates authority from convenience, reports observed
-# coverage and missingness, keeps usage-rights claims limited to reviewed
-# evidence, and traces both variables from provider metadata to the processed
-# panel used by the lesson. Reconcile its dates, row counts, and missing counts
-# with the executed metadata and quality-report tables; those outputs are the
-# snapshot-specific self-check.
-# ```

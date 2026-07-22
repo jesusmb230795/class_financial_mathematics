@@ -304,30 +304,3 @@ else:
 # date range form the dashboard handoff to the integrated Mexican case. Preserve
 # them with any exported chart so the image cannot be interpreted outside its
 # data contract.
-
-# %% [markdown] tags=["exercise"]
-# ## Checkpoint exercise
-#
-# Create one dashboard evidence card comparing a Banxico variable with a
-# DB.NOMICS variable.
-#
-# 1. State the analytical question, source, unit, frequency, transformation,
-#    data mode, actual date range, and missing count for both variables.
-# 2. If both selections are positive level series, compare native and rebased
-#    views and explain which answers the stated question more faithfully. If a
-#    rate or inflation series is selected, explain why rebasing is disabled.
-# 3. Recalculate the relationship with rolling windows of 12 and 24 aligned
-#    observations. State the aligned frequency and the calendar duration those
-#    windows represent; if the panel is monthly, label them as 12 and 24 months.
-# 4. Write one supported observation, one plausible hypothesis, and one causal
-#    claim that the dashboard **cannot** establish.
-#
-
-# %% [markdown] tags=["solution"]
-# ```{dropdown} Suggested answer rubric
-# A complete card keeps source and transformation metadata attached to the
-# chart, chooses the view that matches the question, reports both rolling
-# comparisons with their aligned frequency, and separates observation and
-# hypothesis from unsupported causality. Reconcile the dates, missing counts,
-# and rolling values with the executed panel metadata and dashboard output.
-# ```

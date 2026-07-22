@@ -22,7 +22,7 @@
 #
 # This lesson builds a provider-dated Banxico FIX series and uses it to
 # distinguish exchange-rate levels, first differences, log returns, and
-# constant-mean residuals. Only non-null USD/MXN observations published in the
+# constant-mean residuals. Only non-null MXN-per-USD FIX observations in the
 # committed Banxico snapshot enter the calculations; the lesson does not
 # reindex the calendar or forward-fill the fixing. Formal stationarity tests
 # and ARIMA order selection remain the responsibility of Lessons 2.3 and 2.4
@@ -45,7 +45,7 @@
 # 2. Transform the FIX level into first differences and log returns.
 # 3. Compare dependence in levels and transformed series.
 # 4. Fit a constant-mean benchmark and inspect residual dependence.
-# 5. Close with limitations, a reproducible checkpoint, and the next handoff.
+# 5. Close with limitations and the next reproducible handoff.
 #
 # ## Prerequisites and notation
 #
@@ -57,8 +57,10 @@
 # | --- | --- | --- |
 # | $P_t$ | Banxico FIX at publication step $t$ | MXN per USD |
 # | $\Delta P_t$ | $P_t-P_{t-1}$ | MXN per USD |
+# | $R_t$ | $P_t/P_{t-1}-1$ | decimal simple return |
 # | $g_t$ | $\log(P_t/P_{t-1})$ | decimal log return |
 # | $\varepsilon_t$ | $g_t-\bar g$ | constant-mean residual, decimal |
+# | $w_t$ | random-walk innovation | zero-mean benchmark shock |
 #
 # A lag in this lesson counts provider publication steps, not a fixed number of
 # calendar days. The interval inventory below makes that distinction visible.
@@ -91,8 +93,8 @@ pd.set_option("display.float_format", lambda value: f"{value:,.6f}")
 #
 # The committed Banxico extract retains the provider dates present in the
 # snapshot. Individual Banxico columns can be missing on different dates, so
-# the USD/MXN column is selected and its nulls are removed before any change or
-# return is calculated.
+# the `usd_mxn` field (quoted as MXN per USD) is selected and its nulls are
+# removed before any change or return is calculated {cite}`banxicoSIE2025`.
 
 # %%
 banxico_daily = banxico_daily_panel(
@@ -102,7 +104,7 @@ banxico_daily = banxico_daily_panel(
 series_ids = banxico_daily.attrs.get("series_ids", {})
 series_id = series_ids.get(FOCUS_SERIES)
 snapshot_generated_at = banxico_daily.attrs.get("snapshot_generated_at")
-assert series_id == EXPECTED_SERIES_ID, "Unexpected Banxico USD/MXN series"
+assert series_id == EXPECTED_SERIES_ID, "Unexpected Banxico MXN-per-USD series"
 assert snapshot_generated_at, "Snapshot generation timestamp is required"
 
 fix_levels = (
@@ -145,7 +147,7 @@ sample_inventory
 #
 # The requested window begins on 2021-01-01, but the observed start is the first
 # non-null FIX publication inside that window. The observation count therefore
-# refers only to published USD/MXN values. No synthetic business-day rows or
+# refers only to published MXN-per-USD FIX values. No synthetic business-day rows or
 # forward-filled fixings are included. The snapshot records provenance for
 # reproducibility; it does not by itself establish redistribution rights.
 
@@ -181,7 +183,9 @@ calendar_interval_distribution
 # $$
 # \Delta P_t=P_t-P_{t-1},
 # \qquad
-# g_t=\log(P_t)-\log(P_{t-1}).
+# R_t=\frac{P_t}{P_{t-1}}-1,
+# \qquad
+# g_t=\log(P_t)-\log(P_{t-1})=\log(1+R_t).
 # $$
 #
 # A random walk is a useful benchmark for a persistent level:
@@ -190,8 +194,9 @@ calendar_interval_distribution
 # P_t=P_{t-1}+w_t.
 # $$
 #
-# The benchmark motivates transformations; it does not prove that the observed
-# fixing follows a random walk.
+# Under the benchmark, $w_t$ has zero mean, finite constant variance, and no
+# serial correlation. Those assumptions motivate transformations; they do not
+# prove that the observed fixing follows a random walk.
 
 # %%
 first_differences = fix_levels.diff().rename("first_difference_mxn_per_usd")
@@ -218,9 +223,11 @@ transformation_frame.head()
 
 # %%
 source_note = (
-    f"Banxico SIE series {series_id}; snapshot generated "
-    f"{snapshot_generated_at}"
+    f"Banxico SIE series {series_id}; observed "
+    f"{fix_levels.index.min():%Y-%m-%d} to {fix_levels.index.max():%Y-%m-%d}; "
+    f"snapshot {snapshot_generated_at}; provider-dated observations, no forward fill"
 )
+# %% mystnb={"image": {"alt": "Four vertically aligned panels show the Banxico FIX level in MXN per USD, publication-interval log returns, a rolling mean, and non-annualized rolling volatility."}}
 level_return_figure = build_level_return_diagnostics(
     fix_levels,
     log_returns,
@@ -306,10 +313,21 @@ baseline_summary
 # %% [markdown]
 # ## White-noise and volatility diagnostics
 #
-# A white-noise benchmark has mean zero, no serial correlation, and constant
-# variance. Weak residual autocorrelation would support a simple conditional
-# mean, but it would not imply constant variance. Autocorrelation in squared
-# residuals is a separate screen for volatility dependence.
+# A finite-variance white-noise benchmark satisfies
+#
+# $$
+# \mathbb E[\varepsilon_t]=0,
+# \qquad
+# \operatorname{Var}(\varepsilon_t)=\sigma_\varepsilon^2,
+# \qquad
+# \operatorname{Cov}(\varepsilon_t,\varepsilon_{t-h})=0
+# \quad(h\ne0).
+# $$
+#
+# This definition does not require Gaussianity or independence. Weak residual
+# autocorrelation would support a simple conditional mean, but it would not
+# imply constant variance. Autocorrelation in squared residuals is a separate
+# screen for volatility dependence.
 
 # %%
 residual_dependence = pd.DataFrame(
@@ -327,10 +345,11 @@ residual_dependence = pd.DataFrame(
 )
 residual_dependence
 
-# %%
+# %% mystnb={"image": {"alt": "Four diagnostic panels show the constant-mean residual path, residual autocorrelation, squared-residual autocorrelation, and a normal quantile-quantile plot for Banxico FIX log returns."}}
 residual_figure = build_residual_diagnostics(
     residuals,
     title="Constant-mean residual diagnostics for Banxico FIX log returns",
+    residual_unit="decimal log return / FIX publication interval",
     lags=20,
     source=source_note,
     data_mode=banxico_daily.attrs.get("data_mode", "snapshot"),
@@ -344,8 +363,9 @@ plt.close(residual_figure)
 # Residual autocorrelation at lags 1 and 5 is small in magnitude in this sample,
 # whereas lag-1 squared-residual autocorrelation is visibly larger. The pattern
 # is consistent with limited linear mean dependence alongside time-varying
-# volatility. It is not a formal ARCH test, proof of white noise, or evidence
-# for a particular GARCH order.
+# volatility. The QQ panel separately screens Gaussian shape. None of these
+# panels is a formal ARCH test, proof of white noise, or evidence for a
+# particular GARCH order.
 
 # %% [markdown]
 # ## Limitations
@@ -369,75 +389,11 @@ plt.close(residual_figure)
 # models developed later in the module, see
 # {cite}`engle1982autoregressive,bollerslev1986generalized,sheppard2024arch`.
 
-# %% [markdown] tags=["exercise"]
-# ## Checkpoint exercise
-#
-# 1. Rank publication-to-publication moves by absolute log return and report the
-#    five largest dates, calendar gaps, first differences, and log returns.
-# 2. Report autocorrelation at publication lags 1 and 5 for the level, first
-#    difference, log return, and squared constant-mean residual.
-# 3. Choose the most defensible input for the later ARIMA workflow. Explain why
-#    weak return autocorrelation does not rule out volatility clustering.
-
-# %% tags=["solution"]
-checkpoint_moves = (
-    transformation_frame.dropna(
-        subset=[
-            "calendar_gap_days",
-            "first_difference_mxn_per_usd",
-            "log_return",
-        ]
-    )
-    .assign(absolute_log_return=lambda frame: frame["log_return"].abs())
-    .nlargest(5, "absolute_log_return")
-    [
-        [
-            "mxn_per_usd",
-            "calendar_gap_days",
-            "first_difference_mxn_per_usd",
-            "log_return",
-            "absolute_log_return",
-        ]
-    ]
-)
-assert len(checkpoint_moves) == 5
-checkpoint_moves
-
-# %% tags=["solution"]
-checkpoint_acf = pd.DataFrame(
-    {
-        "level": [fix_levels.autocorr(lag=1), fix_levels.autocorr(lag=5)],
-        "first_difference": [
-            first_differences.autocorr(lag=1),
-            first_differences.autocorr(lag=5),
-        ],
-        "log_return": [
-            log_returns.autocorr(lag=1),
-            log_returns.autocorr(lag=5),
-        ],
-        "squared_constant_mean_residual": [
-            residuals.pow(2).autocorr(lag=1),
-            residuals.pow(2).autocorr(lag=5),
-        ],
-    },
-    index=pd.Index([1, 5], name="publication_lag"),
-)
-checkpoint_acf
-
-# %% [markdown]
-# **Checkpoint interpretation.**
-#
-# Log returns are the most defensible target for the later ARIMA workflow
-# because they express proportional publication-to-publication changes and show
-# far less short-lag persistence than the level. The current sample has weak
-# return autocorrelation at the requested lags but stronger short-lag
-# autocorrelation in squared residuals. That distinction separates mean
-# dependence from variance dependence without claiming that either process has
-# already been identified.
-
 # %% [markdown]
 # ## Handoff
 #
 # Carry the level-versus-return distinction and the provider-calendar caveat
-# into Lesson 2.3, which owns formal stationarity and pre-model diagnostics.
-# Lesson 2.4 then owns ARIMA order selection and fitted-residual validation.
+# into [Lesson 2.3](2.3.time_series_diagnostics_and_volatility_extensions.ipynb),
+# which develops formal stationarity and pre-model diagnostics.
+# [Lesson 2.4](2.4.arima_diagnostic_workflow.ipynb) then covers ARIMA order
+# selection and fitted-residual validation.

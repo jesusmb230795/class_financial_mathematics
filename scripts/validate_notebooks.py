@@ -17,7 +17,6 @@ from nbformat.validator import NotebookValidationError
 
 
 ALLOWED_TAGS = {
-    "exercise",
     "hide-cell",
     "hide-input",
     "hide-output",
@@ -31,7 +30,6 @@ ALLOWED_TAGS = {
     "remove-output",
     "setup",
     "skip-execution",
-    "solution",
 }
 REQUIRED_HEADINGS = {
     "# ",
@@ -308,11 +306,7 @@ def validate_ipynb(path: Path) -> list[str]:
 
     if first_code_seen and not {"setup", "hide-input"}.issubset(first_code_tags):
         errors.append(f"{path}: first code cell must use setup and hide-input tags")
-    if status != "legacy":
-        for required_tag in ("exercise", "solution"):
-            if required_tag not in notebook_tags:
-                errors.append(f"{path}: missing required {required_tag!r} cell tag")
-    elif "legacy" not in notebook_tags:
+    if status == "legacy" and "legacy" not in notebook_tags:
         errors.append(f"{path}: legacy notebook cells must be tagged legacy")
 
     return errors

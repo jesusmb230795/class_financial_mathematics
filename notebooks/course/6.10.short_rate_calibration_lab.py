@@ -213,29 +213,6 @@ summary
 # - The Feller condition is a parameter restriction, not a complete validation of CIR fit.
 # - Model-generated rate paths should be interpreted with model-risk notes before being used for valuation.
 
-# %% [markdown] tags=["exercise"]
-# ## Checkpoint exercise
-#
-# Calibrate the CETES 28-day proxy over 2018–2021 and 2022–2026 using
-# $\Delta t=1/252$ years.
-#
-# 1. Report $c$, $\beta$, $\kappa$, $\theta$, and $\sigma$ for each window with
-#    rate units stated.
-# 2. Simulate 10,000 one-year Vasicek paths from the same initial rate and compare
-#    terminal means and 5th/95th percentiles.
-# 3. Evaluate the Feller condition for the displayed CIR parameters and for a
-#    volatility of 40%.
-# 4. Explain why daily observations, parameter instability, and the chosen
-#    252-business-day clock limit the calibration.
-#
-
-# %% [markdown] tags=["solution"]
-# ```{dropdown} Suggested answer rubric
-# A complete answer compares both calibration windows, declares the time-step
-# convention, reports simulation quantiles in rate units, and distinguishes a
-# Feller check from empirical model validation.
-# ```
-
 # %% [markdown]
 # ## Handoff
 #

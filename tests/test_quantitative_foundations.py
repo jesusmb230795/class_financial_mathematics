@@ -225,7 +225,7 @@ def test_rate_panel_pca_uses_statistical_component_names() -> None:
     assert explained["explained_variance_ratio"].sum() <= 1 + 1e-12
 
 
-def test_promoted_quantitative_lessons_have_specific_checkpoints_and_citations() -> None:
+def test_promoted_quantitative_lessons_have_citations() -> None:
     sources = [
         *sorted((PROJECT_ROOT / "notebooks" / "course").glob("6.*.py")),
         *sorted((PROJECT_ROOT / "notebooks" / "course").glob("7.*.py")),
@@ -235,8 +235,6 @@ def test_promoted_quantitative_lessons_have_specific_checkpoints_and_citations()
     assert len(sources) == 26
     for source in sources:
         text = source.read_text(encoding="utf-8")
-        assert "Reproduce one result that demonstrates this objective" not in text
-        assert "Change one economically meaningful input" not in text
         assert "{cite}`" in text
 
 

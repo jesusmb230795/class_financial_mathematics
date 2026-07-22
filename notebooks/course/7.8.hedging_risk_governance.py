@@ -205,32 +205,6 @@
 # - Governance cannot eliminate judgment; it makes authority, evidence,
 #   exceptions, and accountability observable.
 
-# %% [markdown] tags=["exercise"]
-# ## Assessment
-#
-# A long fixed-income portfolio has a first-order DV01 loss magnitude of MXN
-# 42,000 per basis point. One hedge contract provides MXN 1,050 per basis point
-# in the opposite direction.
-#
-# 1. Calculate the whole-contract hedge count and direction.
-# 2. Calculate the first-order portfolio loss and hedge gain for a +30 basis
-#    point matched yield shock.
-# 3. Report residual first-order P&L.
-# 4. Name three risks that remain even when the residual is zero.
-# 5. Define one observable escalation trigger for hedge drift.
-
-# %% [markdown] tags=["solution"]
-# ```{dropdown} Suggested answer
-# The ratio is \(42{,}000/1{,}050=40\), so use 40 contracts in the direction
-# opposite the portfolio DV01 (short under the stated long-bond setup). A +30 bp
-# shock produces an approximate MXN 1,260,000 portfolio loss and MXN 1,260,000
-# hedge gain, leaving zero first-order residual. Basis risk, convexity,
-# liquidity/margin risk, counterparty risk, and model risk remain. One observable
-# trigger is: if absolute residual DV01 exceeds MXN 2,000 per bp at the daily
-# close, the desk must investigate and rebalance or obtain a documented
-# exception before the next trading day.
-# ```
-
 # %% [markdown]
 # ## Handoff
 #

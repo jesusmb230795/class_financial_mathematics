@@ -217,24 +217,3 @@ pd.Series(
 # discrete scenario P&L; model-method differences are explicit valuation reserves
 # or governance items rather than hidden inside VaR. The next lesson adds
 # stochastic variance and correlation-driven skew to the model-risk inventory.
-
-# %% [markdown] tags=["exercise"]
-# ## Checkpoint exercise
-#
-# Repeat the American-put comparison for rates of 0%, 5%, and 10%.
-#
-# 1. Report European value, CRR American value, Leisen-Reimer value, early-exercise
-#    premium, and the CRR/LR method difference at each rate.
-# 2. Double Asian Monte Carlo paths and report naive and control-variate standard
-#    errors plus their reduction factor.
-# 3. Compare daily and weekly BGK-adjusted barriers for both up and down barriers.
-# 4. Identify which differences are sampling error, discretization/model error,
-#    and economically hedgeable exposure.
-#
-
-# %% [markdown] tags=["solution"]
-# ```{dropdown} Suggested answer rubric
-# A complete answer reports option values and premiums in currency units,
-# separates Monte Carlo error from model-method differences, uses the correct
-# barrier direction, and specifies what enters a hedge versus model governance.
-# ```

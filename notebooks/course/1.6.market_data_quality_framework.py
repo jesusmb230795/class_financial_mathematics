@@ -363,30 +363,3 @@ hampel_outlier_flags(returns, window=7, n_sigmas=3.0)
 # inventory, calendar rule, missingness counts, outlier review, and
 # transformation labels. Apply it to the NASDAQ panel before `1.4`, to the macro
 # panel before `1.5`, and to the official-source levels before `1.7`.
-
-# %% [markdown] tags=["exercise"]
-# ## Checkpoint exercise
-#
-# Create a quality ticket for the synthetic price example and one Mexican source
-# from the inventory.
-#
-# 1. Distinguish missing dates from missing values before and after business-day
-#    alignment, reporting both counts.
-# 2. Recalculate simple and log returns and explain why neither series should be
-#    forward-filled directly.
-# 3. Review every Hampel flag against the underlying prices and record
-#    `retain`, `correct`, or `needs source review`; do not delete a value solely
-#    because it is extreme.
-# 4. For the Mexican source, state the institution, unit, calendar, revision or
-#    access risk, and the exact metadata needed for the next pipeline stage.
-#
-
-# %% [markdown] tags=["solution"]
-# ```{dropdown} Suggested answer rubric
-# A complete ticket separates dates from values, preserves return semantics,
-# documents rather than automatically removes outliers, and carries provider,
-# unit, calendar, access, and revision evidence into the pipeline handoff. It
-# must identify 2026-01-06 as an absent business date, 2026-01-08 as an explicit
-# missing value, and the jump/reversal as source-review candidates before any
-# fill or deletion decision.
-# ```

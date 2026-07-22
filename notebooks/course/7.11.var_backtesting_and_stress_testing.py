@@ -208,23 +208,3 @@ stress_scenario_loss(weights, stress_shocks)
 # The final dashboard varies alpha, lookback, and EWMA decay interactively. Use
 # the backtesting evidence from this page to avoid interpreting dashboard
 # sensitivity as model validation.
-
-# %% [markdown] tags=["exercise"]
-# ## Checkpoint exercise
-#
-# 1. Verify that every one-day VaR forecast is non-negative and that the first
-#    usable forecast depends only on the previous 250 returns.
-# 2. Report exception count, exception rate, Kupiec p-value, Christoffersen
-#    independence p-value, and conditional-coverage p-value for both historical
-#    and Gaussian forecasts.
-# 3. Recompute the historical backtest with a 500-day window, compare the
-#    exception evidence, and explain why passing either test is not proof that
-#    the tail model is correct.
-#
-
-# %% [markdown] tags=["solution"]
-# ```{dropdown} Suggested answer rubric
-# A complete answer demonstrates the one-day information lag, reports all five
-# diagnostics for both models and both windows, distinguishes exception
-# frequency from clustering, and discusses the low power of rare-event tests.
-# ```

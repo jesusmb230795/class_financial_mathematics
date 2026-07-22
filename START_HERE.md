@@ -13,8 +13,10 @@ Use this page as the entry point for the local course workspace.
 5. Save your work in a personal branch or copy; generated outputs are removed
    from the canonical notebooks.
 
-The first code cell of every notebook contains the common setup. Exercises are
-tagged `exercise`; expandable reference solutions are tagged `solution`.
+The first code cell of every executable notebook contains the common setup.
+Lessons use worked checks, interpretation prompts, or decision notes when those
+activities strengthen a specific objective. The published repository does not
+append a universal checkpoint or public answer key to every notebook.
 
 ## Author workflow
 

@@ -12,7 +12,7 @@
       "target_path": "img/generated/m4-three-statement-evidence-model-map.png",
       "aspect_ratio": "16:9",
       "recommended_size": "1920x1080",
-      "alt_text": "Financial modeling map linking income statement, balance sheet, cash flow, and equity while separating reported, reclassified, normalized, and forecast evidence layers.",
+      "alt_text": "Financial modeling map linking the income statement, balance sheet, cash flow, and equity while separating reported, reclassified, normalized, and forecast evidence layers.",
       "generator_script": "scripts/generate_module_concept_maps.py --asset m4-three-statement-evidence-model-map",
       "production_method": "deterministic_matplotlib",
       "used_by": [
@@ -23,10 +23,86 @@
           "target_markdown": "../img/generated/m4-three-statement-evidence-model-map.png"
         }
       ],
-      "prompt": "Create a 1920x1080 PNG, 16:9. Academic three-statement modeling map for Module 4. Link the income statement, balance sheet, cash flow statement, and equity roll-forward with explicit directional arrows and a final balance and cash reconciliation check. Above the statements, show four evidence layers in order: reported, reclassified, normalized, forecast. Keep labels short and exact. Off-white background, navy linework, teal operating links, muted-blue balance-sheet links, amber forecast highlights, coral control-break warnings, and a 7% safe margin. No company logos, fake filings, or invented numbers.",
+      "prompt": "Create a 1920x1080 PNG, 16:9. Academic three-statement modeling map for Module 4. Link the income statement, balance sheet, cash flow statement, and equity roll-forward with explicit directional arrows and a final balance and cash reconciliation check. Show that operating-balance, fixed-asset, and debt schedules feed the cash bridge, and that closing cash returns to the balance sheet. Above the statements, show four evidence layers in order: reported, reclassified, normalized, forecast. Keep labels short and exact. Off-white background, navy linework, teal operating links, muted-blue balance-sheet links, amber forecast highlights, coral control-break warnings, and a 7% safe margin. No company logos, fake filings, or invented numbers.",
       "production_notes": [
-        "Generated from code so accounting identities, layer order, and reconciliation directions remain exact.",
-        "Long accounting definitions remain in the chapter rather than inside the image."
+        "Generated from code so accounting identities, layer order, and reconciliation dependencies remain exact.",
+        "Forecast is amber and coral is reserved for a failed control; long definitions remain in the chapter.",
+        "The reverse balance-to-cash dependency makes working-capital, fixed-asset, and debt schedule feedback explicit."
+      ]
+    },
+    {
+      "order": 32,
+      "id": "m4-roe-roic-driver-map",
+      "status": "approved",
+      "role": "lesson_driver_map",
+      "target_path": "img/generated/m4-roe-roic-driver-map.png",
+      "aspect_ratio": "16:9",
+      "recommended_size": "1920x1080",
+      "alt_text": "Two-lane driver map comparing the DuPont components of return on equity with the operating-margin and capital-turnover components of return on invested capital.",
+      "generator_script": "scripts/generate_module_concept_maps.py --asset m4-roe-roic-driver-map",
+      "production_method": "deterministic_matplotlib",
+      "used_by": [
+        {
+          "file": "notebooks/course/4.2.ratios_dupont_and_capital_efficiency.md",
+          "locator": "ROE and ROIC driver comparison",
+          "mode": "markdown_insert",
+          "target_markdown": "../../img/generated/m4-roe-roic-driver-map.png"
+        }
+      ],
+      "prompt": "Create a 1920x1080 two-lane academic driver map. The ROE lane shows net margin 9.00%, asset turnover 1.307x, and equity multiplier 1.811x combining to ROE 21.30%. The ROIC lane shows after-tax operating margin 11.25% and capital turnover 1.688x combining to ROIC 18.99%. Use large labels, an off-white background, teal operating links, muted-blue capital links, amber comparison accents, and no decorative or invented data.",
+      "production_notes": [
+        "The values reproduce the lesson simulation and distinguish the common-equity and invested-capital perimeters.",
+        "The two lanes prevent readers from treating ROE and ROIC as interchangeable return measures."
+      ]
+    },
+    {
+      "order": 33,
+      "id": "m4-normalized-ebit-bridge",
+      "status": "approved",
+      "role": "lesson_reconciliation_chart",
+      "target_path": "img/generated/m4-normalized-ebit-bridge.png",
+      "aspect_ratio": "16:9",
+      "recommended_size": "1920x1080",
+      "alt_text": "Waterfall chart reconciling reported EBIT of USD 120 million through a plant-closure add-back, land-sale gain removal, and routine software cost to normalized EBIT of USD 122 million.",
+      "generator_script": "scripts/generate_module_concept_maps.py --asset m4-normalized-ebit-bridge",
+      "production_method": "deterministic_matplotlib",
+      "used_by": [
+        {
+          "file": "notebooks/course/4.3.accounting_quality_and_normalization.md",
+          "locator": "Normalized EBIT adjustment schedule",
+          "mode": "markdown_insert",
+          "target_markdown": "../../img/generated/m4-normalized-ebit-bridge.png"
+        }
+      ],
+      "prompt": "Create a 1920x1080 academic waterfall chart in USD millions: reported EBIT 120, plant-closure add-back +18, land-sale gain removal -10, routine software cost -6, normalized EBIT 122. State that stock compensation has zero adjustment and remains in operating expense. Use large labels, an off-white background, semantic book colors, and no fabricated evidence.",
+      "production_notes": [
+        "The chart is a deterministic rendering of the signed pretax bridge in Lesson 4.3.",
+        "Tax treatment is deliberately excluded from the chart and explained in the adjacent text."
+      ]
+    },
+    {
+      "order": 34,
+      "id": "m4-forecast-cash-reconciliation",
+      "status": "approved",
+      "role": "lesson_reconciliation_chart",
+      "target_path": "img/generated/m4-forecast-cash-reconciliation.png",
+      "aspect_ratio": "16:9",
+      "recommended_size": "1920x1080",
+      "alt_text": "Waterfall chart reconciling beginning cash of USD 60 million through operating cash flow, capital expenditures, debt repayment, and dividends paid to ending cash of USD 86.05 million.",
+      "generator_script": "scripts/generate_module_concept_maps.py --asset m4-forecast-cash-reconciliation",
+      "production_method": "deterministic_matplotlib",
+      "used_by": [
+        {
+          "file": "notebooks/course/4.5.three_statement_model_and_review.md",
+          "locator": "Forecast cash reconciliation",
+          "mode": "markdown_insert",
+          "target_markdown": "../../img/generated/m4-forecast-cash-reconciliation.png"
+        }
+      ],
+      "prompt": "Create a 1920x1080 academic cash waterfall in USD millions: beginning cash 60, CFO +146.05, capital expenditures -70, debt repayment -20, dividends paid -30, ending cash 86.05. Use large labels, an off-white background, teal operating inflow, restrained coral outflows, muted-blue totals, and explicit sign labels.",
+      "production_notes": [
+        "The waterfall reproduces the Lesson 4.5 cash identity under zero FX effect and identical statement cash scopes.",
+        "Dividends declared equal dividends paid only within the stated simulation assumptions."
       ]
     }
   ]

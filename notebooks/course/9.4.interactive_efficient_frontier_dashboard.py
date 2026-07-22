@@ -220,28 +220,6 @@ else:
 #   projection norm is evidence that the original slider assumptions were not
 #   jointly coherent.
 
-# %% [markdown] tags=["exercise"]
-# ## Checkpoint exercise
-#
-# Set equity correlation to 0.95, bond correlation to 0.95, and equity-bond
-# correlation to -0.40.
-#
-# 1. Report the minimum eigenvalue before and after the PSD guardrail and the
-#    projection norm.
-# 2. Verify that the projected covariance has no materially negative eigenvalue
-#    and that both GMVP and tangency weights sum to one.
-# 3. Compare GMVP volatility against the baseline slider values.
-# 4. Explain why projection makes the calculation admissible but does not make
-#    the raw economic assumptions plausible.
-#
-
-# %% [markdown] tags=["solution"]
-# ```{dropdown} Suggested answer rubric
-# A complete answer reports eigenvalues and volatility with units, verifies
-# full-investment constraints, and distinguishes a numerical PSD repair from an
-# empirically defensible correlation model.
-# ```
-
 # %% [markdown]
 # ## Handoff
 #

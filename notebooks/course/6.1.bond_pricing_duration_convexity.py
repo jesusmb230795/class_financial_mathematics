@@ -187,28 +187,6 @@ scenario
 # - Convexity improves the approximation but still assumes a simplified yield-shift structure.
 # - Bond valuation results depend on day-count, compounding, settlement, and cash-flow convention choices.
 
-# %% [markdown] tags=["exercise"]
-# ## Checkpoint exercise
-#
-# Reprice the five-year 8% coupon bond at nominal annual yields of 5%, 7%, and 9%,
-# each convertible semiannually.
-#
-# 1. Report price, Macaulay duration, modified duration, and convexity at each
-#    yield.
-# 2. For a +200 basis-point shock from 7%, compare exact price with duration-only
-#    and duration-convexity approximations and report both errors in price points.
-# 3. Verify that solving YTM from the 7% case recovers 7% within numerical
-#    tolerance.
-# 4. Explain why the convexity correction improves the large-shock approximation.
-#
-
-# %% [markdown] tags=["solution"]
-# ```{dropdown} Suggested answer rubric
-# A complete answer labels the nominal semiannual convention, reports all prices
-# per 100 face value and durations in years, verifies the YTM roundtrip, and
-# quantifies the approximation improvement.
-# ```
-
 # %% [markdown]
 # ## Handoff
 #

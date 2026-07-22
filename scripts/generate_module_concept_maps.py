@@ -85,6 +85,15 @@ class FlowSpec:
     closing_note: str = "Follow the arrows from evidence to action."
 
 
+@dataclass(frozen=True)
+class WaterfallChange:
+    """One signed adjustment in a reconciliation waterfall."""
+
+    label: str
+    amount: float
+    accent: str
+
+
 def blend_with_background(color: str, strength: float = 0.10) -> str:
     """Return a quiet tint of a palette color on the book background."""
 
@@ -101,7 +110,19 @@ def blend_with_background(color: str, strength: float = 0.10) -> str:
     return to_hex(blended)
 
 
-def new_canvas(title: str, subtitle: str) -> tuple[Figure, Axes]:
+def new_canvas(
+    title: str,
+    subtitle: str,
+    *,
+    eyebrow: str = "MODULE CONCEPT MAP",
+    eyebrow_size: float = 11,
+    eyebrow_y: float = 0.955,
+    title_size: float = 27,
+    title_y: float = 0.905,
+    subtitle_size: float = 14,
+    subtitle_y: float = 0.848,
+    divider_y: float = 0.805,
+) -> tuple[Figure, Axes]:
     """Create the shared 16:9 canvas and title block."""
 
     figure, axis = plt.subplots(figsize=FIGURE_SIZE, dpi=EXPORT_DPI)
@@ -114,10 +135,10 @@ def new_canvas(title: str, subtitle: str) -> tuple[Figure, Axes]:
 
     axis.text(
         0.07,
-        0.955,
-        "MODULE CONCEPT MAP",
+        eyebrow_y,
+        eyebrow,
         color=MUTED_BLUE,
-        fontsize=11,
+        fontsize=eyebrow_size,
         fontweight="bold",
         ha="left",
         va="top",
@@ -125,10 +146,10 @@ def new_canvas(title: str, subtitle: str) -> tuple[Figure, Axes]:
     )
     axis.text(
         0.07,
-        0.905,
+        title_y,
         title,
         color=INK,
-        fontsize=27,
+        fontsize=title_size,
         fontweight="bold",
         ha="left",
         va="center",
@@ -136,17 +157,17 @@ def new_canvas(title: str, subtitle: str) -> tuple[Figure, Axes]:
     )
     axis.text(
         0.07,
-        0.848,
+        subtitle_y,
         subtitle,
         color=INK,
-        fontsize=14,
+        fontsize=subtitle_size,
         ha="left",
         va="center",
         transform=axis.transAxes,
     )
     axis.plot(
         [0.07, 0.93],
-        [0.805, 0.805],
+        [divider_y, divider_y],
         color=SOFT_GRID,
         linewidth=1.5,
         transform=axis.transAxes,
@@ -162,6 +183,9 @@ def add_box(
     *,
     step: int | None = None,
     title_size: float | None = None,
+    detail_size: float | None = None,
+    detail_weight: str = "normal",
+    text_alignment: str = "left",
 ) -> None:
     """Draw a labeled concept box with an optional sequence marker."""
 
@@ -217,6 +241,11 @@ def add_box(
 
     if title_size is None:
         title_size = 15 if width <= 0.17 else 17
+    detail_x = x + 0.032
+    if text_alignment == "center":
+        text_x = x + width / 2
+        detail_x = text_x
+
     axis.text(
         text_x,
         y + height * 0.62,
@@ -224,20 +253,25 @@ def add_box(
         color=INK,
         fontsize=title_size,
         fontweight="bold",
-        ha="left",
+        ha=text_alignment,
         va="center",
+        multialignment=text_alignment,
         linespacing=1.05,
         zorder=5,
         transform=axis.transAxes,
     )
+    if detail_size is None:
+        detail_size = 11.5 if width >= 0.17 else 10.5
     axis.text(
-        x + 0.032,
+        detail_x,
         y + height * 0.25,
         node.detail,
         color=INK,
-        fontsize=11.5 if width >= 0.17 else 10.5,
-        ha="left",
+        fontsize=detail_size,
+        fontweight=detail_weight,
+        ha=text_alignment,
         va="center",
+        multialignment=text_alignment,
         linespacing=1.15,
         zorder=5,
         transform=axis.transAxes,
@@ -252,6 +286,8 @@ def add_arrow(
     color: str = MUTED_BLUE,
     curve: float = 0.0,
     mutation_scale: float = 18,
+    linewidth: float = 2.0,
+    linestyle: str | tuple[float, tuple[float, ...]] = "solid",
     shrink: float = 8,
     zorder: float = 1,
 ) -> None:
@@ -262,7 +298,8 @@ def add_arrow(
         end,
         arrowstyle="-|>",
         mutation_scale=mutation_scale,
-        linewidth=2.0,
+        linewidth=linewidth,
+        linestyle=linestyle,
         color=color,
         shrinkA=shrink,
         shrinkB=shrink,
@@ -278,8 +315,11 @@ def connect_boxes(
     first: BoxPlacement,
     second: BoxPlacement,
     *,
+    color: str = MUTED_BLUE,
     curve: float = 0.0,
     mutation_scale: float = 18,
+    linewidth: float = 2.0,
+    linestyle: str | tuple[float, tuple[float, ...]] = "solid",
     shrink: float = 8,
     zorder: float = 1,
 ) -> None:
@@ -298,14 +338,25 @@ def connect_boxes(
         axis,
         first.anchor(start_side),
         second.anchor(end_side),
+        color=color,
         curve=curve,
         mutation_scale=mutation_scale,
+        linewidth=linewidth,
+        linestyle=linestyle,
         shrink=shrink,
         zorder=zorder,
     )
 
 
-def add_lane_label(axis: Axes, y: float, label: str, color: str) -> None:
+def add_lane_label(
+    axis: Axes,
+    y: float,
+    label: str,
+    color: str,
+    *,
+    font_size: float = 10.5,
+    line_start: float = 0.29,
+) -> None:
     """Label one conceptual lane without adding another panel."""
 
     axis.text(
@@ -313,14 +364,14 @@ def add_lane_label(axis: Axes, y: float, label: str, color: str) -> None:
         y,
         label,
         color=INK,
-        fontsize=10.5,
+        fontsize=font_size,
         fontweight="bold",
         ha="left",
         va="center",
         transform=axis.transAxes,
     )
     axis.plot(
-        [0.29, 0.93],
+        [line_start, 0.93],
         [y, y],
         color=blend_with_background(color, 0.35),
         linewidth=1.4,
@@ -335,20 +386,11 @@ def flow_positions(count: int) -> list[BoxPlacement]:
         top = [BoxPlacement(x, 0.52, 0.26, 0.21) for x in (0.07, 0.37, 0.67)]
         bottom = [BoxPlacement(x, 0.18, 0.26, 0.21) for x in (0.67, 0.37, 0.07)]
     elif count == 7:
-        top = [
-            BoxPlacement(x, 0.52, 0.17, 0.21)
-            for x in (0.07, 0.295, 0.52, 0.745)
-        ]
+        top = [BoxPlacement(x, 0.52, 0.17, 0.21) for x in (0.07, 0.295, 0.52, 0.745)]
         bottom = [BoxPlacement(x, 0.18, 0.245, 0.21) for x in (0.67, 0.37, 0.07)]
     elif count == 8:
-        top = [
-            BoxPlacement(x, 0.52, 0.17, 0.21)
-            for x in (0.07, 0.295, 0.52, 0.745)
-        ]
-        bottom = [
-            BoxPlacement(x, 0.18, 0.17, 0.21)
-            for x in (0.745, 0.52, 0.295, 0.07)
-        ]
+        top = [BoxPlacement(x, 0.52, 0.17, 0.21) for x in (0.07, 0.295, 0.52, 0.745)]
+        bottom = [BoxPlacement(x, 0.18, 0.17, 0.21) for x in (0.745, 0.52, 0.295, 0.07)]
     else:
         raise ValueError("Flow maps support six, seven, or eight nodes.")
     return top + bottom
@@ -396,69 +438,105 @@ def render_flow(spec: FlowSpec) -> Figure:
     return figure
 
 
-def render_m4_three_statement_model() -> Figure:
-    """Render evidence states and the four linked modeling surfaces."""
+def render_m2_time_series_bridge() -> Figure:
+    """Separate the modeling spine from non-mandatory market context."""
 
     figure, axis = new_canvas(
-        "Three-statement model: evidence states and reconciliation",
-        "Move reported evidence through controlled adjustments, then keep every forecast surface linked.",
+        "Financial time series: from prices to conditional risk",
+        "Transform observations, diagnose dependence, model conditionally, and keep market context explicit.",
     )
-    add_lane_label(axis, 0.755, "EVIDENCE STATES", MUTED_BLUE)
-    add_lane_label(axis, 0.445, "INTEGRATED FORECAST SURFACES", TEAL)
-
-    evidence_nodes = (
-        ConceptNode("Reported", "source values · disclosures", MUTED_BLUE),
-        ConceptNode("Reclassified", "consistent analytical view", AMBER),
-        ConceptNode("Normalized", "recurring economics", CORAL),
-        ConceptNode("Forecast", "drivers · timing · scenarios", TEAL),
-    )
-    surface_nodes = (
-        ConceptNode("Income statement", "earnings flow", TEAL),
-        ConceptNode("Balance sheet", "stocks · funding", MUTED_BLUE),
-        ConceptNode("Cash flow", "cash bridge", AMBER),
-        ConceptNode("Equity", "retained value · claims", CORAL),
-    )
-    evidence_positions = [
-        BoxPlacement(x, 0.51, 0.145, 0.18)
-        for x in (0.055, 0.235, 0.415, 0.595)
-    ]
-    surface_positions = [
-        BoxPlacement(x, 0.17, 0.145, 0.18)
-        for x in (0.055, 0.235, 0.415, 0.595)
-    ]
-    checks = BoxPlacement(0.79, 0.285, 0.15, 0.28)
-
-    for first, second in zip(evidence_positions, evidence_positions[1:]):
-        connect_boxes(axis, first, second)
-    for first, second in zip(surface_positions, surface_positions[1:]):
-        connect_boxes(axis, first, second)
-    add_arrow(axis, evidence_positions[-1].anchor("right"), checks.anchor("left"), curve=0.10)
-    add_arrow(axis, surface_positions[-1].anchor("right"), checks.anchor("left"), curve=-0.10)
-
-    for step, (node, placement) in enumerate(
-        zip(evidence_nodes, evidence_positions, strict=True),
-        start=1,
-    ):
-        add_box(axis, node, placement, step=step, title_size=13.5)
-    for step, (node, placement) in enumerate(
-        zip(surface_nodes, surface_positions, strict=True),
-        start=1,
-    ):
-        add_box(axis, node, placement, step=step, title_size=13.5)
-    add_box(
+    add_lane_label(
         axis,
-        ConceptNode(
-            "Reconciliation\nchecks",
-            "balance · cash bridge\nretained earnings",
-            TEAL,
-        ),
-        checks,
-        title_size=14,
+        0.755,
+        "MODELING SPINE",
+        TEAL,
+        font_size=11,
+        line_start=0.25,
     )
+    spine_nodes = (
+        ConceptNode("Price\nlevel", "provider-dated\nobservations", TEAL),
+        ConceptNode("Return\ntransform", "simple · log", MUTED_BLUE),
+        ConceptNode("Diagnostics", "ADF · ACF/PACF\nresidual checks", AMBER),
+        ConceptNode("Mean & variance\nmodels", "ARIMA · ARCH/GARCH", CORAL),
+        ConceptNode("Forecast & risk", "evaluation · volatility\none-step VaR", TEAL),
+    )
+    spine_placements = tuple(
+        BoxPlacement(x, 0.49, width, 0.19)
+        for x, width in (
+            (0.07, 0.15),
+            (0.245, 0.15),
+            (0.42, 0.15),
+            (0.595, 0.15),
+            (0.77, 0.16),
+        )
+    )
+    for first, second in zip(spine_placements, spine_placements[1:]):
+        connect_boxes(
+            axis,
+            first,
+            second,
+            color=MUTED_BLUE,
+            mutation_scale=15,
+            linewidth=2.2,
+            shrink=12,
+            zorder=3.5,
+        )
+    for node, placement in zip(spine_nodes, spine_placements, strict=True):
+        add_box(
+            axis,
+            node,
+            placement,
+            title_size=13.5,
+            detail_size=10,
+            text_alignment="center",
+        )
+
+    add_lane_label(
+        axis,
+        0.405,
+        "MARKET CONTEXT — NOT AUTOMATIC MODEL INPUTS",
+        AMBER,
+        font_size=10.5,
+        line_start=0.43,
+    )
+    context_nodes = (
+        ConceptNode("Volume", "trading activity", AMBER),
+        ConceptNode("Liquidity", "execution conditions", AMBER),
+        ConceptNode("Interpretation & limits", "economic meaning · caveats", MUTED_BLUE),
+    )
+    context_placements = (
+        BoxPlacement(0.13, 0.155, 0.20, 0.16),
+        BoxPlacement(0.39, 0.155, 0.20, 0.16),
+        BoxPlacement(0.68, 0.155, 0.25, 0.16),
+    )
+    context_dash = (0, (4, 3))
+    for source in context_placements[:2]:
+        connect_boxes(
+            axis,
+            source,
+            context_placements[2],
+            color=AMBER,
+            curve=0.08 if source is context_placements[0] else -0.08,
+            mutation_scale=14,
+            linewidth=1.8,
+            linestyle=context_dash,
+            shrink=12,
+            zorder=3.5,
+        )
+    for node, placement in zip(context_nodes, context_placements, strict=True):
+        add_box(
+            axis,
+            node,
+            placement,
+            title_size=14,
+            detail_size=10.5,
+            text_alignment="center",
+        )
+
     axis.text(
         0.5,
-        0.08,
-        "Reported → Reclassified → Normalized → Forecast, with linked statements and equity.",
+        0.075,
+        "Volume and liquidity inform interpretation; the declared model uses them only when a lesson explicitly adds them.",
         color=MUTED_BLUE,
         fontsize=11.5,
         ha="center",
@@ -466,6 +544,498 @@ def render_m4_three_statement_model() -> Figure:
         transform=axis.transAxes,
     )
     return figure
+
+
+def render_m4_three_statement_model() -> Figure:
+    """Render evidence states and the four linked modeling surfaces."""
+
+    figure, axis = new_canvas(
+        "Three-statement model: linked evidence and checks",
+        "Advance evidence deliberately, then reconcile the linked forecast statements.",
+        eyebrow_size=18,
+        title_size=32,
+        subtitle_size=22,
+    )
+    add_lane_label(
+        axis,
+        0.755,
+        "EVIDENCE STATES",
+        MUTED_BLUE,
+        font_size=22,
+        line_start=0.31,
+    )
+    add_lane_label(
+        axis,
+        0.525,
+        "LINKED FORECAST DEPENDENCIES",
+        TEAL,
+        font_size=22,
+        line_start=0.45,
+    )
+
+    evidence_nodes = (
+        ConceptNode("Reported", "Filings · notes", MUTED_BLUE),
+        ConceptNode("Reclassified", "Consistent view", MUTED_BLUE),
+        ConceptNode("Normalized", "Recurring economics", TEAL),
+        ConceptNode("Forecast", "Drivers · timing", AMBER),
+    )
+    evidence_positions = [BoxPlacement(x, 0.575, 0.18, 0.135) for x in (0.06, 0.29, 0.52, 0.75)]
+
+    for index, (first, second) in enumerate(zip(evidence_positions, evidence_positions[1:])):
+        connect_boxes(
+            axis,
+            first,
+            second,
+            color=AMBER if index == 2 else MUTED_BLUE,
+            mutation_scale=24,
+            linewidth=3.0,
+            shrink=11,
+        )
+
+    for node, placement in zip(evidence_nodes, evidence_positions, strict=True):
+        add_box(
+            axis,
+            node,
+            placement,
+            title_size=23,
+            detail_size=21,
+        )
+
+    income = BoxPlacement(0.07, 0.215, 0.18, 0.19)
+    cash = BoxPlacement(0.33, 0.345, 0.16, 0.15)
+    equity = BoxPlacement(0.33, 0.115, 0.16, 0.15)
+    balance = BoxPlacement(0.57, 0.235, 0.16, 0.19)
+    checks = BoxPlacement(0.78, 0.235, 0.15, 0.19)
+
+    add_arrow(
+        axis,
+        income.anchor("right"),
+        cash.anchor("left"),
+        color=TEAL,
+        curve=-0.08,
+        mutation_scale=24,
+        linewidth=3.0,
+        shrink=10,
+    )
+    add_arrow(
+        axis,
+        income.anchor("right"),
+        equity.anchor("left"),
+        color=MUTED_BLUE,
+        curve=0.08,
+        mutation_scale=24,
+        linewidth=3.0,
+        shrink=10,
+    )
+    add_arrow(
+        axis,
+        cash.anchor("right"),
+        balance.anchor("left"),
+        color=TEAL,
+        curve=-0.08,
+        mutation_scale=24,
+        linewidth=3.0,
+        shrink=10,
+    )
+    add_arrow(
+        axis,
+        balance.anchor("left"),
+        cash.anchor("right"),
+        color=MUTED_BLUE,
+        curve=-0.42,
+        mutation_scale=28,
+        linewidth=3.0,
+        shrink=18,
+    )
+    add_arrow(
+        axis,
+        equity.anchor("right"),
+        balance.anchor("left"),
+        color=MUTED_BLUE,
+        curve=0.08,
+        mutation_scale=24,
+        linewidth=3.0,
+        shrink=10,
+    )
+    add_arrow(
+        axis,
+        balance.anchor("right"),
+        checks.anchor("left"),
+        color=MUTED_BLUE,
+        mutation_scale=24,
+        linewidth=3.0,
+        shrink=10,
+    )
+
+    surface_nodes = (
+        (ConceptNode("Income", "Earnings flow", TEAL), income),
+        (ConceptNode("Cash", "Cash bridge", TEAL), cash),
+        (ConceptNode("Equity", "Retained claims", MUTED_BLUE), equity),
+        (
+            ConceptNode("Balance", "Schedules → cash\nClosing stocks", MUTED_BLUE),
+            balance,
+        ),
+        (ConceptNode("Checks", "BS diff. = 0\nCash diff. = 0", MUTED_BLUE), checks),
+    )
+    for node, placement in surface_nodes:
+        add_box(
+            axis,
+            node,
+            placement,
+            title_size=23,
+            detail_size=20,
+        )
+
+    axis.text(
+        checks.x + checks.width / 2,
+        0.195,
+        "Break → review",
+        color=CORAL,
+        fontsize=22,
+        fontweight="bold",
+        ha="center",
+        va="center",
+        transform=axis.transAxes,
+    )
+    axis.text(
+        0.5,
+        0.06,
+        "Income → Cash + Equity  |  Balance schedules → Cash  |  Cash + Equity → Balance → Checks",
+        color=MUTED_BLUE,
+        fontsize=19,
+        ha="center",
+        va="center",
+        transform=axis.transAxes,
+    )
+    return figure
+
+
+def render_m4_roe_roic_driver_map() -> Figure:
+    """Render separate ROE and ROIC return-driver lanes."""
+
+    figure, axis = new_canvas(
+        "ROE and ROIC: different return perimeters",
+        "Separate common-equity leverage from after-tax operating capital efficiency.",
+        eyebrow_size=18,
+        eyebrow_y=0.94,
+        title_size=32,
+        title_y=0.875,
+        subtitle_size=22,
+        subtitle_y=0.81,
+        divider_y=0.755,
+    )
+    add_lane_label(
+        axis,
+        0.705,
+        "ROE · COMMON EQUITY",
+        AMBER,
+        font_size=22,
+        line_start=0.39,
+    )
+    add_lane_label(
+        axis,
+        0.37,
+        "ROIC · INVESTED CAPITAL",
+        TEAL,
+        font_size=22,
+        line_start=0.43,
+    )
+
+    roe_nodes = (
+        (
+            ConceptNode("Net margin", "9.00%", TEAL),
+            BoxPlacement(0.07, 0.45, 0.17, 0.18),
+        ),
+        (
+            ConceptNode("Asset turnover", "1.307x", TEAL),
+            BoxPlacement(0.30, 0.45, 0.17, 0.18),
+        ),
+        (
+            ConceptNode("Equity multiplier", "1.811x", MUTED_BLUE),
+            BoxPlacement(0.53, 0.45, 0.17, 0.18),
+        ),
+        (
+            ConceptNode("ROE", "21.30%", AMBER),
+            BoxPlacement(0.77, 0.45, 0.16, 0.18),
+        ),
+    )
+    roic_nodes = (
+        (
+            ConceptNode("After-tax operating\nmargin", "11.25%", TEAL),
+            BoxPlacement(0.07, 0.115, 0.27, 0.18),
+        ),
+        (
+            ConceptNode("Capital turnover", "1.688x", MUTED_BLUE),
+            BoxPlacement(0.43, 0.115, 0.24, 0.18),
+        ),
+        (
+            ConceptNode("ROIC", "18.99%", TEAL),
+            BoxPlacement(0.77, 0.115, 0.16, 0.18),
+        ),
+    )
+
+    for node, placement in (*roe_nodes, *roic_nodes):
+        add_box(
+            axis,
+            node,
+            placement,
+            title_size=22,
+            detail_size=29,
+            detail_weight="bold",
+            text_alignment="center",
+        )
+
+    for x, operator, color, y in (
+        (0.27, "×", TEAL, 0.54),
+        (0.50, "×", MUTED_BLUE, 0.54),
+        (0.735, "=", AMBER, 0.54),
+        (0.385, "×", TEAL, 0.205),
+        (0.72, "=", MUTED_BLUE, 0.205),
+    ):
+        axis.text(
+            x,
+            y,
+            operator,
+            color=color,
+            fontsize=31,
+            fontweight="bold",
+            ha="center",
+            va="center",
+            transform=axis.transAxes,
+        )
+
+    axis.text(
+        0.5,
+        0.045,
+        "ROE includes financial leverage; ROIC measures after-tax operating return on invested capital.",
+        color=MUTED_BLUE,
+        fontsize=21,
+        ha="center",
+        va="center",
+        transform=axis.transAxes,
+    )
+    return figure
+
+
+def format_waterfall_amount(value: float, decimals: int, *, signed: bool) -> str:
+    """Format one waterfall amount with an explicit sign when requested."""
+
+    sign = "+" if signed else ""
+    return f"{value:{sign},.{decimals}f}"
+
+
+def render_reconciliation_waterfall(
+    *,
+    title: str,
+    subtitle: str,
+    starting_label: str,
+    starting_value: float,
+    starting_accent: str,
+    changes: tuple[WaterfallChange, ...],
+    ending_label: str,
+    ending_value: float,
+    ending_accent: str,
+    decimals: int,
+    y_upper: float,
+    y_ticks: Sequence[float],
+    x_label_size: float,
+    footer: str,
+    eyebrow_y: float = 0.955,
+    title_y: float = 0.905,
+    subtitle_y: float = 0.848,
+    divider_y: float = 0.805,
+    plot_top: float = 0.73,
+    starting_value_inside: bool = False,
+) -> Figure:
+    """Render a signed waterfall with an independently checked ending total."""
+
+    computed_ending = starting_value + sum(change.amount for change in changes)
+    if not math.isclose(computed_ending, ending_value, rel_tol=0, abs_tol=1e-9):
+        raise ValueError(
+            f"Waterfall does not reconcile: computed {computed_ending}, expected {ending_value}."
+        )
+
+    figure, axis = new_canvas(
+        title,
+        subtitle,
+        eyebrow="MODULE 4 RECONCILIATION",
+        eyebrow_size=18,
+        eyebrow_y=eyebrow_y,
+        title_size=32,
+        title_y=title_y,
+        subtitle_size=22,
+        subtitle_y=subtitle_y,
+        divider_y=divider_y,
+    )
+    plot = figure.add_axes([0.10, 0.23, 0.82, plot_top - 0.23])
+    plot.set_facecolor(BACKGROUND)
+    plot.set_axisbelow(True)
+    plot.grid(axis="y", color=SOFT_GRID, linewidth=1.2, alpha=0.75)
+    plot.spines[["top", "right"]].set_visible(False)
+    plot.spines[["left", "bottom"]].set_color(SOFT_GRID)
+    plot.spines[["left", "bottom"]].set_linewidth(1.4)
+
+    labels = [starting_label, *(change.label for change in changes), ending_label]
+    accents = [starting_accent, *(change.accent for change in changes), ending_accent]
+    bottoms = [0.0]
+    heights = [starting_value]
+    display_values = [starting_value]
+    signed_values = [False]
+    running_total = starting_value
+    connector_levels = [running_total]
+
+    for change in changes:
+        next_total = running_total + change.amount
+        bottoms.append(min(running_total, next_total))
+        heights.append(abs(change.amount))
+        display_values.append(change.amount)
+        signed_values.append(True)
+        running_total = next_total
+        connector_levels.append(running_total)
+
+    bottoms.append(0.0)
+    heights.append(ending_value)
+    display_values.append(ending_value)
+    signed_values.append(False)
+
+    x_positions = list(range(len(labels)))
+    bar_width = 0.62
+    plot.bar(
+        x_positions,
+        heights,
+        bottom=bottoms,
+        width=bar_width,
+        color=[blend_with_background(accent, 0.28) for accent in accents],
+        edgecolor=accents,
+        linewidth=2.4,
+        zorder=3,
+    )
+
+    for index, level in enumerate(connector_levels):
+        plot.plot(
+            [index + bar_width / 2, index + 1 - bar_width / 2],
+            [level, level],
+            color=MUTED_BLUE,
+            linewidth=1.8,
+            zorder=2,
+        )
+
+    label_offset = y_upper * 0.025
+    for bar_index, (x, bottom, height, value, is_signed) in enumerate(
+        zip(
+            x_positions,
+            bottoms,
+            heights,
+            display_values,
+            signed_values,
+            strict=True,
+        )
+    ):
+        if bar_index == 0 and starting_value_inside:
+            label_y = bottom + height * 0.55
+            vertical_alignment = "center"
+        elif is_signed and value < 0:
+            label_y = bottom - label_offset
+            vertical_alignment = "top"
+        else:
+            label_y = bottom + height + label_offset
+            vertical_alignment = "bottom"
+        plot.text(
+            x,
+            label_y,
+            format_waterfall_amount(value, decimals, signed=is_signed),
+            color=INK,
+            fontsize=26,
+            fontweight="bold",
+            ha="center",
+            va=vertical_alignment,
+            zorder=4,
+        )
+
+    plot.set_xlim(-0.65, len(labels) - 0.35)
+    plot.set_ylim(0, y_upper)
+    plot.set_yticks(y_ticks)
+    plot.tick_params(axis="y", colors=INK, labelsize=20, length=0, pad=8)
+    plot.set_ylabel("USD millions", color=INK, fontsize=22, labelpad=16)
+    plot.set_xticks(x_positions)
+    plot.set_xticklabels(
+        labels,
+        color=INK,
+        fontsize=x_label_size,
+        fontweight="bold",
+    )
+    plot.tick_params(axis="x", colors=INK, length=0, pad=15)
+    for label in plot.get_xticklabels():
+        label.set_linespacing(1.12)
+
+    axis.text(
+        0.5,
+        0.06,
+        footer,
+        color=MUTED_BLUE,
+        fontsize=22,
+        ha="center",
+        va="center",
+        transform=axis.transAxes,
+    )
+    return figure
+
+
+def render_m4_normalized_ebit_bridge() -> Figure:
+    """Render the signed pretax bridge from reported to normalized EBIT."""
+
+    return render_reconciliation_waterfall(
+        title="Normalized EBIT: signed adjustment bridge",
+        subtitle="Bridge reported operating profit to recurring economics with signed pretax adjustments.",
+        starting_label="Reported\nEBIT",
+        starting_value=120,
+        starting_accent=MUTED_BLUE,
+        changes=(
+            WaterfallChange("Plant\nclosure\nadd-back", 18, TEAL),
+            WaterfallChange("Land-sale\ngain removed", -10, CORAL),
+            WaterfallChange("Software cost\nrecognized", -6, CORAL),
+        ),
+        ending_label="Normalized\nEBIT",
+        ending_value=122,
+        ending_accent=TEAL,
+        decimals=0,
+        y_upper=165,
+        y_ticks=(0, 40, 80, 120, 160),
+        x_label_size=22,
+        footer="Stock compensation: 0 adjustment — it remains in operating expense.",
+    )
+
+
+def render_m4_forecast_cash_reconciliation() -> Figure:
+    """Render the forecast cash-flow reconciliation to ending cash."""
+
+    return render_reconciliation_waterfall(
+        title="Forecast cash: beginning-to-ending reconciliation",
+        subtitle="Reconcile beginning cash through operating, investing, and financing cash flows.",
+        starting_label="Beginning\ncash",
+        starting_value=60,
+        starting_accent=MUTED_BLUE,
+        changes=(
+            WaterfallChange("Operating\ncash\nflow", 146.05, TEAL),
+            WaterfallChange("Capital\nspending", -70, CORAL),
+            WaterfallChange("Debt\nrepayment", -20, CORAL),
+            WaterfallChange("Dividends\npaid", -30, CORAL),
+        ),
+        ending_label="Ending\ncash",
+        ending_value=86.05,
+        ending_accent=MUTED_BLUE,
+        decimals=2,
+        y_upper=230,
+        y_ticks=(0, 50, 100, 150, 200),
+        x_label_size=22,
+        footer="60.00 + 146.05 − 70.00 − 20.00 − 30.00 = 86.05",
+        eyebrow_y=0.94,
+        title_y=0.875,
+        subtitle_y=0.81,
+        divider_y=0.755,
+        plot_top=0.71,
+        starting_value_inside=True,
+    )
 
 
 def render_m5_corporate_valuation() -> Figure:
@@ -543,14 +1113,8 @@ def render_m5_corporate_valuation() -> Figure:
         ConceptNode("Equity value", "value attributable\nto owners", MUTED_BLUE),
         ConceptNode("Thesis ·\nmonitoring", "risks · catalysts · triggers", AMBER),
     )
-    firm_positions = [
-        BoxPlacement(x, 0.45, 0.14, 0.17)
-        for x in (0.12, 0.33, 0.54, 0.75)
-    ]
-    equity_positions = [
-        BoxPlacement(x, 0.15, 0.14, 0.17)
-        for x in (0.12, 0.33, 0.54, 0.75)
-    ]
+    firm_positions = [BoxPlacement(x, 0.45, 0.14, 0.17) for x in (0.12, 0.33, 0.54, 0.75)]
+    equity_positions = [BoxPlacement(x, 0.15, 0.14, 0.17) for x in (0.12, 0.33, 0.54, 0.75)]
 
     split_x = band_labels[1][2].x + band_labels[1][2].width / 2
     axis.plot(
@@ -694,8 +1258,7 @@ def render_m6_term_structure() -> Figure:
         ConceptNode("Short-rate model", "calibration · simulation", MUTED_BLUE),
     )
     curve_positions = [
-        BoxPlacement(0.07 + index * 0.147, 0.51, 0.125, 0.18)
-        for index in range(len(curve_nodes))
+        BoxPlacement(0.07 + index * 0.147, 0.51, 0.125, 0.18) for index in range(len(curve_nodes))
     ]
     panel_nodes = (
         ConceptNode("Rate panel", "mixed instruments", MUTED_BLUE),
@@ -703,10 +1266,7 @@ def render_m6_term_structure() -> Figure:
         ConceptNode("PCA", "statistical directions", TEAL),
         ConceptNode("PC1 · PC2 · PC3", "do not rename by shape", CORAL),
     )
-    panel_positions = [
-        BoxPlacement(x, 0.17, 0.16, 0.17)
-        for x in (0.10, 0.32, 0.54, 0.76)
-    ]
+    panel_positions = [BoxPlacement(x, 0.17, 0.16, 0.17) for x in (0.10, 0.32, 0.54, 0.76)]
 
     for first, second in zip(curve_positions, curve_positions[1:]):
         connect_boxes(axis, first, second)
@@ -748,10 +1308,7 @@ def add_frontier_inset(figure: Figure) -> None:
     inset.set_ylim(0, 1)
 
     feasible_x = [0.18 + 0.055 * index for index in range(12)]
-    feasible_y = [
-        0.20 + 0.032 * index + 0.075 * math.sin(index * 1.7)
-        for index in range(12)
-    ]
+    feasible_y = [0.20 + 0.032 * index + 0.075 * math.sin(index * 1.7) for index in range(12)]
     inset.scatter(feasible_x, feasible_y, s=18, color=SOFT_GRID, zorder=1)
     frontier_x = [0.26, 0.34, 0.43, 0.53, 0.64, 0.76, 0.88]
     frontier_y = [0.28, 0.39, 0.49, 0.59, 0.68, 0.76, 0.83]
@@ -895,20 +1452,6 @@ def render_m10_capstone() -> Figure:
 
 
 FLOW_SPECS: dict[str, FlowSpec] = {
-    "m2-price-return-volume-volatility-bridge": FlowSpec(
-        title="Financial time series: from prices to conditional risk",
-        subtitle="Transform observations carefully, add market context, diagnose dependence, then model volatility.",
-        nodes=(
-            ConceptNode("Price", "ordered market observations", TEAL),
-            ConceptNode("Return", "simple · log", MUTED_BLUE),
-            ConceptNode("Volume", "trading activity context", AMBER),
-            ConceptNode("Liquidity", "interpret price movement", AMBER),
-            ConceptNode("Volatility clusters", "quiet and turbulent periods", CORAL),
-            ConceptNode("Diagnostics", "ACF · PACF · residuals", MUTED_BLUE),
-            ConceptNode("ARCH · GARCH", "conditional variance model", TEAL),
-        ),
-        closing_note="Volume and liquidity add context; they are not automatic model inputs.",
-    ),
     "m7-option-payoff-greeks-map": FlowSpec(
         title="Derivatives pricing, hedging, and governance",
         subtitle="Move from contract exposure to model sensitivities, hedge execution, residual P&L, and limits.",
@@ -957,16 +1500,15 @@ def render_flow_asset(asset_id: str) -> Figure:
 
 
 RENDERERS: dict[str, Callable[[], Figure]] = {
-    "m2-price-return-volume-volatility-bridge": lambda: render_flow_asset(
-        "m2-price-return-volume-volatility-bridge"
-    ),
+    "m2-price-return-volume-volatility-bridge": render_m2_time_series_bridge,
     "m4-three-statement-evidence-model-map": render_m4_three_statement_model,
+    "m4-roe-roic-driver-map": render_m4_roe_roic_driver_map,
+    "m4-normalized-ebit-bridge": render_m4_normalized_ebit_bridge,
+    "m4-forecast-cash-reconciliation": render_m4_forecast_cash_reconciliation,
     "m5-corporate-value-creation-valuation-map": render_m5_corporate_valuation,
     "m6-fixed-income-cash-flow-duration-map": render_m6_fixed_income,
     "m6-yield-curve-factor-scenarios": render_m6_term_structure,
-    "m7-option-payoff-greeks-map": lambda: render_flow_asset(
-        "m7-option-payoff-greeks-map"
-    ),
+    "m7-option-payoff-greeks-map": lambda: render_flow_asset("m7-option-payoff-greeks-map"),
     "m8-alternatives-asset-vehicle-strategy-map": lambda: render_flow_asset(
         "m8-alternatives-asset-vehicle-strategy-map"
     ),
@@ -1046,10 +1588,7 @@ def main() -> int:
     for asset_id in selected_asset_ids(args.asset, args.all):
         output = OUTPUT_DIR / f"{asset_id}.png"
         save_rgb(RENDERERS[asset_id](), output)
-        print(
-            f"Wrote {output.relative_to(ROOT)} "
-            f"({CANVAS_SIZE[0]}x{CANVAS_SIZE[1]}, RGB)"
-        )
+        print(f"Wrote {output.relative_to(ROOT)} ({CANVAS_SIZE[0]}x{CANVAS_SIZE[1]}, RGB)")
     return 0
 
 

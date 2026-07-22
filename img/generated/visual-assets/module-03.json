@@ -28,6 +28,81 @@
         "Generated from code so the evidence sequence and transmission arrows remain exact.",
         "The figure is conceptual and contains no empirical forecast or fabricated market value."
       ]
+    },
+    {
+      "order": 29,
+      "id": "m3-supply-demand-identification",
+      "status": "approved",
+      "role": "lesson_diagram",
+      "target_path": "img/generated/m3-supply-demand-identification.png",
+      "aspect_ratio": "16:9",
+      "recommended_size": "1600x900",
+      "alt_text": "Two schematic supply-and-demand panels show an inward supply shift raising price and lowering quantity, and an outward demand shift raising both price and quantity.",
+      "generator_script": "scripts/generate_module3_lesson_figures.py --asset m3-supply-demand-identification",
+      "production_method": "deterministic_matplotlib",
+      "used_by": [
+        {
+          "file": "notebooks/course/3.1.economic_foundations.md",
+          "locator": "Supply and demand identification comparison",
+          "mode": "markdown_insert",
+          "target_markdown": "../../img/generated/m3-supply-demand-identification.png"
+        }
+      ],
+      "prompt": "Do not generate this image with an image model. Generate an exact 1600x900 PNG with: uv run python scripts/generate_module3_lesson_figures.py --asset m3-supply-demand-identification.",
+      "production_notes": [
+        "The curves are schematic and contain no estimated or observed data.",
+        "Curve labels, line styles, equilibrium labels, and arrows carry the meaning in addition to color."
+      ]
+    },
+    {
+      "order": 30,
+      "id": "m3-fx-carry-break-even",
+      "status": "approved",
+      "role": "lesson_chart",
+      "target_path": "img/generated/m3-fx-carry-break-even.png",
+      "aspect_ratio": "16:9",
+      "recommended_size": "1600x900",
+      "alt_text": "The USD return on an unhedged MXN investment falls as future MXN per USD rises and crosses the 5 percent USD alternative at 17.8552 MXN per USD.",
+      "generator_script": "scripts/generate_module3_lesson_figures.py --asset m3-fx-carry-break-even",
+      "production_method": "deterministic_matplotlib",
+      "used_by": [
+        {
+          "file": "notebooks/course/3.3.currency_parity_fx.md",
+          "locator": "Unhedged carry break-even explanation",
+          "mode": "markdown_insert",
+          "target_markdown": "../../img/generated/m3-fx-carry-break-even.png"
+        }
+      ],
+      "prompt": "Do not generate this image with an image model. Generate an exact 1600x900 PNG with: uv run python scripts/generate_module3_lesson_figures.py --asset m3-fx-carry-break-even.",
+      "production_notes": [
+        "All values reproduce the lesson's 17.20 spot, 9 percent MXN rate, and 5 percent USD rate.",
+        "The chart labels the quote as MXN per USD and states that the break-even is not a forecast."
+      ]
+    },
+    {
+      "order": 31,
+      "id": "m3-scenario-valuation-bridge",
+      "status": "approved",
+      "role": "lesson_chart",
+      "target_path": "img/generated/m3-scenario-valuation-bridge.png",
+      "aspect_ratio": "16:9",
+      "recommended_size": "1600x900",
+      "alt_text": "A sequential valuation waterfall moves from 96.33 MXN to 93.58 MXN after the cash-flow change and to 91.48 MXN after the rate and risk-premium change.",
+      "generator_script": "scripts/generate_module3_lesson_figures.py --asset m3-scenario-valuation-bridge",
+      "production_method": "deterministic_matplotlib",
+      "used_by": [
+        {
+          "file": "notebooks/course/3.4.macro_scenarios_cme.md",
+          "locator": "Cash-flow-first scenario attribution",
+          "mode": "markdown_insert",
+          "target_markdown": "../../img/generated/m3-scenario-valuation-bridge.png"
+        }
+      ],
+      "prompt": "Do not generate this image with an image model. Generate an exact 1600x900 PNG with: uv run python scripts/generate_module3_lesson_figures.py --asset m3-scenario-valuation-bridge.",
+      "production_notes": [
+        "The bridge reproduces the lesson arithmetic exactly and starts level bars at zero.",
+        "The caption and source note state that sequential attribution is order-dependent and not causal."
+      ]
     }
   ]
 }

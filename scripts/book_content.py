@@ -62,15 +62,14 @@ DEBT_REQUIRED_LIST_FIELDS = (
 )
 DEBT_SCORE_FIELDS = ("impact", "urgency", "risk", "confidence", "effort")
 DEBT_PRIORITIES = {"P0", "P1", "P2", "P3"}
+FORBIDDEN_CHECKPOINT_HEADING = "## Checkpoint exercise"
 LEGACY_NOTEBOOK_PATH_PATTERNS = (
     re.compile(r"notebooks/class/"),
     re.compile(r"""["']notebooks["']\s*/\s*["']class["']"""),
 )
-GENERIC_CHECKPOINT_TEXT = "Reproduce one result that demonstrates this objective"
 PUBLISHED_LESSON_MARKERS = {
     "learning objectives": ("## Learning objectives",),
     "prerequisites": ("## Prerequisites",),
-    "practice": ("## Practice", "## Assessment", "## Checkpoint exercise"),
     "handoff": ("## Handoff", "## Next step", "## Next steps"),
 }
 
@@ -1066,12 +1065,8 @@ def _validate_lesson_semantics(plan: dict[str, Any], root: Path) -> list[str]:
                 continue
             text = source.read_text(encoding="utf-8")
             label = _display_path(source, root)
-            if GENERIC_CHECKPOINT_TEXT.casefold() in text.casefold():
-                errors.append(
-                    f"{label}: replace the generic checkpoint with a "
-                    "lesson-specific assessment"
-                )
-
+            if FORBIDDEN_CHECKPOINT_HEADING.casefold() in text.casefold():
+                errors.append(f"{label}: remove the checkpoint exercise section")
             if section == "published":
                 folded = text.casefold()
                 for marker_name, alternatives in PUBLISHED_LESSON_MARKERS.items():

@@ -33,10 +33,11 @@ simulations and explain their parameters.
 Record failure modes, model risk, data quality, sensitivity, and cases where
 the method should not be used.
 
-## Practice
+## Application or decision check (when useful)
 
-1. Add at least one interpretation or calculation task.
-2. Provide a verifiable expected output or a tagged solution in notebooks.
+Add a lesson-specific interpretation, calculation, or decision task only when
+it strengthens an objective. State the expected evidence or quality boundary;
+do not append generic checkpoint boilerplate or require a public answer key.
 
 ## Handoff
 

@@ -184,25 +184,3 @@ par_rate
 # for limits, stress tests, VaR, and Expected Shortfall. The next lesson adds
 # nonlinear European option prices and Greeks to this carry-and-discounting
 # foundation.
-
-# %% [markdown] tags=["exercise"]
-# ## Checkpoint exercise
-#
-# For a one-year forward, compare $(r,q)$ pairs of (10%, 2%), (6%, 6%), and
-# (4%, 8%) under continuous compounding.
-#
-# 1. Report forward price, forward-minus-spot, long-forward delta, and the spot
-#    hedge per unit notional.
-# 2. Shock every continuously compounded zero rate in the swap table by +1 basis
-#    point and report the change in par swap rate.
-# 3. Explain why a zero-value inception price does not imply zero market risk.
-# 4. Name the carry, curve, basis, and counterparty inputs required before the
-#    positions enter portfolio risk reports.
-#
-
-# %% [markdown] tags=["solution"]
-# ```{dropdown} Suggested answer rubric
-# A complete answer labels continuous compounding, reports prices in currency and
-# rates in basis points, uses the hedge sign correctly, and connects valuation
-# inputs to portfolio scenario P&L.
-# ```

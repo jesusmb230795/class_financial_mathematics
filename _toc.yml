@@ -91,7 +91,7 @@ parts:
       - file: notebooks/course/4.4.specialized_entities_and_consolidation
         title: Specialized Entities and Consolidation
       - file: notebooks/course/4.5.three_statement_model_and_review
-        title: Three-Statement Model and Review
+        title: Three-Statement Model and Review Memo
 
   - caption: Module 5 - Corporate Issuers and Equity Valuation
     chapters:

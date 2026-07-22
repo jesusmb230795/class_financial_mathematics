@@ -14,14 +14,14 @@
 # ---
 
 # %% [markdown]
-# # Time Series Diagnostics and Volatility Extensions
+# # Time Series Pre-model Diagnostics
 #
 # Module: Quantitative Methods and Financial Time Series
 #
 # ## Lesson summary
 #
-# This lesson is a pre-model diagnostic checkpoint for one published USD/MXN
-# FIX series. It asks whether the price level and return transformation are
+# This lesson is a pre-model diagnostic workflow for one published Banxico FIX
+# series quoted as MXN per USD. It asks whether the price level and return transformation are
 # plausible modeling targets, whether raw returns retain linear dependence,
 # whether Gaussian shape is credible, and whether squared demeaned returns show
 # conditional heteroskedasticity. Model estimation belongs to later lessons
@@ -29,19 +29,20 @@
 #
 # ## Learning objectives
 #
-# By the end of this lesson, students should be able to:
+# By the end of this lesson, readers should be able to:
 #
 # - distinguish a price-level unit-root screen from a return-level screen;
 # - read ACF and PACF plots with 95% confidence bands;
 # - label Ljung-Box on raw returns as a pre-model test;
 # - interpret Jarque-Bera and ARCH-LM without confusing their null hypotheses;
-# - distinguish expanding, rolling-window, and EWMA variance estimators;
+# - distinguish expanding and rolling sample estimators from an EWMA filter;
 # - route ARIMA, GARCH, asymmetric-volatility, and VaR work to the lesson that
 #   owns each fitted-model decision.
 #
 # ## Prerequisites
 #
-# Lesson 2.1 introduces price-to-return transformations. This page uses no
+# [Lesson 2.1](2.1.time_series_1.ipynb) introduces price-to-return
+# transformations. This page uses no
 # fitted ARIMA or GARCH residuals, so every diagnostic below must remain
 # explicitly labeled as pre-model evidence.
 
@@ -50,21 +51,22 @@
 #
 # A process $\{y_t\}$ is weakly stationary when:
 #
-# - $E[y_t]=\mu$ is constant;
+# - $\mathbb E[y_t]=\mu$ is constant;
 # - $\operatorname{Var}(y_t)=\sigma^2<\infty$ is constant;
 # - $\operatorname{Cov}(y_t,y_{t-h})=\gamma_h$ depends only on lag $h$.
 #
 # A random walk,
 #
 # $$
-# y_t=y_{t-1}+\epsilon_t,
+# y_t=y_{t-1}+\varepsilon_t,
 # $$
 #
-# has a variance that grows with time. For a strictly positive price $P_t$, the
+# where $\{\varepsilon_t\}$ is a finite-variance white-noise innovation, has a
+# variance that grows with time. For a strictly positive level $P_t$, the
 # observed-to-observed log return is
 #
 # $$
-# r_t=\log(P_t)-\log(P_{t-1}).
+# g_t=\log(P_t)-\log(P_{t-1}).
 # $$
 #
 # A transformation can make stationarity more plausible, but no single test
@@ -75,10 +77,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from IPython.display import display
+from statsmodels.tsa.stattools import acf as sample_acf
 
 from src.market_data import banxico_daily_panel
 from src.market_data_quality import log_returns
-from src.module2_visuals import build_acf_pacf_figure
+from src.market_risk import ewma_volatility
+from src.module2_visuals import build_acf_pacf_figure, build_volatility_comparison
 from src.time_series_diagnostics import (
     adf_report,
     arch_lm_report,
@@ -89,15 +93,17 @@ from src.time_series_diagnostics import (
 # %% [markdown]
 # ## Reproducible source inventory
 #
-# The dataset is the committed Banxico SIE snapshot, restricted to USD/MXN FIX
+# The dataset is the committed Banxico SIE snapshot, restricted to Banxico FIX
 # series SF43718. Selecting the series and dropping its missing rows preserves
 # only provider-published observations. There is no calendar reindexing and no
-# forward fill.
+# forward fill {cite}`banxicoSIE2025`.
 
 # %%
 ANALYSIS_START = "2021-01-01"
 ANALYSIS_END = "2026-06-05"
 DIAGNOSTIC_LEVEL = 0.05
+VOLATILITY_WINDOW = 63
+EWMA_LAMBDA = 0.94
 
 banxico_panel = banxico_daily_panel(start=ANALYSIS_START, end=ANALYSIS_END)
 series_ids = banxico_panel.attrs.get("series_ids", {})
@@ -125,12 +131,18 @@ demeaned_interval_returns_pct = (
     "demeaned_usd_mxn_fix_interval_log_return_pct"
 )
 observed_gap_days = usd_mxn_fix.index.to_series().diff().dt.days.dropna()
+snapshot_vintage = banxico_panel.attrs.get("snapshot_generated_at", "not recorded")
+source_note = (
+    "Banxico SIE SF43718; observed "
+    f"{usd_mxn_fix.index.min():%Y-%m-%d} to {usd_mxn_fix.index.max():%Y-%m-%d}; "
+    f"snapshot {snapshot_vintage}; provider-dated observations, no forward fill"
+)
 
 source_inventory = pd.DataFrame(
     [
         ("provider", "Banco de México, SIE"),
-        ("series", "SF43718 — USD/MXN FIX"),
-        ("snapshot vintage", banxico_panel.attrs.get("snapshot_generated_at", "not recorded")),
+        ("series", "SF43718 — Banxico FIX, MXN per USD"),
+        ("snapshot vintage", snapshot_vintage),
         ("observed start", usd_mxn_fix.index.min().strftime("%Y-%m-%d")),
         ("observed end", usd_mxn_fix.index.max().strftime("%Y-%m-%d")),
         ("published level observations", f"{len(usd_mxn_fix):,}"),
@@ -147,6 +159,10 @@ source_inventory = pd.DataFrame(
         ),
         ("diagnostic interval", "95% confidence level; 5% decision threshold"),
         ("observation policy", banxico_panel.attrs.get("observation_policy", "not recorded")),
+        (
+            "rights note",
+            "provenance recorded; redistribution terms require external review",
+        ),
     ],
     columns=["inventory item", "value"],
 )
@@ -166,12 +182,26 @@ source_inventory
 # present. Rejecting that null at 5% is evidence against a unit root under this
 # specification and sample; failing to reject is not proof that the series is
 # a random walk {cite}`dickey1979distribution`.
+# With a constant deterministic term, the fitted auxiliary regression is
+#
+# $$
+# \Delta y_t=a+\gamma y_{t-1}
+# +\sum_{i=1}^{k}\delta_i\Delta y_{t-i}+u_t,
+# \qquad H_0:\gamma=0.
+# $$
+#
+# The helper selects $k$ by AIC and reports the resulting lag count. The level
+# and return screens use the same deterministic-term convention, but their
+# samples differ by the initial return lost to differencing.
 
 # %%
 adf_results = pd.DataFrame(
     {
-        "USD/MXN FIX level": adf_report(usd_mxn_fix),
-        "USD/MXN FIX log return": adf_report(interval_returns_pct),
+        "Banxico FIX level (MXN per USD)": adf_report(usd_mxn_fix, regression="c"),
+        "Banxico FIX log return": adf_report(
+            interval_returns_pct,
+            regression="c",
+        ),
     }
 ).T
 adf_results["decision at 5%"] = np.where(
@@ -191,26 +221,59 @@ adf_table
 # %% [markdown]
 # ## ACF and PACF with 95% confidence bands
 #
-# The ACF summarizes total linear correlation by lag. The PACF isolates the
-# incremental linear correlation at a lag after accounting for intermediate
-# lags. The plotted bands are approximate 95% confidence bands under a
-# white-noise reference; crossing a band is a screening signal, not automatic
-# evidence for one ARIMA order.
+# The ACF at lag $h$ is
+#
+# $$
+# \rho_h=\frac{\gamma_h}{\gamma_0}.
+# $$
+#
+# The PACF at lag $h$ is the final coefficient $\phi_{hh}$ in the linear
+# projection of $g_t^{(\%)}$ on
+# $g_{t-1}^{(\%)},\ldots,g_{t-h}^{(\%)}$. It isolates the incremental linear
+# correlation at that lag after accounting for intermediate lags. The plotted
+# bands are approximate 95% confidence bands under a white-noise reference;
+# crossing a band is a screening signal, not automatic evidence for one ARIMA
+# order.
 
-# %%
+# %% mystnb={"image": {"alt": "Two vertically aligned stem plots show the ACF and PACF of Banxico FIX log-return percentage points for lags 1 through 30, with approximate 95 percent white-noise bands."}}
 acf_pacf_figure = build_acf_pacf_figure(
     interval_returns_pct,
-    title="USD/MXN FIX interval log returns: pre-model ACF and PACF",
+    title="Banxico FIX (MXN per USD): pre-model ACF and PACF",
     lags=30,
-    source=(
-        "Banxico SIE SF43718; observed "
-        f"{usd_mxn_fix.index.min():%Y-%m-%d} to {usd_mxn_fix.index.max():%Y-%m-%d}; "
-        "provider-dated observations, no forward fill"
-    ),
+    source=source_note,
     data_mode=banxico_panel.attrs.get("data_mode"),
 )
 display(acf_pacf_figure)
 plt.close(acf_pacf_figure)
+
+# %%
+acf_values = sample_acf(
+    interval_returns_pct,
+    nlags=30,
+    fft=True,
+    adjusted=False,
+)
+white_noise_acf_bound = 1.96 / np.sqrt(len(interval_returns_pct))
+acf_screen = pd.DataFrame(
+    {
+        "lag": np.arange(1, len(acf_values)),
+        "sample_acf": acf_values[1:],
+        "approximate_95pct_bound": white_noise_acf_bound,
+    }
+).set_index("lag")
+acf_screen["outside_approximate_band"] = (
+    acf_screen["sample_acf"].abs() > white_noise_acf_bound
+)
+acf_screen.loc[acf_screen["outside_approximate_band"]]
+
+# %% [markdown]
+# **Output interpretation.**
+#
+# The bounded table identifies any return-ACF lags outside the same approximate
+# white-noise reference used in the figure. Isolated crossings remain screening
+# evidence, not an ARIMA order rule; the joint Ljung-Box test below evaluates a
+# group of autocorrelations instead of selecting the most visually prominent
+# lag.
 
 # %% [markdown]
 # ## Ljung-Box on raw returns
@@ -250,13 +313,19 @@ ljung_box_raw
 # warns against unqualified Gaussian uncertainty statements; it does not by
 # itself select a mean or volatility model
 # {cite}`jarque1980efficient,tsay2010analysis`.
+# For sample skewness $S$, sample kurtosis $K$, and $n$ observations,
+#
+# $$
+# JB=n\left(\frac{S^2}{6}+\frac{(K-3)^2}{24}\right),
+# \qquad H_0:S=0\ \text{and}\ K=3.
+# $$
 
 # %%
 jarque_bera_raw = jarque_bera_report(interval_returns_pct)
 jarque_bera_table = pd.DataFrame(
     [
         {
-            "input": "raw USD/MXN FIX log returns",
+            "input": "raw Banxico FIX log returns",
             "statistic": jarque_bera_raw["statistic"],
             "p-value": jarque_bera_raw["p_value"],
             "decision at 5%": (
@@ -276,6 +345,13 @@ jarque_bera_table
 # squared innovations. Before a fitted mean model exists, demeaned returns are a
 # transparent proxy and `model_df=0`. Lesson 2.2 subsequently estimates the
 # conditional variance {cite}`engle1982autoregressive`.
+# Its auxiliary regression and LM statistic are
+#
+# $$
+# \widehat u_t^2=c+\sum_{i=1}^{k}\delta_i\widehat u_{t-i}^2+e_t,
+# \qquad LM=nR^2,
+# \qquad H_0:\delta_1=\cdots=\delta_k=0.
+# $$
 
 # %%
 arch_lm_raw = arch_lm_report(
@@ -286,7 +362,7 @@ arch_lm_raw = arch_lm_report(
 arch_lm_table = pd.DataFrame(
     [
         {
-            "input": "demeaned USD/MXN FIX log returns",
+            "input": "demeaned Banxico FIX log returns",
             "lags": int(arch_lm_raw["lags"]),
             "LM statistic": arch_lm_raw["lm_statistic"],
             "LM p-value": arch_lm_raw["lm_p_value"],
@@ -314,18 +390,22 @@ diagnostic_decisions = pd.DataFrame(
     [
         {
             "diagnostic": "ADF — level",
-            "input": "USD/MXN FIX, MXN per USD",
+            "input": "Banxico FIX, MXN per USD",
             "null hypothesis": "unit root",
-            "p-value": adf_results.loc["USD/MXN FIX level", "p_value"],
-            "decision at 5%": adf_results.loc["USD/MXN FIX level", "decision at 5%"],
+            "p-value": adf_results.loc["Banxico FIX level (MXN per USD)", "p_value"],
+            "decision at 5%": adf_results.loc[
+                "Banxico FIX level (MXN per USD)", "decision at 5%"
+            ],
             "next owner": "transformation choice on this page",
         },
         {
             "diagnostic": "ADF — return",
             "input": "log-return percentage points per FIX publication interval",
             "null hypothesis": "unit root",
-            "p-value": adf_results.loc["USD/MXN FIX log return", "p_value"],
-            "decision at 5%": adf_results.loc["USD/MXN FIX log return", "decision at 5%"],
+            "p-value": adf_results.loc["Banxico FIX log return", "p_value"],
+            "decision at 5%": adf_results.loc[
+                "Banxico FIX log return", "decision at 5%"
+            ],
             "next owner": "ARIMA candidates in Lesson 2.4",
         },
         {
@@ -357,20 +437,91 @@ diagnostic_decisions = pd.DataFrame(
 diagnostic_decisions
 
 # %% [markdown]
-# ## Three distinct sample-variance estimators
+# ## Three distinct variance estimators and filters
 #
-# These descriptive estimators summarize different information sets. They are
-# not interchangeable labels for the same formula.
+# The next-period quantities below use information available through $t-1$.
+# They summarize different information sets and are not interchangeable labels
+# for the same formula.
 #
 # | Estimator | Variance formula | Information set and boundary |
 # | --- | --- | --- |
-# | Expanding sample variance | $s_t^2=\frac{1}{t-1}\sum_{i=1}^{t}(r_i-\bar r_t)^2$ | Uses every observed return through $t$; all historical observations retain equal weight. |
-# | Rolling-window sample variance | $s_{t,w}^2=\frac{1}{w-1}\sum_{i=t-w+1}^{t}(r_i-\bar r_{t,w})^2$ | Uses the latest $w$ observed returns; the oldest observation drops out when the window advances. |
-# | EWMA variance | $\sigma_t^2=(1-\lambda)u_{t-1}^2+\lambda\sigma_{t-1}^2$ | Recursively weights demeaned innovations $u_t$; $0<\lambda<1$ controls decay and an initial variance must be declared. |
+# | Expanding sample variance | $\widehat\sigma_{t\mid t-1}^2=\frac{1}{t-2}\sum_{i=1}^{t-1}(g_i^{(\%)}-\bar g_{t-1}^{(\%)})^2$ | Uses every observed return through $t-1$; all available observations retain equal weight. |
+# | Rolling-window sample variance | $\widehat\sigma_{t\mid t-1,w}^2=\frac{1}{w-1}\sum_{i=t-w}^{t-1}(g_i^{(\%)}-\bar g_{t-1,w}^{(\%)})^2$ | Uses the latest $w$ returns through $t-1$; the oldest observation drops out when the window advances. |
+# | EWMA variance filter | $\sigma_{t\mid t-1}^2=(1-\lambda)(g_{t-1}^{(\%)})^2+\lambda\sigma_{t-1\mid t-2}^2$ | Uses a zero-mean return approximation; $0<\lambda<1$ controls decay and the initial variance is declared. |
 #
-# Expanding and rolling estimators subtract their own sample mean. EWMA uses a
-# declared innovation or demeaned-return series, so it should not be described
-# as a rolling sample variance.
+# Expanding and rolling estimators subtract their own prior-sample mean. The
+# EWMA path below uses a zero-mean return approximation and an initial variance
+# estimated from a separate 63-publication warm-up. It should not be described
+# as a rolling sample variance or as a calibrated GARCH forecast.
+
+# %%
+lagged_returns_pct = interval_returns_pct.shift(1)
+expanding_volatility_pct = lagged_returns_pct.expanding(
+    min_periods=VOLATILITY_WINDOW
+).std(ddof=1)
+rolling_volatility_pct = lagged_returns_pct.rolling(
+    VOLATILITY_WINDOW,
+    min_periods=VOLATILITY_WINDOW,
+).std(ddof=1)
+
+ewma_warmup_returns = interval_returns_pct.iloc[:VOLATILITY_WINDOW]
+ewma_filter_returns = interval_returns_pct.iloc[VOLATILITY_WINDOW:]
+ewma_filtered_tail = ewma_volatility(
+    ewma_filter_returns,
+    lambda_=EWMA_LAMBDA,
+    initial_variance=float(ewma_warmup_returns.var(ddof=1)),
+)
+ewma_volatility_pct = pd.Series(
+    np.nan,
+    index=interval_returns_pct.index,
+    name="ewma_volatility_pct",
+)
+ewma_volatility_pct.loc[ewma_filtered_tail.index] = ewma_filtered_tail
+
+volatility_estimator_paths = pd.DataFrame(
+    {
+        "Expanding through t-1": expanding_volatility_pct,
+        f"Rolling {VOLATILITY_WINDOW} through t-1": rolling_volatility_pct,
+        f"EWMA lambda={EWMA_LAMBDA:.2f}": ewma_volatility_pct,
+    },
+    index=interval_returns_pct.index,
+)
+assert volatility_estimator_paths.iloc[-1].notna().all()
+
+# %% mystnb={"image": {"alt": "Two aligned panels show Banxico FIX log returns and three prior-information volatility paths: expanding, rolling 63-publication, and EWMA with lambda 0.94."}}
+variance_estimator_figure = build_volatility_comparison(
+    interval_returns_pct,
+    volatility_estimator_paths,
+    title="Banxico FIX (MXN per USD): prior-information volatility estimates",
+    return_scale="percent",
+    volatility_scale="percent",
+    source=f"{source_note}; warm-up/window={VOLATILITY_WINDOW} publications",
+    data_mode=banxico_panel.attrs.get("data_mode"),
+)
+display(variance_estimator_figure)
+plt.close(variance_estimator_figure)
+
+# %%
+latest_volatility_estimates = volatility_estimator_paths.iloc[-1].rename(
+    "volatility_pct_per_fix_publication_interval"
+).to_frame()
+latest_volatility_estimates["target_FIX_publication"] = (
+    interval_returns_pct.index[-1].strftime("%Y-%m-%d")
+)
+latest_volatility_estimates["information_through"] = (
+    interval_returns_pct.index[-2].strftime("%Y-%m-%d")
+)
+latest_volatility_estimates
+
+# %% [markdown]
+# **Output interpretation.**
+#
+# The paths share a return sample and per-publication-interval percentage scale,
+# but they react differently because their memory rules differ. The rolling
+# path drops one observation at each step, the expanding path changes gradually,
+# and EWMA assigns geometrically declining weights. None is annualized in this
+# figure, and visual similarity is not evidence that the estimators are
+# statistically equivalent.
 
 # %% [markdown]
 # ## Bridges to fitted-model lessons
@@ -385,10 +536,11 @@ diagnostic_decisions
 # investigating.
 #
 # **GJR-GARCH and EGARCH.** Asymmetric terms require an explicit return sign.
-# Here $r_t=\Delta\log(\text{MXN per USD})$: a positive return is USD
-# appreciation or peso depreciation, while a negative return is peso
-# appreciation. A “negative-shock” indicator therefore cannot be imported from
-# the equity leverage story without translating that FX sign convention.
+# Here $g_t=\Delta\log P_t$, where $P_t$ is MXN per USD: a positive return is
+# USD appreciation or peso depreciation, while a negative return is USD
+# depreciation or peso appreciation. A “negative-shock” indicator therefore
+# cannot be imported from the equity leverage story without translating that
+# FX sign convention.
 #
 # **Dynamic VaR.** Lesson 2.5 owns heavy-tailed innovations, volatility
 # forecasting, and the positive-loss VaR sign contract. This page does not turn
@@ -406,46 +558,13 @@ diagnostic_decisions
 # | outliers and heavy tails | extreme FX moves can dominate Gaussian diagnostics |
 # | pre-model scope | raw-return evidence is not evidence about fitted residual adequacy |
 
-# %% [markdown] tags=["exercise"]
-# ## Checkpoint exercise
-#
-# 1. Use the programmatic table to report the ADF decisions for the level and
-#    return, including each null hypothesis.
-# 2. Report the 10-lag raw-return Ljung-Box and demeaned-return ARCH-LM
-#    decisions. Explain why they test different forms of dependence.
-# 3. State which lesson owns the next ARIMA, volatility-model, and VaR
-#    decisions, and translate the sign of a negative USD/MXN FIX return.
-
-# %% tags=["solution"]
-checkpoint_solution = diagnostic_decisions[
-    [
-        "diagnostic",
-        "null hypothesis",
-        "p-value",
-        "decision at 5%",
-        "next owner",
-    ]
-].copy()
-checkpoint_solution
-
-# %% tags=["solution"]
-fx_sign_solution = pd.DataFrame(
-    [
-        {
-            "return sign": "negative USD/MXN FIX log return",
-            "economic translation": "USD depreciation / peso appreciation",
-            "modeling implication": (
-                "translate the FX sign before interpreting any asymmetric-volatility term"
-            ),
-        }
-    ]
-)
-fx_sign_solution
-
 # %% [markdown]
 # ## Handoff
 #
-# Carry the return transformation and pre-model decision table into Lesson 2.4
-# for conditional-mean estimation. Carry the demeaned-return ARCH-LM evidence
-# into Lesson 2.2 for the controlled variance-model comparison, then continue
-# to Lesson 2.5 for forecast and positive-loss VaR decisions.
+# Carry the return transformation and pre-model decision table into
+# [Lesson 2.4](2.4.arima_diagnostic_workflow.ipynb) for conditional-mean
+# estimation. Carry the demeaned-return ARCH-LM evidence into
+# [Lesson 2.2](2.2.time_series_2.ipynb) for the controlled variance-model
+# comparison, then continue to
+# [Lesson 2.5](2.5.garch_volatility_risk_workflow.ipynb) for forecast and
+# positive-loss VaR decisions.

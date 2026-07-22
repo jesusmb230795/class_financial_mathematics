@@ -455,29 +455,3 @@ summary
 # carry-index convention, and quality report to the macro dashboard and final
 # case. The downstream analysis must keep synthetic carry separate from
 # observed prices and must retain the common sample window.
-
-# %% [markdown] tags=["exercise"]
-# ## Checkpoint exercise
-#
-# Prepare the pipeline acceptance report for `usd_mxn`,
-# `cetes_28d_carry`, and `udi`.
-#
-# 1. Record source, original meaning, unit, common-window coverage, missing level
-#    count, and missing log-change count for each column.
-# 2. Reproduce the first two CETES carry-index updates from the versioned rate
-#    path and the stated daily-factor formula; reconcile them with the stored values.
-# 3. Explain why the CETES carry index is a synthetic classroom reference and
-#    not an observed CETES price or total-return benchmark.
-# 4. State the calendar-alignment and forward-fill decisions that must accompany
-#    the log-change panel into the integrated case.
-#
-
-# %% [markdown] tags=["solution"]
-# ```{dropdown} Suggested answer rubric
-# A complete report traces all three columns to Banxico, labels levels and
-# synthetic transformations correctly, verifies the carry formula numerically,
-# reports coverage and missingness, and carries the 360-day/calendar-day
-# convention into the downstream case without calling the index investable. It
-# must also mark 2025-01-01 as the 28-day TIIE methodology breakpoint and
-# reconcile the first two CETES carry updates with the executed level table.
-# ```

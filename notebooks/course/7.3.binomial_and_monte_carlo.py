@@ -180,23 +180,3 @@ plt.show()
 # intervals, then compute hedge sensitivities and aggregate residual scenario P&L
 # at the portfolio level. The next lessons use market-implied volatility and an
 # interactive dashboard to expose sensitivity and calibration risk.
-
-# %% [markdown] tags=["exercise"]
-# ## Checkpoint exercise
-#
-# Price the displayed call with 25, 100, 400, and 1,600 tree steps and with Monte
-# Carlo samples of 2,500, 10,000, 40,000, and 160,000 paths.
-#
-# 1. Report each tree error relative to Black-Scholes.
-# 2. Report each Monte Carlo estimate, standard error, and 95% confidence interval.
-# 3. Verify that the risk-neutral probability remains inside $[0,1]$.
-# 4. Explain the different convergence evidence supplied by deterministic lattice
-#    error and stochastic standard error.
-#
-
-# %% [markdown] tags=["solution"]
-# ```{dropdown} Suggested answer rubric
-# A complete answer reports prices and errors in currency units, shows the
-# expected inverse-square-root standard-error pattern, validates the probability,
-# and does not interpret numerical error as portfolio market risk.
-# ```

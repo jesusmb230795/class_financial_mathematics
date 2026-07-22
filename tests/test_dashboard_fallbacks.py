@@ -238,6 +238,7 @@ def test_volatility_fallback_has_daily_units_and_deterministic_png() -> None:
         assert first.axes[1].lines[0].get_linestyle() == "--"
         assert first.axes[1].lines[1].get_color() == SEMANTIC_COLORS["primary"]
         assert first.axes[1].lines[1].get_linestyle() == "-."
+        _assert_publication_geometry(first)
         assert render_png(first) == render_png(second)
         pd.testing.assert_frame_equal(filtered, original)
     finally:

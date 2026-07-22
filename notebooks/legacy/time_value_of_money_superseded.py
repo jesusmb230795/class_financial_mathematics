@@ -210,25 +210,3 @@ pd.Series(
         "roundtrip_error_mxn": cash_flows["present_value"].sum() - stream_value,
     }
 )
-
-# %% [markdown] tags=["exercise", "legacy"]
-# ## Checkpoint exercise
-#
-# A client can invest MXN 25,000 for 18 months at an 11% quoted annual rate.
-#
-# 1. Compute future value under simple interest, monthly compounding, and
-#    continuous compounding.
-# 2. Convert the 11% nominal rate convertible monthly into effective and
-#    continuous annual equivalents, then verify both roundtrips numerically.
-# 3. Discount each future value with the same convention and report the maximum
-#    recovery error in MXN.
-# 4. Explain why comparing quotations without their compounding basis can mislead
-#    the client.
-#
-
-# %% [markdown] tags=["solution", "legacy"]
-# ```{dropdown} Suggested answer rubric
-# A complete answer reports all three future values in MXN, labels each rate
-# convention, recovers MXN 25,000 to numerical tolerance, and distinguishes a
-# quotation conversion from a change in the underlying economic return.
-# ```

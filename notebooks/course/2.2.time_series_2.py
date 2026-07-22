@@ -14,7 +14,7 @@
 # ---
 
 # %% [markdown]
-# # ARCH and GARCH Volatility Models
+# # ARCH and GARCH Model Comparison
 #
 # Module: Quantitative Methods and Financial Time Series
 #
@@ -28,34 +28,57 @@
 #
 # ## Learning objectives
 #
-# By the end of this lesson, students should be able to:
+# By the end of this lesson, readers should be able to:
 #
 # - distinguish squared-shock memory from lagged-variance memory;
-# - fit ARCH(3) and GARCH(1,1) on the same published USD/MXN FIX returns;
+# - fit ARCH(3) and GARCH(1,1) on the same calculated MXN-per-USD FIX log returns;
 # - verify convergence before interpreting a fitted model;
 # - compare information criteria and annualized conditional-volatility paths;
 # - explain why an in-sample comparison is not a forecasting claim.
 #
 # ## Prerequisites and scope
 #
-# Lesson 2.3 owns the pre-model diagnostics, and Lesson 2.4 owns conditional-mean
-# selection. On this committed SF43718 sample, its bounded search selects
-# ARIMA(0,0,0), but the 10-lag residual Ljung-Box check still rejects at 5%.
-# A constant mean is therefore a controlled assumption for isolating the two
-# variance recursions, not a validated applied mean specification. This notebook
-# does not import fitted objects from Lesson 2.4, and a zero-lag conditional mean
-# does **not** imply independent returns: ARCH and GARCH explicitly model
-# dependence in the second conditional moment.
+# [Lesson 2.3](2.3.time_series_diagnostics_and_volatility_extensions.ipynb)
+# covers the pre-model diagnostics, and
+# [Lesson 2.4](2.4.arima_diagnostic_workflow.ipynb) covers
+# conditional-mean selection. A constant mean is a controlled assumption for
+# isolating the two variance recursions, not a validated applied mean
+# specification. This notebook does not import fitted objects from Lesson 2.4;
+# readers must compare its executed mean-model evidence before treating this as
+# an aligned applied specification. A zero-lag conditional mean does **not**
+# imply independent returns: ARCH and GARCH explicitly model dependence in the
+# second conditional moment.
+
+# %% [markdown]
+# ## Notation and admissibility
+#
+# | Symbol | Meaning | Unit or condition |
+# | --- | --- | --- |
+# | $g_t^{(\%)}=100\log(P_t/P_{t-1})$ | FIX log return at publication step $t$ | percentage points |
+# | $\mu$ | constant conditional mean | percentage points per publication interval |
+# | $\varepsilon_t$ | return innovation, $g_t^{(\%)}-\mu$ | percentage points |
+# | $z_t$ | standardized innovation, $\varepsilon_t/\sigma_t$ | $\mathbb E[z_t]=0$, $\operatorname{Var}(z_t)=1$ |
+# | $\sigma_t^2$ | conditional variance given information through $t-1$ | percentage points squared |
+# | $\omega$ | variance intercept | strictly positive |
+# | $\alpha_i,\beta_j$ | shock and variance-memory coefficients | non-negative |
 
 # %% [markdown]
 # ## Model definitions
+#
+# The common constant-mean equation is
+#
+# $$
+# g_t^{(\%)}=\mu+\varepsilon_t,
+# \qquad
+# \varepsilon_t=\sigma_t z_t.
+# $$
 #
 # An ARCH($p$) model updates conditional variance from the previous $p$ squared
 # innovations:
 #
 # $$
 # \sigma_t^2
-# = \omega + \sum_{i=1}^{p}\alpha_i\epsilon_{t-i}^2.
+# = \omega + \sum_{i=1}^{p}\alpha_i\varepsilon_{t-i}^2.
 # $$
 #
 # A GARCH($p,q$) model adds $q$ lagged conditional variances:
@@ -63,8 +86,15 @@
 # $$
 # \sigma_t^2
 # = \omega
-# + \sum_{i=1}^{p}\alpha_i\epsilon_{t-i}^2
+# + \sum_{i=1}^{p}\alpha_i\varepsilon_{t-i}^2
 # + \sum_{j=1}^{q}\beta_j\sigma_{t-j}^2.
+# $$
+#
+# With unit-variance innovations, the usual finite unconditional-variance
+# condition is
+#
+# $$
+# \sum_{i=1}^{p}\alpha_i+\sum_{j=1}^{q}\beta_j<1.
 # $$
 #
 # This page follows the `arch` package convention: $p$ counts squared-shock
@@ -86,9 +116,10 @@ from src.module2_visuals import build_volatility_comparison
 # %% [markdown]
 # ## Reproducible source inventory
 #
-# The analysis uses only the dates on which Banxico published USD/MXN FIX
-# series SF43718. It does not reindex to an artificial business-day calendar
-# and does not forward-fill weekends, holidays, or missing observations.
+# The analysis uses only the dates on which Banxico published FIX series
+# SF43718, quoted as MXN per USD {cite}`banxicoSIE2025`. It does not reindex to
+# an artificial business-day calendar and does not forward-fill weekends,
+# holidays, or missing observations.
 
 # %%
 ANALYSIS_START = "2021-01-01"
@@ -97,6 +128,7 @@ ANNUALIZATION_FACTOR = 252
 
 banxico_panel = banxico_daily_panel(start=ANALYSIS_START, end=ANALYSIS_END)
 series_ids = banxico_panel.attrs.get("series_ids", {})
+snapshot_generated_at = banxico_panel.attrs.get("snapshot_generated_at")
 if series_ids.get("usd_mxn") != "SF43718":
     raise ValueError("The publication snapshot must map usd_mxn to Banxico SF43718.")
 
@@ -120,8 +152,8 @@ observed_gap_days = usd_mxn_fix.index.to_series().diff().dt.days.dropna()
 source_inventory = pd.DataFrame(
     [
         ("provider", "Banco de México, SIE"),
-        ("series", "SF43718 — USD/MXN FIX"),
-        ("snapshot vintage", banxico_panel.attrs.get("snapshot_generated_at", "not recorded")),
+        ("series", "SF43718 — Banxico FIX, MXN per USD"),
+        ("snapshot vintage", snapshot_generated_at or "not recorded"),
         ("observed start", usd_mxn_fix.index.min().strftime("%Y-%m-%d")),
         ("observed end", usd_mxn_fix.index.max().strftime("%Y-%m-%d")),
         ("published level observations", f"{len(usd_mxn_fix):,}"),
@@ -141,6 +173,10 @@ source_inventory = pd.DataFrame(
             "square-root-of-time with 252 FIX publication intervals/year",
         ),
         ("observation policy", banxico_panel.attrs.get("observation_policy", "not recorded")),
+        (
+            "rights note",
+            "provenance recorded; redistribution terms require external review",
+        ),
     ],
     columns=["inventory item", "value"],
 )
@@ -291,7 +327,7 @@ comparison_table
 # by $\sqrt{252}$ and labeled as annualized percentage points under a declared
 # square-root-of-time convention.
 
-# %%
+# %% mystnb={"image": {"alt": "Two aligned panels show Banxico FIX publication-interval log returns and annualized conditional-volatility paths from ARCH(3) and GARCH(1,1)."}}
 interval_volatility_paths = pd.concat(
     {
         "ARCH(3)": arch_result.conditional_volatility,
@@ -306,25 +342,42 @@ annualized_volatility_paths = interval_volatility_paths.mul(
 volatility_figure = build_volatility_comparison(
     interval_returns_pct,
     interval_volatility_paths,
-    title="USD/MXN FIX: ARCH(3) versus GARCH(1,1) conditional volatility",
+    title="Banxico FIX (MXN per USD): ARCH(3) versus GARCH(1,1) volatility",
     return_scale="percent",
     volatility_scale="percent",
     annualization_factor=ANNUALIZATION_FACTOR,
     source=(
         "Banxico SIE SF43718; observed "
         f"{usd_mxn_fix.index.min():%Y-%m-%d} to {usd_mxn_fix.index.max():%Y-%m-%d}; "
-        "provider-dated observations, no forward fill"
+        f"snapshot {snapshot_generated_at}; provider-dated observations, no forward fill"
     ),
     data_mode=banxico_panel.attrs.get("data_mode"),
 )
 display(volatility_figure)
 plt.close(volatility_figure)
 
+# %%
+volatility_path_summary = annualized_volatility_paths.agg(
+    ["min", "median", "max"]
+).T.rename(
+    columns={
+        "min": "minimum_annualized_volatility_pct",
+        "median": "median_annualized_volatility_pct",
+        "max": "maximum_annualized_volatility_pct",
+    }
+)
+volatility_path_summary["observations"] = annualized_volatility_paths.notna().sum()
+volatility_path_summary["unit"] = (
+    "annualized percentage points; sqrt(252) FIX intervals/year"
+)
+volatility_path_summary
+
 # %% [markdown]
-# The shared axis supports a direct path comparison. Spikes are conditional
-# standard-deviation estimates, not realized losses. Annualization is a scale
-# convention; it does not assert that volatility is constant across 252 future
-# observations.
+# The shared axis supports a direct path comparison, while the summary reports
+# each path on the same scale without relying on visual estimation. Spikes are
+# conditional standard-deviation estimates, not realized losses. Annualization
+# is a scale convention; it does not assert that volatility is constant across
+# 252 future observations.
 
 # %%
 preferred_by_aic = comparison_table["AIC"].idxmin()
@@ -363,64 +416,11 @@ model_decision
 # - A stationary variance recursion is not evidence that the exchange rate
 #   level or the return-generating process is structurally stable.
 
-# %% [markdown] tags=["exercise"]
-# ## Checkpoint exercise
-#
-# 1. Report $\sum_{i=1}^{3}\hat\alpha_i$ for ARCH(3) and
-#    $\hat\alpha_1+\hat\beta_1$ for GARCH(1,1).
-# 2. Find the observed date with the largest absolute difference between the
-#    two annualized conditional-volatility paths and report both values in
-#    annualized percentage points.
-# 3. State which model AIC and BIC prefer, then explain why that result does not
-#    establish forecasting superiority.
-
-# %% tags=["solution"]
-largest_gap_date = (
-    annualized_volatility_paths["ARCH(3)"]
-    .sub(annualized_volatility_paths["GARCH(1,1)"])
-    .abs()
-    .idxmax()
-)
-checkpoint_solution = pd.DataFrame(
-    [
-        {
-            "item": "ARCH(3) variance memory",
-            "answer": f"{arch_alpha_sum:.4f}",
-            "unit or boundary": "sum(alpha_i), dimensionless",
-        },
-        {
-            "item": "GARCH(1,1) variance memory",
-            "answer": f"{garch_alpha_plus_beta:.4f}",
-            "unit or boundary": "alpha[1] + beta[1], dimensionless",
-        },
-        {
-            "item": "largest path gap date",
-            "answer": largest_gap_date.strftime("%Y-%m-%d"),
-            "unit or boundary": "observed SF43718 publication date",
-        },
-        {
-            "item": "ARCH(3) volatility on that date",
-            "answer": f"{annualized_volatility_paths.loc[largest_gap_date, 'ARCH(3)']:.2f}",
-            "unit or boundary": "annualized percentage points",
-        },
-        {
-            "item": "GARCH(1,1) volatility on that date",
-            "answer": f"{annualized_volatility_paths.loc[largest_gap_date, 'GARCH(1,1)']:.2f}",
-            "unit or boundary": "annualized percentage points",
-        },
-        {
-            "item": "AIC / BIC result",
-            "answer": f"{preferred_by_aic} / {preferred_by_bic}",
-            "unit or boundary": "in-sample evidence only; no forecast backtest",
-        },
-    ]
-)
-checkpoint_solution
-
 # %% [markdown]
 # ## Handoff
 #
-# Lesson 2.5 extends the volatility workflow with heavy-tailed innovations,
+# [Lesson 2.5](2.5.garch_volatility_risk_workflow.ipynb) extends the volatility
+# workflow with heavy-tailed innovations,
 # forecasts, and positive-loss VaR. Carry forward the source inventory,
 # convergence guard, explicit return scale, and distinction between in-sample
 # fit and forecast evidence.

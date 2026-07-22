@@ -202,21 +202,3 @@ asset_tail_table
 # The next notebook extends this foundation from a single asset to portfolio
 # semideviation, Sortino ratio, guarded Cornish-Fisher VaR, and EWMA volatility
 # weighting.
-
-# %% [markdown] tags=["exercise"]
-# ## Checkpoint exercise
-#
-# 1. For USD/MXN, report the 1% raw return quantile, historical VaR, and
-#    Expected Shortfall in decimal daily-return units.
-# 2. Verify numerically that the plotted VaR line in return space is the
-#    negative of the reported positive-loss threshold.
-# 3. Repeat at \(\alpha=5\%\) and explain why changing tail probability changes
-#    both the threshold and the number of observations averaged by ES.
-#
-
-# %% [markdown] tags=["solution"]
-# ```{dropdown} Suggested answer rubric
-# A complete answer preserves return and loss signs, reports both alpha levels
-# and tail observation counts, demonstrates the chart/table sign conversion,
-# and notes that empirical ES is noisy when the tail contains few observations.
-# ```

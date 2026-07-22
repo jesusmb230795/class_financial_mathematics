@@ -174,27 +174,6 @@ redington_immunization_check(
 # - DV01 and duration are local measures and do not fully capture nonlinear or nonparallel curve moves.
 # - Redington immunization is a local surplus condition, not a guarantee against all interest-rate scenarios.
 
-# %% [markdown] tags=["exercise"]
-# ## Checkpoint exercise
-#
-# Change the market price from 96.75 to 92.00 while preserving the annual cash
-# flows and effective annual compounding.
-#
-# 1. Solve both YTMs and verify each price roundtrip.
-# 2. Report price, modified duration, convexity, and DV01 for both cases.
-# 3. Under +100 and -100 basis-point shocks, compare exact, duration-only, and
-#    duration-convexity repricing errors.
-# 4. Change asset duration to 5.10 years and identify exactly which Redington
-#    condition fails.
-#
-
-# %% [markdown] tags=["solution"]
-# ```{dropdown} Suggested answer rubric
-# A complete answer verifies both price/YTM roundtrips, labels the effective
-# annual convention, reports DV01 in currency per basis point, and distinguishes
-# local immunization conditions from protection against nonparallel shocks.
-# ```
-
 # %% [markdown]
 # ## Handoff
 #

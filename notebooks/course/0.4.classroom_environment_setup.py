@@ -146,26 +146,3 @@ session_readiness
 # with classroom issue reports, then continue to Module 1's market foundations
 # and source inventory. Return to the full validation lab if the problem
 # involves helpers, snapshots, or credentials beyond this smoke test.
-
-# %% [markdown] tags=["exercise"]
-# ## Checkpoint exercise
-#
-# Use `session_readiness` and the watermark output to write a pre-class go/no-go
-# note.
-#
-# 1. List the Python version and the installed version of every classroom
-#    package.
-# 2. Identify any failed readiness row and give the command or repository path
-#    that resolves it.
-# 3. State whether the next data notebook can run offline without credentials.
-# 4. Explain what this smoke test does **not** prove compared with the full
-#    environment validation lab.
-#
-
-# %% [markdown] tags=["solution"]
-# ```{dropdown} Suggested answer rubric
-# A complete note cites the readiness table and version record, makes an
-# explicit go/no-go decision, maps failures to `uv sync` or the relevant
-# repository artifact, and recognizes that this smoke test does not re-audit
-# every helper, snapshot row count, or optional credential.
-# ```

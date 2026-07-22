@@ -7,8 +7,6 @@ same deterministic synchronizer used by ``make sync-jupytext``.
 
 from __future__ import annotations
 
-import re
-import uuid
 from pathlib import Path
 
 import nbformat
@@ -44,11 +42,6 @@ def source_text(cell: nbformat.NotebookNode) -> str:
     """Return a cell source as text."""
     source = cell.get("source", "")
     return "".join(source) if isinstance(source, list) else source
-
-
-def deterministic_cell_id(path: Path, label: str) -> str:
-    """Create a stable notebook cell identifier."""
-    return uuid.uuid5(uuid.NAMESPACE_URL, f"{path.as_posix()}:{label}").hex[:16]
 
 
 def replace_text_in_code(notebook: nbformat.NotebookNode, old: str, new: str) -> None:
@@ -186,62 +179,6 @@ def fix_known_notebook_issues(
         )
 
 
-def first_learning_objective(notebook: nbformat.NotebookNode) -> str:
-    """Extract the first declared objective for a formative checkpoint."""
-    markdown = "\n".join(
-        source_text(cell) for cell in notebook.cells if cell.cell_type == "markdown"
-    )
-    match = re.search(
-        r"## Learning objectives\s*\n(?P<body>.*?)(?=\n## |\Z)",
-        markdown,
-        flags=re.DOTALL | re.IGNORECASE,
-    )
-    if match:
-        bullet = re.search(r"^\s*[-*]\s+(.+)$", match.group("body"), re.MULTILINE)
-        if bullet:
-            return bullet.group(1).rstrip(".")
-    return "connect the principal calculation to a defensible financial interpretation"
-
-
-def add_checkpoint(
-    notebook: nbformat.NotebookNode,
-    path: Path,
-) -> None:
-    """Append one objective-linked exercise and a collapsed answer rubric."""
-    tags = {
-        tag
-        for cell in notebook.cells
-        for tag in cell.get("metadata", {}).get("tags", [])
-    }
-    if "exercise" in tags:
-        return
-
-    objective = first_learning_objective(notebook)
-    exercise = nbformat.v4.new_markdown_cell(
-        f"""## Checkpoint exercise
-
-Reproduce one result that demonstrates this objective: **{objective}**.
-
-1. Change one economically meaningful input, sample choice, or model assumption.
-2. Compare the baseline and alternative results with units.
-3. Explain the direction of the change and state one data or model limitation.
-""",
-        metadata={"tags": ["exercise"]},
-    )
-    exercise["id"] = deterministic_cell_id(path, "checkpoint-exercise")
-
-    solution = nbformat.v4.new_markdown_cell(
-        """```{dropdown} Suggested answer rubric
-A complete answer identifies the changed assumption, reports both results with
-units, explains the financial mechanism behind the difference, and names a
-limitation that would matter before using the result for a real decision.
-```""",
-        metadata={"tags": ["solution"]},
-    )
-    solution["id"] = deterministic_cell_id(path, "checkpoint-solution")
-    notebook.cells.extend([exercise, solution])
-
-
 def add_cell_tags(
     notebook: nbformat.NotebookNode,
     status: str,
@@ -292,9 +229,6 @@ def normalize_entry(entry: NotebookEntry) -> bool:
     }
 
     add_cell_tags(notebook, entry.status)
-    if entry.status != "legacy":
-        add_checkpoint(notebook, entry.path)
-
     for cell in notebook.cells:
         if cell.cell_type == "code":
             cell.execution_count = None

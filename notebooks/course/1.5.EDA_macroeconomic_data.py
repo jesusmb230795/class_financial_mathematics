@@ -259,30 +259,3 @@ plt.close(macro_eda_figure)
 # handoff to the macro dashboard. Preserve original units alongside rebased views, and do not use
 # latest-vintage macro values as if they had been known on each historical
 # observation date.
-
-# %% [markdown] tags=["exercise"]
-# ## Checkpoint exercise
-#
-# Select one rate, one index, and USD/MXN from `macro`. Retain the quote
-# convention: USD/MXN is measured as MXN per USD, so an increase denotes USD
-# appreciation and MXN depreciation.
-#
-# 1. Record each series' provider, original unit, frequency, first observation,
-#    last observation, and missing count in the common window.
-# 2. Show the economically appropriate transformation for each: percentage-
-#    point change for the rate, percent change or rebasing for the index, and
-#    percent change for USD/MXN.
-# 3. Compare the raw-level chart with the normalized chart and identify one
-#    conclusion that the raw mixed-unit view cannot support.
-# 4. State how release lags or revisions limit a historical interpretation.
-#
-
-# %% [markdown] tags=["solution"]
-# ```{dropdown} Suggested answer rubric
-# A complete response keeps levels, rates, indexes, and exchange rates
-# conceptually distinct; reports coverage and missingness; applies and labels
-# the appropriate transformation; and explains why normalized co-movement is
-# descriptive rather than causal or point-in-time evidence. Reconcile dates,
-# counts, and transformations with the executed source inventory, quality report,
-# and transformed tables; those outputs are the snapshot-specific self-check.
-# ```

@@ -825,33 +825,3 @@ insight_table
 # variable meanings, synthetic-carry convention, missing counts, and source
 # notes; the monthly macro panel remains contextual unless release-date
 # alignment is added.
-
-# %% [markdown] tags=["exercise"]
-# ## Checkpoint exercise
-#
-# Submit the integrated Mexican case as a compact evidence packet.
-#
-# 1. State the research question, common requested window, actual level-panel and
-#    monthly coverage, source files, variable units, and every transformation.
-# 2. Reconcile the inventory, storage map, quality report, log-change panel,
-#    `extreme_change_review`, `case_summary`, correlation matrix, level drawdowns, four figure blocks
-#    containing eleven analytical panels, and
-#    `insight_table`; every quantitative sentence must point to an executed
-#    output.
-# 3. Explain the \(1/360\), daily-factor carry construction and why CETES
-#    carry is a comparison reference rather than an observed-price benchmark.
-# 4. Identify one descriptive claim supported by the case, one hypothesis that
-#    needs more evidence, one prohibited causal or investment claim, and the
-#    next dataset or validation needed.
-#
-
-# %% [markdown] tags=["solution"]
-# ```{dropdown} Suggested answer rubric
-# A complete packet contains all twelve promised evidence layers, uses only the
-# Mexican scope, reconciles dates and missing counts, labels observed-interval
-# log changes, level drawdown, and downside magnitude correctly, documents the
-# synthetic CETES reference, and
-# separates supported description from hypothesis, causality, and investment
-# recommendation. It must also disclose the 2025-01-01 TIIE methodology break
-# and reconcile every quantitative sentence with an executed output.
-# ```

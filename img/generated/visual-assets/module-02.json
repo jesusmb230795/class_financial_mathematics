@@ -60,7 +60,7 @@
       "target_path": "img/generated/m2-price-return-volume-volatility-bridge.png",
       "aspect_ratio": "16:9",
       "recommended_size": "1920x1080",
-      "alt_text": "Bridge diagram linking price, return, volume, liquidity, volatility clustering, and model diagnostics in financial time series.",
+      "alt_text": "Two-lane bridge diagram. The modeling spine runs from provider-dated price levels through return transformation, diagnostics, conditional models, and forecast or risk. A separate context lane routes volume and liquidity only to interpretation and limitations.",
       "generator_script": "scripts/generate_module_concept_maps.py --asset m2-price-return-volume-volatility-bridge",
       "production_method": "deterministic_matplotlib",
       "used_by": [
@@ -77,7 +77,7 @@
         "Show volume as context for interpreting volatility, not as a model input requirement.",
         "Generate from code so every label and causal direction remains exact."
       ],
-      "prompt": "Create a 1920x1080 PNG, 16:9. Academic time-series bridge diagram for Module 2. Show a clean left-to-right flow: price series -> simple/log returns -> volume and liquidity context -> volatility clustering -> diagnostics (ACF/PACF, residual checks) -> ARCH/GARCH model. Use small schematic charts, not real data. Use teal lines for prices/returns, amber bars for volume, coral clusters for high-volatility periods, navy axes and annotations. Off-white background, 7% safe margin, no fake ticker names, no formulas beyond short labels."
+      "prompt": "Create a 1920x1080 PNG, 16:9. Academic two-lane time-series bridge for Module 2. The primary modeling spine is price level -> simple/log return transformation -> diagnostics -> ARIMA and ARCH/GARCH models -> forecast and one-step risk. A separate context lane shows volume and liquidity feeding interpretation and limitations with dashed connectors, never the model spine by default. Use teal, muted blue, amber, and coral on an off-white background with a 7% safe margin, no fake market data, and short labels only."
     }
   ]
 }

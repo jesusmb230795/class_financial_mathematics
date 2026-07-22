@@ -192,26 +192,6 @@ discount_table
 # - Parameter estimates can be unstable when maturities are sparse or concentrated.
 # - A visually good fit does not guarantee arbitrage-free dynamics or stable out-of-sample forecasts.
 
-# %% [markdown] tags=["exercise"]
-# ## Checkpoint exercise
-#
-# Increase the 10-year observed yield by 25 basis points and refit the curve.
-#
-# 1. Report the baseline and shocked $\beta_0$, $\beta_1$, $\beta_2$, and $\tau$.
-# 2. Compare the fitted 2-, 10-, and 30-year yields in basis points and identify
-#    whether the original curve is upward-sloping or inverted.
-# 3. Rebuild the annual-compounding discount table and verify that every
-#    spot-rate roundtrip error is below $10^{-12}$.
-# 4. Explain why a local quote shock can change several fitted maturities.
-#
-
-# %% [markdown] tags=["solution"]
-# ```{dropdown} Suggested answer rubric
-# A complete answer labels the original curve as inverted, reports parameter and
-# yield changes with units, verifies the annual-compounding roundtrip, and notes
-# that a parsimonious curve spreads local information across maturities.
-# ```
-
 # %% [markdown]
 # ## Handoff
 #

@@ -192,23 +192,3 @@ else:
 # Use the dashboard comparison as input to a risk memo that states the selected
 # model, rejected alternatives, backtest evidence, stress loss, liquidity
 # assumptions, limit owner, and escalation trigger.
-
-# %% [markdown] tags=["exercise"]
-# ## Checkpoint exercise
-#
-# 1. Hold lookback and lambda fixed and compare historical VaR and ES at
-#    \(\alpha=1\%\) and \(\alpha=5\%\).
-# 2. Hold alpha fixed at 1% and compare the four available VaR methods for
-#    lookbacks of 500 and 1,000 observations; record Cornish-Fisher moment
-#    diagnostics and availability for each.
-# 3. Explain separately how tail probability, sample window, and EWMA decay
-#    change the estimates, and identify which comparison is most exposed to
-#    sampling error.
-#
-
-# %% [markdown] tags=["solution"]
-# ```{dropdown} Suggested answer rubric
-# A complete answer changes one control at a time, reports non-negative daily
-# loss metrics with units, preserves the Cornish-Fisher guardrail, and
-# distinguishes quantile choice, sample choice, and volatility weighting.
-# ```

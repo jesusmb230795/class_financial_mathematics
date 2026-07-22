@@ -69,6 +69,7 @@ def _display_label(value: str) -> str:
         "cetes_28d": "CETES 28-day rate",
         "cetes_28d_carry": "CETES 28-day carry",
         "mexico_inflation": "Mexico inflation",
+        "mxn_per_usd_fix": "Banxico FIX (MXN per USD)",
         "policy_rate_carry": "Policy-rate carry",
         "tiie_28d": "TIIE 28-day rate",
         "tiie_28d_carry": "TIIE 28-day carry",
@@ -444,7 +445,7 @@ def build_volatility_dashboard_fallback(
         figure, axes = plt.subplots(
             2,
             1,
-            figsize=(10, 7),
+            figsize=(7.5, 7),
             dpi=INLINE_FIGURE_DPI,
             sharex=True,
             constrained_layout=True,
@@ -462,7 +463,6 @@ def build_volatility_dashboard_fallback(
         returns_axis.set_title("Observed returns")
         returns_axis.set_ylabel(return_axis_label.strip())
         returns_axis.yaxis.set_major_formatter(PercentFormatter(xmax=1, decimals=1))
-        returns_axis.legend(frameon=False)
 
         volatility_axis.plot(
             filtered.index,

@@ -276,26 +276,3 @@ environment_report
 # required fields are `True`, run the classroom smoke test in
 # `0.4.classroom_environment_setup`; do not start Module 1 with a failed path,
 # package, snapshot, or helper check.
-
-# %% [markdown] tags=["exercise"]
-# ## Checkpoint exercise
-#
-# Use `runtime_report`, `path_report`, `snapshot_report`, and
-# `environment_report` to prepare a reproducibility ticket for this checkout.
-#
-# 1. Record the Python version and name every required check that is `False`.
-# 2. Compare each required snapshot's observed row count with its declared row
-#    count; identify any mismatch.
-# 3. State whether the environment is ready for Module 1 and give the exact
-#    remediation command or file path for each failed check.
-# 4. Explain why missing optional credentials do not block the offline
-#    publication workflow.
-#
-
-# %% [markdown] tags=["solution"]
-# ```{dropdown} Suggested answer rubric
-# A complete ticket cites the executed report values, distinguishes required
-# checks from optional credentials, reconciles snapshot row counts with
-# `metadata.json`, and gives an actionable remediation for every failure. It
-# does not print or request secret values.
-# ```

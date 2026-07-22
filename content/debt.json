@@ -106,7 +106,7 @@
       "observed_symptom": "Financial statements, corporate and equity valuation, alternatives, and the capstone exist only as roadmap targets.",
       "potential_impact": "The published book remains structurally incomplete even when its current pages build successfully.",
       "engineering_risk": "Large content drops can bypass the intake boundary and create inconsistent terminology, citations, or navigation.",
-      "concrete_failure_mode": "A module is marked published before its overview, sequence, evidence, and assessment contract are complete.",
+      "concrete_failure_mode": "A module is marked published before its overview, sequence, evidence, and application boundary are complete.",
       "dependencies": [
         "incoming-text workflow",
         "module and lesson templates",
@@ -130,34 +130,34 @@
     },
     {
       "id": "BOOK-004",
-      "title": "Replace generic checkpoint boilerplate with lesson-specific assessment",
+      "title": "Replace generic checkpoint boilerplate with lesson-specific application evidence",
       "category": "pedagogy",
       "status": "resolved",
       "priority": "P2",
       "evidence": [
-        "all 71 published lesson sources in notebooks/manifest.json",
-        "scripts/book_content.py published-lesson semantic checks",
-        "tests/test_book_content.py generic-assessment regression coverage"
+        "canonical percent-format notebook sources and synchronized ipynb pairs",
+        "scripts/book_content.py and scripts/validate_notebooks.py",
+        "START_HERE.md, content/README.md, and content/templates/lesson.md"
       ],
       "affected_workflows_or_users": [
         "students practicing financial interpretation",
         "instructors reviewing objective alignment"
       ],
-      "observed_symptom": "Many notebooks end with the same general prompt and rubric.",
-      "potential_impact": "Assessment does not reliably demonstrate mastery of the lesson-specific objective.",
-      "engineering_risk": "Bulk edits to generated ipynb files would be overwritten by the canonical percent sources.",
-      "concrete_failure_mode": "A notebook passes structural validation while its checkpoint can be answered without using the lesson method.",
+      "observed_symptom": "Many notebooks ended with the same general prompt and public answer rubric regardless of lesson method.",
+      "potential_impact": "Boilerplate activity can imply mastery without requiring the lesson-specific calculation, evidence, or decision boundary.",
+      "engineering_risk": "Bulk edits to generated ipynb files would be overwritten unless the canonical percent sources and pair synchronizer change together.",
+      "concrete_failure_mode": "A notebook passes structural validation while a generic checkpoint can be answered without using the lesson method.",
       "dependencies": [
         "canonical percent-format notebook sources",
         "learning objectives",
-        "assessment review"
+        "authoring and promotion contracts"
       ],
       "owner": "module authors",
-      "recommended_next_action": "Keep lesson-specific practice and rubrics aligned with learning objectives; retain the semantic content validator and fresh notebook execution for every future promotion.",
+      "recommended_next_action": "Use worked checks, decision notes, or explicit practice only where they strengthen a named objective; keep evidence verifiable without requiring a universal public answer key.",
       "validation_criteria": [
-        "Each checkpoint names a lesson-specific calculation or interpretation.",
-        "Each rubric maps visibly to a learning objective.",
-        "Notebook-pair and fresh-execution checks pass."
+        "Published lessons retain coherent objectives, prerequisites, limitations, and handoffs.",
+        "Any application activity names lesson-specific evidence or a decision boundary.",
+        "Legacy generic checkpoint headings are absent and notebook-pair checks pass."
       ],
       "prioritization": {
         "impact": 3,

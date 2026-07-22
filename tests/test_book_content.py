@@ -209,10 +209,6 @@ Summary {cite}`source2026`.
 
 - Repository setup.
 
-## Practice
-
-Verify one observable result from this lesson.
-
 ## Handoff
 
 Continue to the next lesson.
@@ -419,24 +415,34 @@ def test_debt_status_orders_open_p0_before_lower_priorities() -> None:
     ]
 
 
-def test_validate_rejects_generic_or_incomplete_published_assessment(
+def test_validate_rejects_incomplete_published_lesson_structure(
     tmp_path: Path,
 ) -> None:
     make_repository(tmp_path)
     lesson = tmp_path / "notebooks/course/0.1.reproducible_stack.md"
     text = lesson.read_text(encoding="utf-8")
     lesson.write_text(
-        text.replace("## Prerequisites", "## Prior knowledge").replace(
-            "Verify one observable result from this lesson.",
-            "Reproduce one result that demonstrates this objective.",
-        ),
+        text.replace("## Prerequisites", "## Prior knowledge"),
         encoding="utf-8",
     )
 
     errors = error_text(tmp_path)
 
-    assert "replace the generic checkpoint" in errors
     assert "published lesson is missing a prerequisites section" in errors
+
+
+def test_validate_rejects_checkpoint_exercise_sections(tmp_path: Path) -> None:
+    make_repository(tmp_path)
+    lesson = tmp_path / "notebooks/course/0.1.reproducible_stack.md"
+    lesson.write_text(
+        lesson.read_text(encoding="utf-8").replace(
+            "## Handoff",
+            "## Checkpoint exercise\n\nReproduce one result.\n\n## Handoff",
+        ),
+        encoding="utf-8",
+    )
+
+    assert "remove the checkpoint exercise section" in error_text(tmp_path)
 
 
 def test_validate_requires_citations_in_published_lessons(tmp_path: Path) -> None:

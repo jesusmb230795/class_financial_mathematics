@@ -302,6 +302,9 @@ A page is ready for the published TOCs only when:
   existing page without a documented reason;
 - learning objectives, notation, definitions, examples, limitations, and
   handoff to the next page are coherent;
+- any application prompt, decision note, or worked check is specific to the
+  lesson objective and states verifiable evidence; generic checkpoint sections
+  and universal public answer keys are not publication requirements;
 - factual or methodological claims have traceable citations;
 - data examples declare provider, series or instrument, unit, frequency,
   calendar, revision policy, license note, and snapshot/live mode as relevant;

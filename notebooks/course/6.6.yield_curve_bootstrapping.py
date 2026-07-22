@@ -157,26 +157,6 @@ plt.show()
 # - Interpolation choices can affect forward rates even when spot rates look smooth.
 # - A curve built from simplified instruments should not be used as a production discounting curve.
 
-# %% [markdown] tags=["exercise"]
-# ## Checkpoint exercise
-#
-# Remove the 2.5-year instrument and try to bootstrap the 3-year coupon bond.
-#
-# 1. Record the exact missing cash-flow date reported by the guardrail.
-# 2. Restore the instrument, change its price by MXN 0.25 per MXN 100 face, and
-#    recompute the 2.5- and 3-year discount factors, annual spots, and forward.
-# 3. Verify that every spot-to-discount roundtrip error is below $10^{-12}$.
-# 4. Explain why silently dropping the 2.5-year coupon would overstate the
-#    3-year discount factor.
-#
-
-# %% [markdown] tags=["solution"]
-# ```{dropdown} Suggested answer rubric
-# A complete answer identifies the missing 2.5-year cash flow, reports the price
-# shock in MXN and rate changes in basis points, verifies the declared annual
-# convention, and explains the direction of the bootstrap error.
-# ```
-
 # %% [markdown]
 # ## Handoff
 #

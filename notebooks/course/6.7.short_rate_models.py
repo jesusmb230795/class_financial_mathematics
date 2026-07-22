@@ -210,28 +210,6 @@ plt.show()
 # - Vasicek permits negative rates, while CIR imposes nonnegative rates at the cost of stricter dynamics.
 # - Model-generated paths depend heavily on calibration window, discretization, and parameter stability.
 
-# %% [markdown] tags=["exercise"]
-# ## Checkpoint exercise
-#
-# Simulate 5,000 five-year paths after doubling $\kappa$ from 0.40 to 0.80 while
-# keeping $r_0$, $\theta$, and $\sigma$ fixed.
-#
-# 1. Compare the one- and five-year mean, standard deviation, and 5th/95th
-#    percentiles for Vasicek.
-# 2. Repeat for CIR and report whether the Feller condition holds in each case.
-# 3. Count negative Vasicek observations and verify that the full-truncation CIR
-#    output remains non-negative.
-# 4. Explain how faster mean reversion changes dispersion without claiming that
-#    either one-factor model fits the current curve.
-#
-
-# %% [markdown] tags=["solution"]
-# ```{dropdown} Suggested answer rubric
-# A complete answer reports rate distributions in percentage points, verifies the
-# boundary and Feller diagnostics, and separates simulation behavior from
-# calibration or market-fit evidence.
-# ```
-
 # %% [markdown]
 # ## Handoff
 #

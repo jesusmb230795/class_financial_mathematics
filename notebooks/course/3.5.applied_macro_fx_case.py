@@ -54,7 +54,7 @@
 # The case also assumes the log-return, regression, regularization, MAE, and
 # chronological-validation foundations from
 # [Module 2](../../chapters/02-time-series.md). Retain the quote convention
-# \(S_{\mathrm{MXN/USD}}\): an increase means USD appreciation and MXN
+# $S_{\mathrm{MXN/USD}}$: an increase means USD appreciation and MXN
 # depreciation. Rates and returns are stored as decimals in code.
 
 # %% [markdown]
@@ -112,11 +112,11 @@ METADATA_PATH = PROJECT_ROOT / "data/snapshots/metadata.json"
 #
 # | Case field | Provider and series | Stored unit | Monthly construction and use |
 # | --- | --- | --- | --- |
-# | `banxico_target_rate` | Banxico SIE `SF61745` | decimal annual target rate | Last available observation in reference month |
-# | `cetes_28d` | Banxico SIE `SF60633` | decimal annual quoted rate | Last available observation; forms a tenor-mismatched proxy gap |
+# | `banxico_target_rate` | Banxico SIE `SF61745` | decimal annual policy target | Last available observation in reference month; not a one-year investment return |
+# | `cetes_28d` | Banxico SIE `SF60633` | decimal annualized quoted yield on a 28-day zero-coupon instrument | Last available observation; forms a tenor- and convention-mismatched proxy gap |
 # | `usd_mxn` | Banxico SIE `SF43718` | MXN per USD FIX | Last available level; target is next-month log return |
-# | `mexico_inflation` | DB.NOMICS `IMF/CPI/M.MX.PCPI_IX` | decimal year-over-year CPI change, constructed as \(CPI_t/CPI_{t-12}-1\) | Shifted one month before modeling as an availability proxy |
-# | `us_10y` | DB.NOMICS `FED/H15/RIFLGFCY10_N.B` | decimal annual yield | Last available observation; forms a maturity-mismatched proxy spread |
+# | `mexico_inflation` | DB.NOMICS `IMF/CPI/M.MX.PCPI_IX` | decimal year-over-year CPI change, constructed as $CPI_t/CPI_{t-12}-1$ | Shifted one month before modeling as an availability proxy |
+# | `us_10y` | DB.NOMICS `FED/H15/RIFLGFCY10_N.B` | decimal annual nominal constant-maturity yield, quoted on the H.15 investment basis | Last available observation; forms a maturity- and convention-mismatched proxy spread |
 #
 # A month label is a period end, not a release timestamp. INEGI's corresponding
 # June 2025 CPI release was published on 2025-07-09, after the June month-end
@@ -138,15 +138,28 @@ if not macro.index.is_monotonic_increasing or macro.index.has_duplicates:
 recorded_coverage = metadata["output_coverage"]["official_macro_panel"]
 sample_start = macro.index.min().date().isoformat()
 sample_end = macro.index.max().date().isoformat()
-generation_timestamp = metadata["generated_at"]
-generation_date = generation_timestamp[:10]
+source_retrieval_timestamp = metadata["generated_at"]
+derived_rebuild_timestamp = metadata["derived_generated_at"]
+source_vintage_date = source_retrieval_timestamp[:10]
+derived_rebuild_date = derived_rebuild_timestamp[:10]
+generation_mode = metadata["generation_mode"]
 assert sample_start == recorded_coverage["start"]
 assert sample_end == recorded_coverage["end"]
+assert generation_mode == "derived-only"
+assert metadata["rebuilt_from_versioned_sources"] is True
 
 sample_audit = pd.DataFrame(
     [
         {"Audit item": "Snapshot", "Value": SNAPSHOT_PATH.relative_to(PROJECT_ROOT)},
-        {"Audit item": "Generation / retrieval timestamp (UTC)", "Value": generation_timestamp},
+        {
+            "Audit item": "Source retrieval vintage (UTC)",
+            "Value": source_retrieval_timestamp,
+        },
+        {
+            "Audit item": "Derived panel rebuild (UTC)",
+            "Value": derived_rebuild_timestamp,
+        },
+        {"Audit item": "Generation mode", "Value": generation_mode},
         {"Audit item": "Actual sample start (inclusive)", "Value": sample_start},
         {"Audit item": "Actual sample end (inclusive)", "Value": sample_end},
         {"Audit item": "Monthly period rows", "Value": len(macro)},
@@ -167,31 +180,35 @@ display(
 # **Output interpretation.**
 #
 # The panel contains 78 consecutive monthly period labels from 2019-01-31
-# through 2025-06-30 and no missing case fields. The 2026-06-07 timestamp records
-# when this current-vintage extract was generated; it is not an observation date
-# and the panel must not be presented as current market data.
+# through 2025-06-30 and no missing case fields. The source snapshots were
+# retrieved on 2026-06-07; the derived panel was rebuilt from those versioned
+# sources on 2026-07-21. Neither timestamp is an observation date, and the panel
+# must not be presented as current market data.
 
 # %% [markdown]
 # ## From period-labeled observations to available features
 #
-# At each month-end origin \(t\), the target is the next monthly USD/MXN log
+# At each month-end origin $t$, the target is the next monthly USD/MXN log
 # return:
 #
 # ```{math}
-# g^{FX}_{t+1}=\log\left(\frac{S_{t+1}}{S_t}\right).
+# g^{\mathrm{FX}}_{t+1}=\log\left(\frac{S_{t+1}}{S_t}\right).
 # ```
 #
 # A positive target is USD appreciation and MXN depreciation. The feature
 # contract is deliberately narrow:
 #
-# | Feature at origin \(t\) | Construction | Availability interpretation |
+# | Feature at origin $t$ | Construction | Availability interpretation |
 # | --- | --- | --- |
-# | Policy-minus-US-10-year proxy | Mexico policy rate minus US 10-year yield | Both are period-\(t\) market/policy observations; maturities do not match |
-# | Lagged Mexico inflation | Year-over-year inflation labeled \(t-1\) | One-month release-lag proxy; not a true vintage join |
-# | CETES-policy proxy gap | CETES 28-day rate minus policy rate | Period-\(t\) values; tenor and quotation conventions differ |
-# | FX momentum | \(\log(S_t/S_{t-3})\) | Uses spot levels at \(t\) or earlier |
+# | Policy-minus-US-10-year proxy | Mexico policy rate minus US 10-year yield | Both are period-$t$ market/policy observations; maturities do not match |
+# | Lagged Mexico inflation | Year-over-year inflation labeled $t-1$ | One-month release-lag proxy; not a true vintage join |
+# | CETES-policy proxy gap | CETES 28-day rate minus policy rate | Period-$t$ values; tenor and quotation conventions differ |
+# | FX momentum | $\log(S_t/S_{t-3})$ | Uses spot levels at $t$ or earlier |
 #
-# Neither rate spread is covered interest parity or a tradable carry basis.
+# The reported annualized rates are not converted to one common maturity,
+# compounding convention, day-count basis, or settlement calendar before
+# subtraction. The differences are deliberately labeled model proxies: neither
+# is a yield-curve spread, covered-interest-parity basis, or tradable carry basis.
 
 # %%
 macro_features, model_data = prepare_macro_fx_features(
@@ -229,7 +246,7 @@ history_display = macro_features[
         "us_10y",
         "usd_mxn",
     ]
-].dropna()
+].dropna(how="all")
 history_sample_label = (
     f"{history_display.index.min().date().isoformat()} to "
     f"{history_display.index.max().date().isoformat()}"
@@ -237,7 +254,8 @@ history_sample_label = (
 history_figure = build_macro_fx_history_figure(
     macro_features,
     sample_label=history_sample_label,
-    vintage_label=generation_date,
+    source_vintage_label=source_vintage_date,
+    rebuild_label=derived_rebuild_date,
 )
 display(history_figure)
 plt.close(history_figure)
@@ -259,7 +277,7 @@ plt.close(history_figure)
 # The first 75% of usable forecast origins form the training sample; the final
 # 25% form a later holdout. Scaling and Ridge estimation are fitted inside one
 # pipeline using training data only. `alpha=4.0` is a fixed classroom shrinkage
-# setting declared before viewing the holdout; it is not tuned on test data.
+# setting in this workflow; it is not tuned on the holdout.
 #
 # Two naive benchmarks make the decision standard explicit:
 #
@@ -267,12 +285,44 @@ plt.close(history_figure)
 # - **zero change:** predict a zero log return, equivalent to a random-walk next
 #   USD/MXN level.
 #
+# For training set $\mathcal T$ and holdout $\mathcal H$, the benchmarks and
+# evaluation metric are:
+#
+# ```{math}
+# \widehat g^{\mathrm{mean}}_{t+1}
+# =\frac{1}{|\mathcal T|}\sum_{j\in\mathcal T}g^{\mathrm{FX}}_{j+1},
+# \qquad
+# \widehat g^{\mathrm{zero}}_{t+1}=0,
+# ```
+#
+# ```{math}
+# \operatorname{MAE}_m
+# =\frac{1}{|\mathcal H|}
+# \sum_{t\in\mathcal H}
+# \left|g^{\mathrm{FX}}_{t+1}-\widehat g^{(m)}_{t+1}\right|.
+# ```
+#
 # The model is accepted only if its holdout MAE is lower than **both** naive
-# benchmarks. This gate is intentionally simple and does not establish
-# deployability even if passed.
+# benchmarks:
+#
+# ```{math}
+# \operatorname{Accept\ Ridge}
+# \iff
+# \operatorname{MAE}_{\mathrm{Ridge}}
+# <\min\left(
+# \operatorname{MAE}_{\mathrm{mean}},
+# \operatorname{MAE}_{\mathrm{zero}}
+# \right).
+# ```
+#
+# This gate is intentionally simple and does not establish deployability even
+# if passed.
 
 # %%
 training, testing = chronological_split(model_data, training_fraction=0.75)
+training_target_realization_end = macro.index[
+    macro.index.get_loc(training.index.max()) + 1
+]
 
 evaluation_model = Pipeline(
     [
@@ -345,8 +395,12 @@ decision_gate = pd.DataFrame(
         {"Gate item": "Training origins", "Result": len(training)},
         {"Gate item": "Test origins", "Result": len(testing)},
         {
-            "Gate item": "Training cutoff",
+            "Gate item": "Last training forecast origin",
             "Result": training.index.max().date().isoformat(),
+        },
+        {
+            "Gate item": "Last training target realization",
+            "Result": training_target_realization_end.date().isoformat(),
         },
         {"Gate item": "Best naive benchmark", "Result": best_benchmark_name},
         {
@@ -361,19 +415,20 @@ decision_gate = pd.DataFrame(
 )
 display(
     decision_gate.style.hide(axis="index").set_caption(
-        "Table 4. Predeclared model-acceptance gate"
+        "Table 4. Specified model-acceptance gate"
     )
 )
 
 # %% [markdown]
 # **Output interpretation.**
 #
-# The training sample contains 55 origins through 2023-10-31; the test contains
-# 19 later origins from 2023-11-30 through 2025-05-31, with target realizations
-# through 2025-06-30. Ridge MAE is 0.02394 in log-return units, or 2.394
+# The training sample contains 55 forecast origins through 2023-10-31 and target
+# realizations through 2023-11-30. The test contains 19 forecast origins from
+# 2023-11-30 through 2025-05-31, with target realizations through 2025-06-30.
+# Ridge MAE is 0.02394 in log-return units, or 2.394
 # percentage points after multiplying by 100, versus 2.176 and 2.190 percentage
 # points for the training-mean and zero-change benchmarks. Ridge is 10.02%
-# worse than the best naive benchmark, its \(R^2\) is -0.123, and it gets the
+# worse than the best naive benchmark, its $R^2$ is -0.123, and it gets the
 # return sign right in only 6 of 19 months. The model is therefore **rejected**.
 # Failure to beat a transparent benchmark is the main result, not an output to
 # hide or repair by tuning against the same holdout.
@@ -389,7 +444,8 @@ evaluation_figure = build_macro_fx_evaluation_figure(
     mae_by_model,
     sample_label=test_sample_label,
     realization_end=model_realization_end.date().isoformat(),
-    vintage_label=generation_date,
+    source_vintage_label=source_vintage_date,
+    rebuild_label=derived_rebuild_date,
 )
 display(evaluation_figure)
 plt.close(evaluation_figure)
@@ -415,6 +471,17 @@ plt.close(evaluation_figure)
 # `Observed-input baseline` is a mechanical reference, not the most probable
 # macro scenario. Every non-baseline case changes only the listed annual-rate
 # inputs; three-month FX momentum remains observed.
+# For estimation window $w$, the displayed sensitivity is
+#
+# ```{math}
+# \Delta\widehat g^{(w)}_s\,[\mathrm{bp}]
+# =10{,}000\left[
+# \widehat f_w(x_s)-\widehat f_w(x_0)
+# \right],
+# ```
+#
+# where $x_0$ is the observed-input baseline and $x_s$ is the shocked feature
+# vector. This is a fitted-model diagnostic, not an identified causal effect.
 #
 # | Scenario | Trigger and mechanism hypothesis | Monitoring evidence and limitation |
 # | --- | --- | --- |
@@ -422,9 +489,10 @@ plt.close(evaluation_figure)
 # | Global long-yield shock | US 10-year +75 bp, CETES +25 bp | H.15 yield and global risk conditions; maturities and instruments do not match |
 # | Disinflation and domestic easing | Lagged-inflation proxy -100 bp, policy -100 bp, CETES -125 bp | CPI and policy path; symmetry is an imposed stress design, not a forecast |
 #
-# The **evaluation fit** remains trained only through 2023-10. An **updated fit**
-# uses all 74 labeled origins through 2025-05 solely to diagnose window
-# sensitivity. It is not a validated production model.
+# The **evaluation fit** uses forecast origins through 2023-10 and target
+# realizations through 2023-11. An **updated fit** uses all 74 labeled origins
+# through 2025-05 solely to diagnose window sensitivity. It is not a validated
+# production model.
 
 # %%
 latest = macro_features.iloc[-1].copy()
@@ -494,6 +562,15 @@ np.testing.assert_allclose(
     expected_sensitivity_bps,
     atol=1e-6,
 )
+nonbaseline_sensitivity = scenario_sensitivity.drop(
+    index="Observed-input baseline"
+)
+assert (
+    nonbaseline_sensitivity["Evaluation fit"]
+    * nonbaseline_sensitivity["Updated fit"]
+    < 0
+).all()
+assert nonbaseline_sensitivity.abs().to_numpy().max() < 10_000 * ridge_mae
 
 scenario_assumptions_display = 10_000 * scenario_inputs.rename(
     columns={
@@ -530,7 +607,8 @@ scenario_figure = build_macro_fx_scenario_stability_figure(
         ),
     },
     sample_label=f"scenario origin {latest_date.date().isoformat()}",
-    vintage_label=generation_date,
+    source_vintage_label=source_vintage_date,
+    rebuild_label=derived_rebuild_date,
 )
 display(scenario_figure)
 plt.close(scenario_figure)
@@ -557,8 +635,9 @@ plt.close(scenario_figure)
 # - Month-end dates are period labels; some fall on weekends and are not source
 #   observation or publication dates.
 # - Policy-minus-US-10-year and CETES-minus-policy features mix maturities,
-#   instruments, calendars, and quotation conventions. They are not tradable
-#   carry spreads, yield-curve slopes, CIP bases, or causal policy shocks.
+#   instruments, calendars, compounding conventions, day-count bases, and
+#   quotation conventions. They are not tradable carry spreads, yield-curve
+#   slopes, CIP bases, or causal policy shocks.
 # - `alpha=4.0` is fixed for a transparent holdout demonstration. Future tuning
 #   would require time-aware validation inside the training period, not reuse of
 #   this test sample.
@@ -570,104 +649,26 @@ plt.close(scenario_figure)
 # - Snapshot provenance supports reproducibility but does not by itself establish
 #   redistribution or other downstream-use rights.
 
-# %% [markdown] tags=["exercise"]
-# ## Assessment
-#
-# Create a `Domestic 75 bp tightening` diagnostic from the 2025-06-30 row:
-#
-# - policy rate: +75 basis points;
-# - CETES 28-day rate: +100 basis points;
-# - lagged Mexican inflation and US 10-year yield: unchanged; and
-# - three-month FX momentum: unchanged.
-#
-# 1. Report the policy-minus-US-10-year proxy and CETES-policy proxy gap.
-# 2. Calculate the change versus the observed-input baseline under both the
-#    evaluation fit and updated fit, in basis points of one-month log return.
-# 3. Compare the larger absolute sensitivity with Ridge test MAE.
-# 4. Write a three- or four-sentence decision note: state the hypothesized
-#    mechanism, one alternative explanation, the benchmark decision, and one
-#    limitation. Do not publish an FX target.
-
-# %% tags=["solution"]
-checkpoint_inputs = pd.DataFrame(
-    [
-        {
-            "scenario": "Domestic 75 bp tightening",
-            "policy_shock": 0.0075,
-            "cetes_shock": 0.0100,
-            "lagged_inflation_proxy_shock": 0.0000,
-            "us_10y_shock": 0.0000,
-        }
-    ]
-).set_index("scenario")
-checkpoint_features = scenario_feature_frame(checkpoint_inputs, latest)
-baseline_features = scenario_features.loc[["Observed-input baseline"]]
-
-checkpoint_deltas = {}
-for fit_name, fitted_model in diagnostic_models.items():
-    baseline_prediction = fitted_model.predict(
-        baseline_features[list(FEATURE_COLUMNS)]
-    )[0]
-    checkpoint_prediction = fitted_model.predict(
-        checkpoint_features[list(FEATURE_COLUMNS)]
-    )[0]
-    checkpoint_deltas[fit_name] = 10_000 * (
-        checkpoint_prediction - baseline_prediction
-    )
-
-np.testing.assert_allclose(
-    [checkpoint_deltas["Evaluation fit"], checkpoint_deltas["Updated fit"]],
-    [-1.799063, 72.680753],
-    atol=1e-6,
-)
-
-checkpoint_answer = pd.DataFrame(
-    [
-        {"Assessment item": "As-of date", "Result": latest_date.date().isoformat()},
-        {
-            "Assessment item": "Policy-minus-US-10-year proxy",
-            "Result": f"{100 * checkpoint_features.iloc[0]['mx_policy_minus_us_10y']:.2f}%",
-        },
-        {
-            "Assessment item": "CETES-policy proxy gap",
-            "Result": f"{100 * checkpoint_features.iloc[0]['cetes_policy_gap']:.2f}%",
-        },
-        {
-            "Assessment item": "Evaluation-fit delta vs baseline",
-            "Result": f"{checkpoint_deltas['Evaluation fit']:+.2f} bp",
-        },
-        {
-            "Assessment item": "Updated-fit delta vs baseline",
-            "Result": f"{checkpoint_deltas['Updated fit']:+.2f} bp",
-        },
-        {
-            "Assessment item": "Ridge holdout MAE",
-            "Result": f"{10_000 * ridge_mae:.2f} bp",
-        },
-        {
-            "Assessment item": "Decision",
-            "Result": "REJECTED — benchmark and stability evidence fail",
-        },
-    ]
-)
-assert checkpoint_deltas["Evaluation fit"] * checkpoint_deltas["Updated fit"] < 0
-display(
-    checkpoint_answer.style.hide(axis="index").set_caption(
-        "Table 7. Suggested assessment calculation"
-    )
-)
-
 # %% [markdown]
-# **Assessment interpretation.**
+# ## Decision-note practice
 #
-# The policy-minus-US-10-year proxy is 4.51% and the CETES-policy gap is 0.25%.
-# Relative to each fit's baseline, the same tightening diagnostic changes the
-# predicted one-month log return by about -1.80 basis points under the evaluation
-# fit and +72.68 basis points under the updated fit. The signs disagree, and even
-# the larger move is well below the 239.41-basis-point holdout MAE. Tighter policy
-# could affect relative rates and currency demand, but the fitted response is not
-# a causal estimate and could instead reflect sample composition or omitted
-# global-risk conditions. The model remains rejected, so no FX target is issued.
+# Write a 120--180 word note for a valuation or hedging lead. Use four short
+# paragraphs or labels so that the reasoning remains auditable:
+#
+# 1. **Mechanism:** state how one named macro shock could affect the
+#    $S_{\mathrm{MXN/USD}}$ quote, including the direction implied by the quote
+#    convention.
+# 2. **Evidence:** report the Ridge holdout MAE, both benchmark MAEs, and the
+#    acceptance-gate result; do not substitute in-sample fit.
+# 3. **Alternatives:** name at least two omitted drivers or competing
+#    explanations that could produce the same observed FX movement.
+# 4. **Decision and limits:** state that Ridge is rejected, that the scenario
+#    sensitivities are unstable, and that no point forecast or hedge instruction
+#    should be passed downstream from this workflow.
+#
+# A complete note must keep percentage points, basis points, and MXN-per-USD
+# levels distinct. It may recommend better data or validation, but it must not
+# turn the rejected-model diagnostic into an investment recommendation.
 
 # %% [markdown]
 # ## Handoff

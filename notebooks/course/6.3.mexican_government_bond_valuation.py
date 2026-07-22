@@ -232,27 +232,6 @@ pd.DataFrame(comparison)
 # - Live valuation would require validated curves, calendars, UDI values, tax treatment, and instrument-specific details.
 # - Small convention differences can create material price and accrued-interest differences.
 
-# %% [markdown] tags=["exercise"]
-# ## Checkpoint exercise
-#
-# Price a 91-day CETES with a 9.25% ACT/360 return yield and MXN 10 face value.
-#
-# 1. Convert the return yield to a discount-rate quote and back; report the
-#    roundtrip error.
-# 2. For the Bono M example, compare day-count bases 360 and 365 and report the
-#    coupon payment, period yield, accrued interest, dirty price, and clean price.
-# 3. Identify every quantity that changes and explain why this is a full
-#    convention change, not an accrued-interest-only experiment.
-# 4. State which production inputs remain omitted from the simplified valuation.
-#
-
-# %% [markdown] tags=["solution"]
-# ```{dropdown} Suggested answer rubric
-# A complete answer verifies the CETES quotation roundtrip, reports all prices in
-# MXN per stated face value, identifies the three day-count channels, and names
-# settlement calendar, curve, tax, and instrument-master limitations.
-# ```
-
 # %% [markdown]
 # ## Handoff
 #

@@ -21,6 +21,8 @@ from matplotlib.figure import Figure
 from matplotlib.ticker import PercentFormatter
 from scipy import stats
 from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
+from statsmodels.tsa.stattools import acf as sample_acf
+from statsmodels.tsa.stattools import pacf as sample_pacf
 
 from src.visual_style import (
     AMBER_DARK,
@@ -198,6 +200,7 @@ def _plot_acf_panel(
         values,
         ax=axis,
         lags=lags,
+        zero=False,
         alpha=0.05,
         bartlett_confint=bartlett_confint,
         title=title,
@@ -208,7 +211,23 @@ def _plot_acf_panel(
     )
     axis.set_xlabel("Lag (observations)")
     axis.set_ylabel("Correlation")
+    correlations = sample_acf(values, nlags=lags, fft=True, adjusted=False)[1:]
+    axis.set_ylim(_correlation_limits(correlations, len(values)))
     style_axes(axis, grid_axis="y")
+
+
+def _correlation_limits(
+    correlations: np.ndarray,
+    observations: int,
+) -> tuple[float, float]:
+    """Return symmetric, labeled limits that retain values and reference bands."""
+    approximate_bound = 1.96 / np.sqrt(observations)
+    largest = max(
+        approximate_bound,
+        float(np.max(np.abs(correlations))) if len(correlations) else 0.0,
+    )
+    limit = min(1.0, max(0.15, 1.25 * largest))
+    return -limit, limit
 
 
 def build_level_return_diagnostics(
@@ -250,12 +269,13 @@ def build_level_return_diagnostics(
 
     with matplotlib_style():
         figure, axes = plt.subplots(
-            2,
-            2,
-            figsize=(13.5, 8.8),
+            4,
+            1,
+            figsize=(7.5, 12.5),
             dpi=INLINE_FIGURE_DPI,
+            sharex=True,
         )
-        level_axis, return_axis, mean_axis, volatility_axis = axes.ravel()
+        level_axis, return_axis, mean_axis, volatility_axis = axes
 
         level_axis.plot(
             level_values.index,
@@ -266,7 +286,6 @@ def build_level_return_diagnostics(
         )
         level_axis.set_title(f"{level_label} level")
         level_axis.set_ylabel(f"Level ({level_unit})")
-        level_axis.legend(loc="best")
 
         return_axis.plot(
             return_percent.index,
@@ -279,7 +298,6 @@ def build_level_return_diagnostics(
         return_axis.set_title(f"{return_name} observations")
         return_axis.set_ylabel(f"{return_name} (%)")
         return_axis.yaxis.set_major_formatter(PercentFormatter(xmax=100, decimals=1))
-        return_axis.legend(loc="best")
 
         mean_axis.plot(
             rolling_mean_percent.index,
@@ -292,7 +310,6 @@ def build_level_return_diagnostics(
         mean_axis.set_title(f"{window}-observation rolling sample mean")
         mean_axis.set_ylabel("Rolling mean (%)")
         mean_axis.yaxis.set_major_formatter(PercentFormatter(xmax=100, decimals=2))
-        mean_axis.legend(loc="best")
 
         volatility_axis.plot(
             rolling_volatility_percent.index,
@@ -306,15 +323,9 @@ def build_level_return_diagnostics(
         volatility_axis.yaxis.set_major_formatter(
             PercentFormatter(xmax=100, decimals=2)
         )
-        volatility_axis.legend(loc="best")
 
-        for axis, index in (
-            (level_axis, level_values.index),
-            (return_axis, return_values.index),
-            (mean_axis, return_values.index),
-            (volatility_axis, return_values.index),
-        ):
-            _format_time_axis(axis, index)
+        _format_time_axis(volatility_axis, return_values.index)
+        for axis in axes:
             style_axes(axis, grid_axis="y")
 
         figure.suptitle(
@@ -338,7 +349,7 @@ def build_level_return_diagnostics(
                 ),
             ),
         )
-        figure.tight_layout(rect=(0, 0.13, 1, 0.95))
+        figure.tight_layout(rect=(0, 0.105, 1, 0.965))
     return figure
 
 
@@ -362,10 +373,11 @@ def build_acf_pacf_figure(
 
     with matplotlib_style():
         figure, axes = plt.subplots(
-            1,
             2,
-            figsize=(12.5, 4.8),
+            1,
+            figsize=(7.5, 7.2),
             dpi=INLINE_FIGURE_DPI,
+            sharex=True,
         )
         acf_axis, pacf_axis = axes
         _plot_acf_panel(
@@ -375,14 +387,16 @@ def build_acf_pacf_figure(
             title="Autocorrelation function (95% bands)",
             color=TEAL,
             marker=series_marker(0),
-            bartlett_confint=True,
+            bartlett_confint=False,
         )
+        acf_axis.set_xlabel("")
         plot_pacf(
             clean.to_numpy(dtype=float),
             ax=pacf_axis,
             lags=lag_count,
             alpha=0.05,
             method="ywm",
+            zero=False,
             title="Partial autocorrelation function (95% bands)",
             color=MUTED_BLUE,
             marker=series_marker(1),
@@ -391,6 +405,12 @@ def build_acf_pacf_figure(
         )
         pacf_axis.set_xlabel("Lag (observations)")
         pacf_axis.set_ylabel("Partial correlation")
+        pacf_values = sample_pacf(
+            clean.to_numpy(dtype=float),
+            nlags=lag_count,
+            method="ywm",
+        )[1:]
+        pacf_axis.set_ylim(_correlation_limits(pacf_values, len(clean)))
         style_axes(pacf_axis, grid_axis="y")
 
         figure.suptitle(title, x=0.01, ha="left")
@@ -402,12 +422,14 @@ def build_acf_pacf_figure(
                 data_mode=data_mode,
                 method=(
                     "ACF and PACF are sample diagnostics. Shaded intervals are the "
-                    "approximate 95% confidence bands from statsmodels (alpha=0.05), "
-                    "not model-selection guarantees."
+                    "approximate 95% confidence bands from statsmodels (alpha=0.05) "
+                    "under a white-noise standard-error reference, not model-selection "
+                    "guarantees. Symmetric axes adapt to the plotted values and bands; "
+                    "read magnitudes from the labeled scale."
                 ),
             ),
         )
-        figure.tight_layout(rect=(0, 0.22, 1, 0.91))
+        figure.tight_layout(rect=(0, 0.17, 1, 0.94))
     return figure
 
 
@@ -415,12 +437,14 @@ def build_residual_diagnostics(
     series: pd.Series,
     *,
     title: str,
+    residual_unit: str = "model unit",
     lags: int = 20,
     source: str | None = None,
     data_mode: str | None = None,
 ) -> Figure:
     """Plot residual path, linear and squared ACFs, and a normal QQ panel."""
     title = _required_text(title, "title")
+    residual_unit = _required_text(residual_unit, "residual_unit")
     source = _optional_text(source, "source")
     data_mode = _optional_text(data_mode, "data_mode")
     values = _numeric_series(series, "series", minimum_observations=4)
@@ -433,12 +457,12 @@ def build_residual_diagnostics(
 
     with matplotlib_style():
         figure, axes = plt.subplots(
-            2,
-            2,
-            figsize=(12.5, 8.6),
+            4,
+            1,
+            figsize=(7.5, 12.5),
             dpi=INLINE_FIGURE_DPI,
         )
-        path_axis, acf_axis, squared_acf_axis, qq_axis = axes.ravel()
+        path_axis, acf_axis, squared_acf_axis, qq_axis = axes
 
         path_axis.plot(
             clean.index,
@@ -449,8 +473,7 @@ def build_residual_diagnostics(
         )
         path_axis.axhline(0, color=INK, linestyle="--", linewidth=0.9, alpha=0.7)
         path_axis.set_title("Residual path")
-        path_axis.set_ylabel("Residual (model units)")
-        path_axis.legend(loc="best")
+        path_axis.set_ylabel(f"Residual\n({residual_unit})")
         _format_time_axis(path_axis, clean.index)
         style_axes(path_axis, grid_axis="y")
 
@@ -498,7 +521,7 @@ def build_residual_diagnostics(
         )
         qq_axis.set_title("Normal QQ plot")
         qq_axis.set_xlabel("Theoretical normal quantile")
-        qq_axis.set_ylabel("Ordered residual (model units)")
+        qq_axis.set_ylabel(f"Ordered residual\n({residual_unit})")
         qq_axis.legend(loc="best")
         style_axes(qq_axis, grid_axis="both")
 
@@ -513,11 +536,12 @@ def build_residual_diagnostics(
                     "These are in-sample residual diagnostics, not proof of white noise "
                     "or Gaussian innovations. ACF bands are approximate 95% intervals "
                     "with alpha=0.05; squared residuals screen for remaining variance "
-                    "dependence."
+                    "dependence. Symmetric correlation axes adapt to the displayed "
+                    f"values and bands. Residual unit: {residual_unit}."
                 ),
             ),
         )
-        figure.tight_layout(rect=(0, 0.16, 1, 0.94))
+        figure.tight_layout(rect=(0, 0.11, 1, 0.965))
     return figure
 
 
@@ -629,7 +653,7 @@ def build_volatility_comparison(
         figure, axes = plt.subplots(
             2,
             1,
-            figsize=(12.5, 7.8),
+            figsize=(7.5, 7.4),
             dpi=INLINE_FIGURE_DPI,
             sharex=True,
         )
@@ -646,7 +670,6 @@ def build_volatility_comparison(
         return_axis.set_title("Observed returns")
         return_axis.set_ylabel("Return (%)")
         return_axis.yaxis.set_major_formatter(PercentFormatter(xmax=100, decimals=1))
-        return_axis.legend(loc="best")
 
         marker_interval = max(1, len(plotted_paths) // 12)
         for index, column in enumerate(plotted_paths.columns):
@@ -671,8 +694,8 @@ def build_volatility_comparison(
             ncols=min(3, len(plotted_paths.columns)),
         )
 
+        _format_time_axis(volatility_axis, return_values.index)
         for axis in axes:
-            _format_time_axis(axis, return_values.index)
             style_axes(axis, grid_axis="y")
 
         figure.suptitle(title, x=0.01, ha="left")
@@ -701,8 +724,369 @@ def build_volatility_comparison(
     return figure
 
 
+def build_forecast_comparison(
+    observed: pd.Series,
+    forecasts: pd.DataFrame | Mapping[str, pd.Series],
+    *,
+    title: str,
+    scale: Scale = "decimal",
+    prediction_interval: pd.DataFrame | None = None,
+    prediction_interval_label: str = "95% model-based interval",
+    source: str | None = None,
+    data_mode: str | None = None,
+) -> Figure:
+    """Compare aligned evaluation returns and cumulative absolute forecast errors.
+
+    ``scale`` describes the input unit for both the observed series and every
+    forecast.  The figure displays returns as percentages and cumulative
+    absolute error as percentage points, preserving one common evaluation
+    sample across all forecast paths.
+    """
+    title = _required_text(title, "title")
+    source = _optional_text(source, "source")
+    data_mode = _optional_text(data_mode, "data_mode")
+    scale = _validate_scale(scale, "scale")
+    observed_values = _numeric_series(
+        observed,
+        "observed",
+        require_dates=True,
+    )
+    forecast_values = _volatility_frame(forecasts)
+    if not observed_values.index.equals(forecast_values.index):
+        raise ValueError("observed and forecasts must use the same dated index")
+    if observed_values.isna().any() or forecast_values.isna().any().any():
+        raise ValueError("observed and forecasts cannot contain missing values")
+
+    interval_values: pd.DataFrame | None = None
+    if prediction_interval is not None:
+        prediction_interval_label = _required_text(
+            prediction_interval_label,
+            "prediction_interval_label",
+        )
+        if not isinstance(prediction_interval, pd.DataFrame):
+            raise ValueError("prediction_interval must be a pandas DataFrame")
+        if list(prediction_interval.columns) != ["lower", "upper"]:
+            raise ValueError(
+                "prediction_interval columns must be exactly ['lower', 'upper']"
+            )
+        interval_values = pd.DataFrame(
+            {
+                column: _numeric_series(
+                    prediction_interval[column],
+                    f"prediction_interval[{column!r}]",
+                    require_dates=True,
+                )
+                for column in prediction_interval.columns
+            },
+            index=prediction_interval.index.copy(),
+        )
+        if not observed_values.index.equals(interval_values.index):
+            raise ValueError(
+                "observed and prediction_interval must use the same dated index"
+            )
+        if interval_values.isna().any().any():
+            raise ValueError("prediction_interval cannot contain missing values")
+        if (interval_values["lower"] > interval_values["upper"]).any():
+            raise ValueError("prediction_interval lower values cannot exceed upper values")
+
+    multiplier = 100.0 if scale == "decimal" else 1.0
+    plotted_observed = observed_values.multiply(multiplier)
+    plotted_forecasts = forecast_values.multiply(multiplier)
+    plotted_interval = (
+        interval_values.multiply(multiplier)
+        if interval_values is not None
+        else None
+    )
+    cumulative_absolute_error = plotted_forecasts.sub(
+        plotted_observed,
+        axis=0,
+    ).abs().cumsum()
+
+    with matplotlib_style():
+        figure, axes = plt.subplots(
+            2,
+            1,
+            figsize=(7.5, 7.4),
+            dpi=INLINE_FIGURE_DPI,
+            sharex=True,
+        )
+        forecast_axis, error_axis = axes
+
+        if plotted_interval is not None:
+            forecast_axis.fill_between(
+                plotted_interval.index,
+                plotted_interval["lower"],
+                plotted_interval["upper"],
+                facecolor=MUTED_BLUE,
+                edgecolor=MUTED_BLUE,
+                alpha=0.16,
+                hatch="//",
+                linewidth=0.7,
+                label=prediction_interval_label,
+            )
+
+        forecast_axis.plot(
+            plotted_observed.index,
+            plotted_observed,
+            color=TEAL,
+            linestyle="-",
+            linewidth=1.5,
+            label=f"Observed {_return_label(observed_values).lower()}",
+        )
+        marker_interval = max(1, len(plotted_forecasts) // 12)
+        for index, column in enumerate(plotted_forecasts.columns, start=1):
+            forecast_axis.plot(
+                plotted_forecasts.index,
+                plotted_forecasts[column],
+                color=series_color(index),
+                linestyle=series_linestyle(index),
+                marker=series_marker(index),
+                markevery=marker_interval,
+                markersize=3.5,
+                linewidth=1.5,
+                label=column,
+            )
+            error_axis.plot(
+                cumulative_absolute_error.index,
+                cumulative_absolute_error[column],
+                color=series_color(index),
+                linestyle=series_linestyle(index),
+                marker=series_marker(index),
+                markevery=marker_interval,
+                markersize=3.5,
+                linewidth=1.7,
+                label=column,
+            )
+
+        forecast_axis.axhline(
+            0,
+            color=INK,
+            linestyle="--",
+            linewidth=0.9,
+            alpha=0.7,
+        )
+        forecast_axis.set_title("Observed evaluation returns and fixed forecasts")
+        forecast_axis.set_ylabel("Return (%)")
+        forecast_axis.yaxis.set_major_formatter(
+            PercentFormatter(xmax=100, decimals=1)
+        )
+        forecast_axis.legend(
+            loc="best",
+            ncols=2,
+            fontsize=9,
+        )
+
+        error_axis.set_title("Cumulative absolute forecast error")
+        error_axis.set_ylabel("Cumulative absolute error (percentage points)")
+        error_axis.legend(loc="best", ncols=min(3, len(forecast_values)))
+
+        _format_time_axis(error_axis, observed_values.index)
+        for axis in axes:
+            style_axes(axis, grid_axis="y")
+
+        figure.suptitle(title, x=0.01, ha="left")
+        add_figure_note(
+            figure,
+            _metadata_note(
+                sample=_sample_summary(observed_values),
+                source=source,
+                data_mode=data_mode,
+                method=(
+                    f"Observed and forecast input scale: {scale}; displayed returns are "
+                    "percentages. Cumulative absolute error is the running sum of "
+                    "|observed - forecast| in percentage points; lower is better on "
+                    "this shared evaluation sample, but the measure is not trading "
+                    "profit or loss. "
+                    "Any shaded band is a model-based interval, not an empirical "
+                    "coverage guarantee."
+                ),
+            ),
+        )
+        figure.tight_layout(rect=(0, 0.17, 1, 0.94))
+    return figure
+
+
+def build_innovation_tail_risk_figure(
+    risk_measures: pd.DataFrame,
+    *,
+    alpha: float,
+    degrees_of_freedom: float,
+    source: str | None = None,
+    data_mode: str | None = None,
+) -> Figure:
+    """Compare Gaussian and unit-variance Student-t tails with VaR measures.
+
+    ``risk_measures`` must use model labels as its index and contain
+    ``log_return_loss_threshold_pct`` and ``simple_return_loss_pct`` columns.
+    Both columns are displayed in percentage points.
+    """
+    source = _optional_text(source, "source")
+    data_mode = _optional_text(data_mode, "data_mode")
+    if not isinstance(alpha, Real) or isinstance(alpha, bool):
+        raise ValueError("alpha must be a real number")
+    alpha_value = float(alpha)
+    if not np.isfinite(alpha_value) or not 0 < alpha_value < 0.5:
+        raise ValueError("alpha must be finite and between 0 and 0.5")
+    if not isinstance(degrees_of_freedom, Real) or isinstance(
+        degrees_of_freedom,
+        bool,
+    ):
+        raise ValueError("degrees_of_freedom must be a real number")
+    nu = float(degrees_of_freedom)
+    if not np.isfinite(nu) or nu <= 2:
+        raise ValueError("degrees_of_freedom must be finite and greater than 2")
+    if not isinstance(risk_measures, pd.DataFrame):
+        raise ValueError("risk_measures must be a pandas DataFrame")
+    expected_columns = [
+        "log_return_loss_threshold_pct",
+        "simple_return_loss_pct",
+    ]
+    if list(risk_measures.columns) != expected_columns:
+        raise ValueError(f"risk_measures columns must be exactly {expected_columns}")
+    if risk_measures.empty or len(risk_measures) > 4:
+        raise ValueError("risk_measures must contain between one and four models")
+    if risk_measures.index.has_duplicates:
+        raise ValueError("risk_measures model labels must be unique")
+    labels = [_required_text(label, "risk model label") for label in risk_measures.index]
+    values = risk_measures.copy(deep=True)
+    values.index = labels
+    for column in values.columns:
+        values[column] = pd.to_numeric(values[column], errors="coerce")
+    value_array = values.to_numpy(dtype=float)
+    if not np.isfinite(value_array).all() or (value_array < 0).any():
+        raise ValueError("risk_measures must contain finite non-negative values")
+
+    student_scale = np.sqrt((nu - 2.0) / nu)
+    gaussian_quantile = float(stats.norm.ppf(alpha_value))
+    student_quantile = float(stats.t.ppf(alpha_value, df=nu) * student_scale)
+    x_min = min(-4.5, student_quantile - 1.0)
+    x_values = np.linspace(x_min, 4.5, 1_200)
+    gaussian_density = stats.norm.pdf(x_values)
+    student_density = stats.t.pdf(x_values / student_scale, df=nu) / student_scale
+
+    with matplotlib_style():
+        figure, axes = plt.subplots(
+            2,
+            1,
+            figsize=(7.5, 8.4),
+            dpi=INLINE_FIGURE_DPI,
+        )
+        density_axis, risk_axis = axes
+
+        density_axis.plot(
+            x_values,
+            gaussian_density,
+            color=MUTED_BLUE,
+            linestyle="-",
+            linewidth=1.8,
+            label="Gaussian, unit variance",
+        )
+        density_axis.plot(
+            x_values,
+            student_density,
+            color=series_color(3),
+            linestyle="--",
+            linewidth=1.8,
+            label=f"Student-t, unit variance (nu={nu:.2f})",
+        )
+        gaussian_tail = x_values <= gaussian_quantile
+        student_tail = x_values <= student_quantile
+        density_axis.fill_between(
+            x_values[gaussian_tail],
+            0,
+            gaussian_density[gaussian_tail],
+            facecolor=MUTED_BLUE,
+            edgecolor=MUTED_BLUE,
+            alpha=0.16,
+            hatch="//",
+        )
+        density_axis.fill_between(
+            x_values[student_tail],
+            0,
+            student_density[student_tail],
+            facecolor=series_color(3),
+            edgecolor=series_color(3),
+            alpha=0.12,
+            hatch="xx",
+        )
+        density_axis.axvline(
+            gaussian_quantile,
+            color=MUTED_BLUE,
+            linestyle=":",
+            linewidth=1.2,
+            label=f"Gaussian {alpha_value:.0%} quantile = {gaussian_quantile:.2f}",
+        )
+        density_axis.axvline(
+            student_quantile,
+            color=series_color(3),
+            linestyle="-.",
+            linewidth=1.2,
+            label=f"Student-t {alpha_value:.0%} quantile = {student_quantile:.2f}",
+        )
+        density_axis.set_title("Standardized innovation distributions and left tails")
+        density_axis.set_xlabel("Standardized innovation")
+        density_axis.set_ylabel("Probability density")
+        density_axis.legend(loc="best", ncols=2)
+        style_axes(density_axis, grid_axis="y")
+
+        positions = np.arange(len(values))
+        bar_width = 0.36
+        log_bars = risk_axis.bar(
+            positions - bar_width / 2,
+            values["log_return_loss_threshold_pct"],
+            width=bar_width,
+            color=MUTED_BLUE,
+            edgecolor=INK,
+            linewidth=0.7,
+            hatch="//",
+            label="Log-return loss threshold",
+        )
+        simple_bars = risk_axis.bar(
+            positions + bar_width / 2,
+            values["simple_return_loss_pct"],
+            width=bar_width,
+            color=series_color(3),
+            edgecolor=INK,
+            linewidth=0.7,
+            hatch="xx",
+            label="Exact simple-return loss",
+        )
+        risk_axis.bar_label(log_bars, fmt="%.3f", padding=3, fontsize=9)
+        risk_axis.bar_label(simple_bars, fmt="%.3f", padding=3, fontsize=9)
+        risk_axis.set_title("One-step VaR on log-return and simple-loss scales")
+        risk_axis.set_ylabel("Positive loss magnitude (%)")
+        risk_axis.set_xticks(positions, labels)
+        risk_axis.yaxis.set_major_formatter(PercentFormatter(xmax=100, decimals=2))
+        risk_axis.legend(loc="best", ncols=2)
+        style_axes(risk_axis, grid_axis="y")
+
+        figure.suptitle(
+            "Innovation-tail and one-step risk comparison",
+            x=0.01,
+            ha="left",
+        )
+        add_figure_note(
+            figure,
+            _metadata_note(
+                sample=f"{len(values)} fitted risk specifications",
+                source=source,
+                data_mode=data_mode,
+                method=(
+                    f"Left-tail probability alpha={alpha_value:.4f}; confidence="
+                    f"{1 - alpha_value:.4f}. Student-t density and quantile are scaled "
+                    "to unit variance. Bars distinguish additive log-return thresholds "
+                    "from exact simple-return position losses."
+                ),
+            ),
+        )
+        figure.tight_layout(rect=(0, 0.14, 1, 0.95))
+    return figure
+
+
 __all__ = [
     "build_acf_pacf_figure",
+    "build_forecast_comparison",
+    "build_innovation_tail_risk_figure",
     "build_level_return_diagnostics",
     "build_residual_diagnostics",
     "build_volatility_comparison",

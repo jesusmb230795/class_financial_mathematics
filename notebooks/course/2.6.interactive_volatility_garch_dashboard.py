@@ -39,17 +39,19 @@
 #
 # ## Prerequisites
 #
-# Lesson 2.5 supplies fitted-model interpretation and diagnostic requirements.
-# This page varies assumptions around one observed USD/MXN FIX series; it does
-# not mix FIX with UDI or constructed carry indices that have incompatible
-# economic meanings and scales.
+# [Lesson 2.5](2.5.garch_volatility_risk_workflow.ipynb) supplies fitted-model
+# interpretation and diagnostic requirements.
+# This page varies assumptions around one observed FIX series quoted as MXN per
+# USD; it does not mix FIX with UDI or constructed carry indices that have
+# incompatible economic meanings and scales.
 #
 # ## Recursions and parameterization
 #
 # The dashboard assumes a zero conditional mean and filters returns through
+# $g_t=\log(P_t/P_{t-1})$, stored as a decimal per FIX publication interval:
 #
 # $$
-# \sigma_t^2=\omega+\alpha r_{t-1}^2+\beta\sigma_{t-1}^2.
+# \sigma_t^2=\omega+\alpha g_{t-1}^2+\beta\sigma_{t-1}^2.
 # $$
 #
 # Let $\rho=\alpha+\beta$ be persistence and let $s=\alpha/\rho$ be the shock
@@ -64,12 +66,22 @@
 # EWMA uses
 #
 # $$
-# \sigma_t^2=\lambda\sigma_{t-1}^2+(1-\lambda)r_{t-1}^2.
+# \sigma_t^2=\lambda\sigma_{t-1}^2+(1-\lambda)g_{t-1}^2.
 # $$
 #
 # Both filters start from $\bar\sigma^2$, so neither initial state uses future
-# observations. The expected half-life of a variance shock, assuming no new
-# shocks, is $h_{1/2}=\log(0.5)/\log(\rho)$ observations.
+# observations. If $d_0$ is a variance deviation after a shock, the GARCH
+# model's expected impulse response satisfies
+#
+# $$
+# \mathbb E_t[d_h]=\rho^h d_0,
+# \qquad
+# h_{1/2}=\frac{\log(0.5)}{\log(\rho)}.
+# $$
+#
+# This is an expected variance-response half-life in publication observations.
+# A realized path continues to receive new squared returns and need not trace
+# that smooth decay.
 
 # %% [markdown]
 # ## Setup
@@ -102,7 +114,7 @@ REQUESTED_END = "2026-06-05"
 # %%
 banxico = banxico_daily_panel(start=REQUESTED_START, end=REQUESTED_END)
 fix_level = banxico["usd_mxn"].dropna().rename("usd_mxn_fix_mxn_per_usd")
-OFFICIAL_RETURNS = log_returns(fix_level).rename("usd_mxn_fix_log_return")
+FIX_LOG_RETURNS = log_returns(fix_level).rename("usd_mxn_fix_log_return")
 calendar_gaps = fix_level.index.to_series().diff().dt.days.dropna()
 
 pd.DataFrame(
@@ -112,10 +124,13 @@ pd.DataFrame(
             "snapshot_generated_at": banxico.attrs["snapshot_generated_at"],
             "observed_start": fix_level.index.min().date().isoformat(),
             "observed_end": fix_level.index.max().date().isoformat(),
-            "return_observations": len(OFFICIAL_RETURNS),
+            "return_observations": len(FIX_LOG_RETURNS),
             "maximum_calendar_gap_days": int(calendar_gaps.max()),
             "return_unit": "log change per FIX publication interval",
             "observation_policy": banxico.attrs["observation_policy"],
+            "rights_note": (
+                "provenance recorded; redistribution terms require external review"
+            ),
         }
     ]
 )
@@ -149,7 +164,7 @@ def filtered_volatility_paths(
     alpha = persistence * shock_share
     beta = persistence * (1 - shock_share)
     omega = long_run_volatility**2 * (1 - persistence)
-    selected_returns = OFFICIAL_RETURNS.tail(periods)
+    selected_returns = FIX_LOG_RETURNS.tail(periods)
     if len(selected_returns) < 2:
         raise ValueError("The selected lookback has fewer than two returns")
 
@@ -172,9 +187,12 @@ def filtered_volatility_paths(
     )
     filtered.attrs.update(
         {
-            "asset": "usd_mxn",
-            "data_mode": "provider-dated snapshot",
-            "sources": "Banxico SIE SF43718 snapshot",
+            "asset": "mxn_per_usd_fix",
+            "data_mode": banxico.attrs["data_mode"],
+            "sources": (
+                "Banxico SIE SF43718; snapshot "
+                f"{banxico.attrs['snapshot_generated_at']}"
+            ),
             "method": (
                 "zero-mean filters; "
                 f"omega={omega:.8f}, alpha={alpha:.3f}, beta={beta:.3f}, "
@@ -182,21 +200,35 @@ def filtered_volatility_paths(
             ),
         }
     )
-    parameters = pd.Series(
+    parameter_values = {
+        "long-run interval volatility": long_run_volatility,
+        "omega": omega,
+        "alpha": alpha,
+        "beta": beta,
+        "persistence (alpha + beta)": persistence,
+        "shock share (alpha / persistence)": shock_share,
+        "EWMA lambda": lambda_,
+        "expected variance-response half-life": garch_variance_half_life(
+            persistence
+        ),
+        "lookback": len(selected_returns),
+    }
+    parameter_units = {
+        "long-run interval volatility": "decimal per FIX publication interval",
+        "omega": "decimal squared",
+        "alpha": "dimensionless",
+        "beta": "dimensionless",
+        "persistence (alpha + beta)": "dimensionless",
+        "shock share (alpha / persistence)": "dimensionless",
+        "EWMA lambda": "dimensionless",
+        "expected variance-response half-life": "publication observations",
+        "lookback": "publication observations",
+    }
+    parameters = pd.DataFrame(
         {
-            "long_run_interval_volatility": long_run_volatility,
-            "omega": omega,
-            "alpha": alpha,
-            "beta": beta,
-            "persistence": persistence,
-            "shock_share_alpha_over_persistence": shock_share,
-            "ewma_lambda": lambda_,
-            "variance_shock_half_life_observations": garch_variance_half_life(
-                persistence
-            ),
-            "lookback_observations": len(selected_returns),
-        },
-        name="value",
+            "value": pd.Series(parameter_values),
+            "unit": pd.Series(parameter_units),
+        }
     )
     return filtered, parameters
 
@@ -206,9 +238,11 @@ def filtered_volatility_paths(
 #
 # Run this cell in JupyterLab with `uv run jupyter lab`. The publication build
 # uses the Matplotlib fallback with the same data, parameter table, trace order,
-# units, and conclusion.
+# units, and conclusion. Slider volatility values are decimals per FIX
+# publication interval (for example, `0.010` means 1.0%); chart ticks display
+# those decimals as percentages.
 
-# %% tags=["interactive"]
+# %% tags=["interactive"] mystnb={"image": {"alt": "Interactive or static two-panel dashboard showing Banxico FIX log returns and GARCH versus EWMA volatility filters; an adjacent table reports parameter values, units, persistence, and expected variance-response half-life."}}
 def plot_volatility_dashboard(
     long_run_volatility=0.01,
     persistence=0.98,
@@ -227,20 +261,20 @@ def plot_volatility_dashboard(
     if RUN_INTERACTIVE_WIDGETS:
         figure = build_volatility_dashboard(
             filtered,
-            asset="usd_mxn",
+            asset="mxn_per_usd_fix",
             persistence=persistence,
-            return_axis_label="Return per FIX publication interval",
-            volatility_axis_label="Volatility per FIX publication interval",
+            return_axis_label="Log return per FIX publication interval (%)",
+            volatility_axis_label="Volatility per FIX publication interval (%)",
         )
     else:
         figure = build_volatility_dashboard_fallback(
             filtered,
-            asset="usd_mxn",
+            asset="mxn_per_usd_fix",
             persistence=persistence,
-            return_axis_label="Return per FIX publication interval",
-            volatility_axis_label="Volatility per FIX publication interval",
+            return_axis_label="Log return per FIX publication interval (%)",
+            volatility_axis_label="Volatility per FIX publication interval (%)",
         )
-    display(parameters.to_frame())
+    display(parameters)
     display(figure)
     if not RUN_INTERACTIVE_WIDGETS:
         plt.close(figure)
@@ -255,7 +289,8 @@ if RUN_INTERACTIVE_WIDGETS:
             max=0.025,
             step=0.001,
             readout_format=".3f",
-            description="Long-run vol",
+            description="Long-run vol (decimal)",
+            style={"description_width": "initial"},
             continuous_update=False,
         ),
         persistence=FloatSlider(
@@ -288,7 +323,7 @@ if RUN_INTERACTIVE_WIDGETS:
         periods=IntSlider(
             value=750,
             min=252,
-            max=min(1250, len(OFFICIAL_RETURNS)),
+            max=min(1250, len(FIX_LOG_RETURNS)),
             step=126,
             description="Lookback",
             continuous_update=False,
@@ -302,9 +337,9 @@ else:
 #
 # A larger shock share moves persistence from $\beta$ toward $\alpha$, making
 # the filter react more sharply to the latest squared return while preserving
-# the same expected decay rate. Larger persistence lengthens variance-shock
-# half-life. EWMA $\lambda$ controls a separate decay rule. The parameter table
-# makes every displayed path reproducible.
+# the same expected decay rate. Larger persistence lengthens the expected
+# variance-response half-life. EWMA $\lambda$ controls a separate decay rule.
+# The parameter table makes every displayed path reproducible.
 
 # %% [markdown]
 # ## Model limitations
@@ -313,55 +348,12 @@ else:
 # - The initial variance is a declared long-run assumption rather than an
 #   estimate from future observations.
 # - FIX publication intervals are not equally spaced in calendar time.
-# - A theoretical half-life assumes no new shocks; it is not measured from a
-#   realized path that continues to receive innovations.
+# - The theoretical half-life describes an expected impulse response; it is not
+#   measured from a realized path that continues to receive innovations.
 # - Symmetric GARCH and EWMA omit direction-specific effects, jumps, liquidity,
 #   parameter uncertainty, and regime changes.
 # - The committed snapshot is reproducible but can differ from a later Banxico
 #   vintage.
-
-# %% [markdown] tags=["exercise"]
-# ## Checkpoint exercise
-#
-# 1. Hold long-run volatility and shock share fixed. Compare persistence 0.78
-#    with 0.98 and report the derived $\alpha$, $\beta$, and theoretical
-#    variance-shock half-life for each scenario.
-# 2. Explain why the half-life is an expectation under no new shocks rather than
-#    an elapsed time measured from the observed maximum-return date.
-# 3. Compare GARCH with EWMA at $\lambda=0.94$ and explain why visual agreement
-#    does not validate either parameter set.
-
-# %% tags=["solution"]
-checkpoint_rows = []
-for scenario_persistence in (0.78, 0.98):
-    _, scenario_parameters = filtered_volatility_paths(
-        long_run_volatility=0.01,
-        persistence=scenario_persistence,
-        shock_share=0.08,
-        lambda_=0.94,
-        periods=750,
-    )
-    checkpoint_rows.append(
-        {
-            "persistence": scenario_persistence,
-            "alpha": scenario_parameters["alpha"],
-            "beta": scenario_parameters["beta"],
-            "variance_shock_half_life_observations": scenario_parameters[
-                "variance_shock_half_life_observations"
-            ],
-        }
-    )
-pd.DataFrame(checkpoint_rows).set_index("persistence")
-
-# %% [markdown] tags=["solution"]
-# ```{dropdown} Suggested answer and interpretation
-# The higher-persistence scenario has a much longer theoretical variance-shock
-# half-life even though the shock share is unchanged. New observed returns keep
-# updating both filters, so a realized path cannot identify pure decay from one
-# shock. Similar-looking GARCH and EWMA curves show only that two recursions can
-# summarize this sample similarly; they do not establish calibration or
-# forecasting superiority.
-# ```
 
 # %% [markdown]
 # ## Handoff
