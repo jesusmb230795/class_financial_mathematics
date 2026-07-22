@@ -49,9 +49,9 @@
           "target_markdown": "../../img/generated/m4-roe-roic-driver-map.png"
         }
       ],
-      "prompt": "Create a 1920x1080 two-lane academic driver map. The ROE lane shows net margin 9.00%, asset turnover 1.307x, and equity multiplier 1.811x combining to ROE 21.30%. The ROIC lane shows after-tax operating margin 11.25% and capital turnover 1.688x combining to ROIC 18.99%. Use large labels, an off-white background, teal operating links, muted-blue capital links, amber comparison accents, and no decorative or invented data.",
+      "prompt": "Create a 1920x1080 two-lane academic driver map. The ROE lane shows net margin 9.00%, asset turnover 1.307×, and equity multiplier 1.811× combining to ROE 21.30%. The ROIC lane shows after-tax operating margin 11.25% and capital turnover 1.688× combining to ROIC 18.99%. Use large labels, an off-white background, teal operating links, muted-blue capital links, amber comparison accents, and no decorative or invented data.",
       "production_notes": [
-        "The values reproduce the lesson simulation and distinguish the common-equity and invested-capital perimeters.",
+        "Every displayed value is derived from the lesson simulation inputs and checked against the defining ROE or ROIC identity before rendering.",
         "The two lanes prevent readers from treating ROE and ROIC as interchangeable return measures."
       ]
     },
@@ -82,6 +82,32 @@
     },
     {
       "order": 34,
+      "id": "m4-entity-perimeter-map",
+      "status": "approved",
+      "role": "lesson_decision_map",
+      "target_path": "img/generated/m4-entity-perimeter-map.png",
+      "aspect_ratio": "16:9",
+      "recommended_size": "1920x1080",
+      "alt_text": "Two-lane entity-perimeter map showing financial assets under IFRS 9, significant influence under IAS 28, joint arrangements under IFRS 11, control and consolidation under IFRS 10, NCI attribution, and structured-entity exposure and support disclosure under IFRS 12.",
+      "generator_script": "scripts/generate_module_concept_maps.py --asset m4-entity-perimeter-map",
+      "production_method": "deterministic_matplotlib",
+      "used_by": [
+        {
+          "file": "notebooks/course/4.4.specialized_entities_and_consolidation.md",
+          "locator": "Entity perimeter and residual-exposure map",
+          "mode": "markdown_insert",
+          "target_markdown": "../../img/generated/m4-entity-perimeter-map.png"
+        }
+      ],
+      "prompt": "Create a deterministic 1920x1080 academic map with two distinct lanes and no quantitative data. In the accounting-route lane, show four parallel classifications: financial asset under IFRS 9; significant influence and the equity method under IAS 28; joint arrangement based on rights and obligations under IFRS 11; and control with consolidation under IFRS 10. In the economic-exposure lane, connect a structured entity to guarantees or liquidity support and then to disclose-and-stress analysis under IFRS 12; separately connect control to NCI attribution across profit, OCI, and equity claims. Use large labels, an off-white background, semantic book colors, and restrained arrows only where a dependency exists.",
+      "production_notes": [
+        "The accounting classifications are parallel routes rather than a sequential process.",
+        "The lower lane makes residual guarantees, liquidity support, structured-entity exposure, and NCI attribution visible without inventing amounts.",
+        "The figure is an author-created instructional schematic; the adjacent lesson provides the authoritative standards references."
+      ]
+    },
+    {
+      "order": 35,
       "id": "m4-forecast-cash-reconciliation",
       "status": "approved",
       "role": "lesson_reconciliation_chart",

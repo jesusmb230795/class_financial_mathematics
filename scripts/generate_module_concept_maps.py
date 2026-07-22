@@ -713,6 +713,49 @@ def render_m4_three_statement_model() -> Figure:
 def render_m4_roe_roic_driver_map() -> Figure:
     """Render separate ROE and ROIC return-driver lanes."""
 
+    revenue = 1_000.0
+    net_income = 90.0
+    average_assets = (740.0 + 790.0) / 2
+    average_equity = (390.0 + 455.0) / 2
+    ebit = 150.0
+    tax_rate = 0.25
+    invested_capital_opening = 250.0 + 390.0 - 80.0
+    invested_capital_closing = 230.0 + 455.0 - 60.0
+    average_invested_capital = (
+        invested_capital_opening + invested_capital_closing
+    ) / 2
+
+    net_margin = net_income / revenue
+    asset_turnover = revenue / average_assets
+    equity_multiplier = average_assets / average_equity
+    roe_from_definition = net_income / average_equity
+    roe_from_drivers = net_margin * asset_turnover * equity_multiplier
+
+    nopat = ebit * (1 - tax_rate)
+    after_tax_operating_margin = nopat / revenue
+    capital_turnover = revenue / average_invested_capital
+    roic_from_definition = nopat / average_invested_capital
+    roic_from_drivers = after_tax_operating_margin * capital_turnover
+
+    if not math.isclose(
+        roe_from_drivers,
+        roe_from_definition,
+        rel_tol=1e-12,
+        abs_tol=1e-12,
+    ):
+        raise ValueError(
+            "Module 4 ROE driver map does not reconcile to net income / average equity."
+        )
+    if not math.isclose(
+        roic_from_drivers,
+        roic_from_definition,
+        rel_tol=1e-12,
+        abs_tol=1e-12,
+    ):
+        raise ValueError(
+            "Module 4 ROIC driver map does not reconcile to NOPAT / average invested capital."
+        )
+
     figure, axis = new_canvas(
         "ROE and ROIC: different return perimeters",
         "Separate common-equity leverage from after-tax operating capital efficiency.",
@@ -743,33 +786,37 @@ def render_m4_roe_roic_driver_map() -> Figure:
 
     roe_nodes = (
         (
-            ConceptNode("Net margin", "9.00%", TEAL),
+            ConceptNode("Net margin", f"{net_margin:.2%}", TEAL),
             BoxPlacement(0.07, 0.45, 0.17, 0.18),
         ),
         (
-            ConceptNode("Asset turnover", "1.307x", TEAL),
+            ConceptNode("Asset turnover", f"{asset_turnover:.3f}×", TEAL),
             BoxPlacement(0.30, 0.45, 0.17, 0.18),
         ),
         (
-            ConceptNode("Equity multiplier", "1.811x", MUTED_BLUE),
+            ConceptNode("Equity multiplier", f"{equity_multiplier:.3f}×", MUTED_BLUE),
             BoxPlacement(0.53, 0.45, 0.17, 0.18),
         ),
         (
-            ConceptNode("ROE", "21.30%", AMBER),
+            ConceptNode("ROE", f"{roe_from_definition:.2%}", AMBER),
             BoxPlacement(0.77, 0.45, 0.16, 0.18),
         ),
     )
     roic_nodes = (
         (
-            ConceptNode("After-tax operating\nmargin", "11.25%", TEAL),
+            ConceptNode(
+                "After-tax operating\nmargin",
+                f"{after_tax_operating_margin:.2%}",
+                TEAL,
+            ),
             BoxPlacement(0.07, 0.115, 0.27, 0.18),
         ),
         (
-            ConceptNode("Capital turnover", "1.688x", MUTED_BLUE),
+            ConceptNode("Capital turnover", f"{capital_turnover:.3f}×", MUTED_BLUE),
             BoxPlacement(0.43, 0.115, 0.24, 0.18),
         ),
         (
-            ConceptNode("ROIC", "18.99%", TEAL),
+            ConceptNode("ROIC", f"{roic_from_definition:.2%}", TEAL),
             BoxPlacement(0.77, 0.115, 0.16, 0.18),
         ),
     )
@@ -810,6 +857,151 @@ def render_m4_roe_roic_driver_map() -> Figure:
         "ROE includes financial leverage; ROIC measures after-tax operating return on invested capital.",
         color=MUTED_BLUE,
         fontsize=21,
+        ha="center",
+        va="center",
+        transform=axis.transAxes,
+    )
+    return figure
+
+
+def render_m4_entity_perimeter_map() -> Figure:
+    """Render accounting routes separately from residual economic exposure."""
+
+    figure, axis = new_canvas(
+        "Entity perimeter: accounting route and economic exposure",
+        "Classify rights for accounting, then test exposure beyond the accounting line.",
+        eyebrow_size=18,
+        eyebrow_y=0.94,
+        title_size=31,
+        title_y=0.875,
+        subtitle_size=21,
+        subtitle_y=0.81,
+        divider_y=0.755,
+    )
+    add_lane_label(
+        axis,
+        0.705,
+        "ACCOUNTING ROUTE · CLASSIFY THE RELATIONSHIP",
+        MUTED_BLUE,
+        font_size=21,
+        line_start=0.55,
+    )
+    add_lane_label(
+        axis,
+        0.385,
+        "ECONOMIC EXPOSURE · LOOK BEYOND THE ACCOUNTING LINE",
+        CORAL,
+        font_size=21,
+        line_start=0.62,
+    )
+
+    accounting_routes = (
+        (
+            ConceptNode("Financial asset", "IFRS 9", MUTED_BLUE),
+            BoxPlacement(0.055, 0.46, 0.20, 0.17),
+        ),
+        (
+            ConceptNode("Significant\ninfluence", "Equity method · IAS 28", TEAL),
+            BoxPlacement(0.285, 0.46, 0.20, 0.17),
+        ),
+        (
+            ConceptNode(
+                "Joint\narrangement",
+                "Rights & obligations\nIFRS 11",
+                AMBER,
+            ),
+            BoxPlacement(0.515, 0.46, 0.20, 0.17),
+        ),
+        (
+            ConceptNode("Control", "Consolidate · IFRS 10", TEAL),
+            BoxPlacement(0.745, 0.46, 0.20, 0.17),
+        ),
+    )
+    residual_exposures = (
+        (
+            ConceptNode(
+                "Structured entity",
+                "Purpose ·\nvariable returns",
+                MUTED_BLUE,
+            ),
+            BoxPlacement(0.055, 0.105, 0.20, 0.18),
+        ),
+        (
+            ConceptNode(
+                "Guarantee or support",
+                "Guarantees ·\nliquidity support",
+                AMBER,
+            ),
+            BoxPlacement(0.285, 0.105, 0.20, 0.18),
+        ),
+        (
+            ConceptNode(
+                "Disclose & stress",
+                "IFRS 12 ·\nresidual exposure",
+                CORAL,
+            ),
+            BoxPlacement(0.515, 0.105, 0.20, 0.18),
+        ),
+        (
+            ConceptNode(
+                "NCI attribution",
+                "Profit · OCI ·\nequity claims",
+                TEAL,
+            ),
+            BoxPlacement(0.745, 0.105, 0.20, 0.18),
+        ),
+    )
+
+    for node, placement in (*accounting_routes, *residual_exposures):
+        add_box(
+            axis,
+            node,
+            placement,
+            title_size=19,
+            detail_size=18,
+            text_alignment="center",
+        )
+
+    structured = residual_exposures[0][1]
+    support = residual_exposures[1][1]
+    disclose = residual_exposures[2][1]
+    control = accounting_routes[3][1]
+    nci = residual_exposures[3][1]
+    connect_boxes(
+        axis,
+        structured,
+        support,
+        color=AMBER,
+        mutation_scale=23,
+        linewidth=2.8,
+        shrink=10,
+    )
+    connect_boxes(
+        axis,
+        support,
+        disclose,
+        color=CORAL,
+        mutation_scale=23,
+        linewidth=2.8,
+        shrink=10,
+    )
+    connect_boxes(
+        axis,
+        control,
+        nci,
+        color=TEAL,
+        mutation_scale=23,
+        linewidth=2.8,
+        shrink=10,
+    )
+
+    axis.text(
+        0.5,
+        0.045,
+        "Accounting classification does not cap economic exposure: "
+        "preserve NCI attribution and stress support commitments.",
+        color=MUTED_BLUE,
+        fontsize=19,
         ha="center",
         va="center",
         transform=axis.transAxes,
@@ -956,7 +1148,7 @@ def render_reconciliation_waterfall(
     plot.set_ylim(0, y_upper)
     plot.set_yticks(y_ticks)
     plot.tick_params(axis="y", colors=INK, labelsize=20, length=0, pad=8)
-    plot.set_ylabel("USD millions", color=INK, fontsize=22, labelpad=16)
+    plot.set_ylabel("USD m", color=INK, fontsize=22, labelpad=16)
     plot.set_xticks(x_positions)
     plot.set_xticklabels(
         labels,
@@ -1504,6 +1696,7 @@ RENDERERS: dict[str, Callable[[], Figure]] = {
     "m4-three-statement-evidence-model-map": render_m4_three_statement_model,
     "m4-roe-roic-driver-map": render_m4_roe_roic_driver_map,
     "m4-normalized-ebit-bridge": render_m4_normalized_ebit_bridge,
+    "m4-entity-perimeter-map": render_m4_entity_perimeter_map,
     "m4-forecast-cash-reconciliation": render_m4_forecast_cash_reconciliation,
     "m5-corporate-value-creation-valuation-map": render_m5_corporate_valuation,
     "m6-fixed-income-cash-flow-duration-map": render_m6_fixed_income,

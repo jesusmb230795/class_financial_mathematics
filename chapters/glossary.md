@@ -36,11 +36,15 @@ This glossary defines core terms used throughout the Jupyter Book.
 | CVaR | Conditional Value at Risk; average loss conditional on exceeding the VaR threshold. Also called Expected Shortfall. | Derivatives and Risk Management |
 | Data mode | Explicit notebook setting, such as `DATA_MODE=offline` or `DATA_MODE=live`, that determines whether a dashboard uses a versioned publication snapshot or provider-backed live data. | Markets, Instruments, and Data |
 | Data source inventory | Structured record of provider, instrument or variable, frequency, date range, field, currency, calendar, and limitations before modeling. | Markets, Instruments, and Data |
+| DIO | Days inventory outstanding; average inventory divided by cost of goods sold and multiplied by the declared day count. | Financial Statement Analysis and Financial Modeling |
 | Dirty price | Bond settlement price including accrued interest. | Fixed Income, Credit, and Term Structure |
+| DPO | Days payables outstanding; average operating trade payables divided by credit purchases and multiplied by the declared day count. When purchases are unavailable, a cost-of-goods-sold proxy must be labeled as such. | Financial Statement Analysis and Financial Modeling |
+| DSO | Days sales outstanding; average trade receivables divided by net credit sales and multiplied by the declared day count. When credit sales are unavailable, a revenue proxy must be labeled as such. | Financial Statement Analysis and Financial Modeling |
 | Drawdown | Percentage decline from the running wealth or price peak to the current level. | Markets, Instruments, and Data |
 | DuPont analysis | Decomposition of return on equity into profitability, asset efficiency, and financial leverage components. | Financial Statement Analysis and Financial Modeling |
 | Duration | First-order sensitivity of a bond price to changes in yield. | Fixed Income, Credit, and Term Structure |
 | DV01 | Dollar value of one basis point; approximate currency price change for a one-basis-point yield move. | Fixed Income, Credit, and Term Structure |
+| EBITDA | Earnings before interest, taxes, depreciation, and amortization; an intermediate performance measure whose calculation and any further adjustments must be stated because it is not a standardized IFRS line item. | Financial Statement Analysis and Financial Modeling |
 | Efficient frontier | Set of portfolios with minimum variance for each expected-return target. | Portfolio Management, Asset Allocation, and Performance |
 | Exchange rate | Price of one currency expressed in terms of another currency. | Economics, Macro, and Currency |
 | Expected Shortfall | Average tail loss beyond a selected quantile threshold. | Derivatives and Risk Management |
@@ -75,12 +79,16 @@ This glossary defines core terms used throughout the Jupyter Book.
 | Modified duration | Approximate percentage price change for a one-unit change in yield. | Fixed Income, Credit, and Term Structure |
 | Monetary policy | Central bank policy affecting short rates, liquidity, inflation expectations, exchange rates, and financial conditions. | Economics, Macro, and Currency |
 | Monte Carlo simulation | Numerical method that estimates values or risks by generating many random scenarios. | Derivatives and Risk Management |
+| NCI | Non-controlling interest; the equity in a subsidiary not attributable, directly or indirectly, to the parent. Consolidated analysis must distinguish the group's totals from the amounts attributable to owners of the parent. | Financial Statement Analysis and Financial Modeling |
 | Nelson-Siegel model | Parametric yield-curve model with level, slope, curvature, and decay parameters. | Fixed Income, Credit, and Term Structure |
 | Nelson-Siegel-Svensson model | Extension of Nelson-Siegel with an additional curvature term and decay parameter. | Fixed Income, Credit, and Term Structure |
 | Net present value | Present value of expected project cash inflows less the present value of cash outflows under an explicit discount-rate and scenario contract. | Corporate Issuers and Equity Valuation |
+| NOPAT | Net operating profit after tax; after-tax operating profit derived from consistently defined operating earnings and taxes attributable to those earnings. It is an analytical measure rather than a standardized financial-statement line item. | Financial Statement Analysis and Financial Modeling |
 | OAS covariance | Oracle Approximating Shrinkage covariance estimator. | Portfolio Management, Asset Allocation, and Performance |
 | Offline snapshot | Versioned real-data extract used so notebooks and book builds run without credentials, network access, or provider-rate-limit risk. | Markets, Instruments, and Data |
 | Output gap | Difference between actual output and estimated potential output, often used to interpret inflation pressure and slack. | Economics, Macro, and Currency |
+| OWC | Operating working capital; operating current assets less non-interest-bearing operating current liabilities under a declared scope. Cash, debt, and other financing balances are normally excluded unless the analysis states otherwise. | Financial Statement Analysis and Financial Modeling |
+| Owner earnings | Analyst-defined estimate of distributable economics based on normalized earnings, eligible non-cash charges, required capital expenditure, and additional operating working capital. It is not a standardized accounting measure, so each component and maintenance-investment assumption must be disclosed. | Financial Statement Analysis and Financial Modeling |
 | Parametric VaR | VaR estimated from an assumed distribution, often Gaussian. | Derivatives and Risk Management |
 | Par swap rate | Fixed rate that makes a swap have zero value at inception under a given discount curve. | Derivatives and Risk Management |
 | Principal Component Analysis | Dimension-reduction method used to summarize correlated curve or return movements with orthogonal factors. | Fixed Income, Credit, and Term Structure |
@@ -99,7 +107,7 @@ This glossary defines core terms used throughout the Jupyter Book.
 | Stochastic volatility | Modeling framework in which volatility is random rather than fixed. | Derivatives and Risk Management |
 | Swap | Derivative contract exchanging two streams of cash flows, commonly fixed versus floating interest payments. | Derivatives and Risk Management |
 | Tangency portfolio | Risky portfolio with the highest Sharpe ratio relative to the selected risk-free rate. | Portfolio Management, Asset Allocation, and Performance |
-| Three-statement model | Forecast model that links the income statement, balance sheet, and cash-flow statement through explicit accounting identities and schedules. | Financial Statement Analysis and Financial Modeling |
+| Three-statement model | Forecast model that links the income statement, balance sheet, and statement of cash flows through explicit accounting identities and schedules. | Financial Statement Analysis and Financial Modeling |
 | Theta | Option Greek measuring sensitivity to the passage of time. | Derivatives and Risk Management |
 | TIIE | Mexican interbank equilibrium interest-rate benchmark; its tenor and methodological vintage must be stated when used. | Markets, Instruments, and Data |
 | UDI | Mexican inflation-indexed unit of account whose peso value is published by Banco de México. | Markets, Instruments, and Data |

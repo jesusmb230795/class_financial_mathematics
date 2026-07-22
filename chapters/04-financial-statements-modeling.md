@@ -15,6 +15,13 @@ reader can explain what each accounting number represents, reconcile earnings
 to cash, and identify the judgments embedded in the source documents
 {cite}`damodaran2012investment`.
 
+The accounting examples use IFRS terminology because the public standard
+summaries provide a common cross-border baseline. For a U.S. issuer, map the
+same analytical questions to authoritative U.S. GAAP and SEC filing
+requirements; do not assume that labels, presentation, or statement-of-cash-
+flows classifications are interchangeable across frameworks
+{cite}`fasbConceptualFramework2024,secHowToRead10K2011`.
+
 ## Learning objectives
 
 By the end of this module, readers should be able to:
@@ -22,8 +29,8 @@ By the end of this module, readers should be able to:
 - scope a financial statement analysis and collect the controlling filing,
   notes, management commentary, the auditor's report, and relevant assurance
   disclosures;
-- connect the income statement, balance sheet, cash flow statement, and equity
-  roll-forward through explicit accounting identities;
+- connect the income statement, balance sheet, statement of cash flows, and
+  equity roll-forward through explicit accounting identities;
 - calculate and interpret profitability, liquidity, leverage, coverage,
   DuPont, return on equity (ROE), and return on invested capital (ROIC)
   measures with consistent periods and units;
@@ -66,9 +73,9 @@ measured over the period ending on that date. Unless a lesson states otherwise:
 
 Tables show expenses and cash outflows in parentheses. In driver equations,
 capital expenditures, dividends, and debt repayments are positive magnitudes
-that are subtracted. When CFO, CFI, or CFF is copied from a cash flow statement,
-the reported section total retains its own sign. This distinction prevents a
-negative outflow from being subtracted twice.
+that are subtracted. When CFO, CFI, or CFF is copied from a statement of cash
+flows, the reported section total retains its own sign. This distinction
+prevents a negative outflow from being subtracted twice.
 
 ## Conceptual spine
 
@@ -90,8 +97,8 @@ equity adjustments, retained earnings ($\mathrm{RE}$) satisfy:
 -\text{Dividends declared}_t.
 ```
 
-The cash flow statement can include a separately reported exchange-rate effect.
-Using the statement's own cash-and-cash-equivalents scope:
+The statement of cash flows can include a separately reported exchange-rate
+effect. Using the statement's own cash-and-cash-equivalents scope:
 
 ```{math}
 \Delta\text{Cash}^{\mathrm{SCF}}_t
@@ -123,7 +130,8 @@ period and the presentation standard actually applied
 The model is reviewable only when statement linkages reconcile and every value
 retains its evidence layer from filing through forecast. Operating-asset,
 liability, fixed-asset, and debt schedules also feed the cash bridge; closing
-cash then returns to the balance sheet.
+cash then returns to the balance sheet. Source: author-created schematic; no
+empirical data or real issuer.
 ```
 
 ### Earnings, capital, and cash flow
@@ -146,6 +154,21 @@ tax bridge rather than a mechanical multiplication.
 {\overline{\text{Invested capital}}_t},
 ```
 
+At the broad operating perimeter:
+
+```{math}
+\mathrm{FCFF}_t
+=\mathrm{NOPAT}_t
++\text{Non-cash operating charges}_t
+-\text{Cash investment in operating assets}_t.
+```
+
+Here, cash investment is measured before the non-cash operating charges added
+separately above. For this module's simplified industrial cases, depreciation
+and amortization are the only non-cash operating charges, while cash investment
+contains only capital expenditures and the change in selected operating
+working capital:
+
 ```{math}
 \mathrm{FCFF}_t
 =\mathrm{NOPAT}_t
@@ -158,7 +181,9 @@ $\mathrm{D\&A}$ means depreciation and amortization. Operating working
 capital includes only the operating current assets and non-interest-bearing
 operating liabilities selected for the analysis. Free cash flow to the firm
 (FCFF) is a valuation input, not a line item that can be copied from every
-filing. Its definition must be reconstructed consistently
+filing. Other non-current operating assets, operating liabilities,
+acquisitions, disposals, and non-cash charges require a wider reinvestment
+bridge. The definition must be reconstructed consistently
 {cite}`damodaran2012investment`.
 
 ### Evidence before interpretation
@@ -185,9 +210,15 @@ direction, amount, tax treatment, period, rationale, and reversibility note.
 | 4 | [Specialized Entities and Consolidation](../notebooks/course/4.4.specialized_entities_and_consolidation.md) | Adapt the framework to different institutional forms | Entity-specific analysis map |
 | 5 | [Three-Statement Model and Review Memo](../notebooks/course/4.5.three_statement_model_and_review.md) | Trace evidence through a simplified balanced forecast and review conclusion | Integrated one-year example, stress-case design, and model review memo |
 
+Lessons 4.1, 4.2, and 4.5 share one industrial-company simulation. In that
+case, reported EBIT is accepted as normalized EBIT only as an explicit teaching
+simplification because no adjustment evidence is introduced. Lesson 4.3 uses a
+separate normalization case, and Lesson 4.4 uses separate specialized-entity
+examples; their values do not silently enter the shared forecast.
+
 ## Data and reproducibility contract
 
-Every financial statement table or model should identify:
+For observed financial statements or models, identify:
 
 - issuer, legal entity, ticker or identifier, and reporting jurisdiction;
 - accounting framework and whether the statements are consolidated or
@@ -204,11 +235,27 @@ Every financial statement table or model should identify:
 - sign convention and formula for every derived metric;
 - snapshot vintage and a source-to-output trace for model inputs.
 
+For an author-created simulation, replace issuer and filing fields with a
+stable case identifier and record the construction method, currency, display
+unit, period length, sign convention, assumptions, formula version, and an
+explicit statement that the values do not represent a real issuer. A simulated
+case must never acquire a filing date, audit status, or empirical provenance.
+
 Financial statement values are period-specific and may be revised. A model
 must not overwrite a historical snapshot when a new filing appears. Store the
 new vintage separately and document the restatement bridge. Traceability and
 machine-readable source structure are part of the analytical result, not
 clerical work {cite}`wilkinson2016fair,wickham2014tidy`.
+
+Interim reports can use more estimation than annual statements, while changes
+in accounting policies, estimates, and prior-period errors have different
+retrospective or prospective treatments. Preserve those distinctions when
+building a time series {cite}`ias34InterimReporting2000,ias8Preparation2003`.
+For U.S. issuers, EDGAR APIs expose submission history and extracted XBRL facts;
+retain the accession number, form, filing date, reporting period, taxonomy,
+concept, context, and unit, then reconcile extracted facts to the controlling
+filing rather than treating an API value as self-explanatory
+{cite}`secEdgarApis2025`.
 
 ## Reading sequence
 
